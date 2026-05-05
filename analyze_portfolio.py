@@ -16,6 +16,7 @@ from agents.bond_analyzer import analyze_bond_position
 from agents.cedear_analyzer import analyze_cedear_position
 from data.argentina import get_bond_data, BOND_REGISTRY
 from data.cedears import get_cedear_data, CEDEAR_REGISTRY
+from notifications.email_sender import send_portfolio_analysis_email
 
 client = Anthropic()
 DELAY_BETWEEN_TICKERS = 12
@@ -147,7 +148,11 @@ def main():
     # --- 4. Mostrar resumen ---
     _print_summary(position_reports, thesis, cash)
 
-    # --- 5. Guardar ---
+    # --- 5. Enviar email ---
+    print("📧 Enviando email...")
+    send_portfolio_analysis_email(position_reports, thesis, cash, broker)
+
+    # --- 6. Guardar ---
     output_file = f"storage/portfolio_analysis_{date.today().isoformat()}.json"
     with open(output_file, "w") as f:
         json.dump({

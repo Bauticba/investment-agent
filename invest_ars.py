@@ -12,6 +12,7 @@ from data.argentina import get_macro_data
 from data.instruments_ar import get_instruments_universe
 from agents.ars_advisor import recommend_allocation
 from data.cedears import get_top_cedears
+from notifications.email_sender import send_ars_recommendation_email
 
 
 def main():
@@ -49,8 +50,14 @@ def main():
 
     # --- 4b. Si hay CEDEARs en el portafolio recomendado, mostrar picks específicos ---
     has_cedears = any(p.get("type") in ("cedear", "cedears") for p in rec.get("allocation", []))
+    cedear_picks = None
     if has_cedears:
         _print_cedear_picks()
+        cedear_picks = get_top_cedears(max_count=3, min_score=6.0)
+
+    # --- 4c. Enviar email ---
+    print("📧 Enviando email...")
+    send_ars_recommendation_email(rec, args.capital, args.riesgo, macro, cedear_picks)
 
     # --- 5. Guardar ---
     output_file = f"storage/inversion_ars_{date.today().isoformat()}.json"
