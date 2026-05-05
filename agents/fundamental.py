@@ -45,7 +45,10 @@ los datos financieros de una empresa y emitir un veredicto claro.
 - Current ratio: {fundamental.get("current_ratio")}
 - Margen de ganancia: {fundamental.get("profit_margin")}
 - ROE: {fundamental.get("return_on_equity")}
-- Free cash flow: ${fundamental.get("free_cashflow"):,}
+- Free cash flow: {fundamental.get("free_cashflow")}
+- Beta: {fundamental.get("beta")}
+- Dividend yield: {fundamental.get("dividend_yield")}
+- Precio objetivo analistas: {fundamental.get("analyst_target")}
 - Descripción: {fundamental.get("description")}
 
 ## Tu tarea

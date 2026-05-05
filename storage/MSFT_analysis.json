@@ -1,0 +1,153 @@
+{
+  "status": "ok",
+  "ticker": "MSFT",
+  "reports": {
+    "fundamental": {
+      "agent": "fundamental",
+      "ticker": "MSFT",
+      "verdict": "buy",
+      "score": 8,
+      "strengths": [
+        "P/E de 24.69 está bien por debajo del máximo aceptable de 40, indicando una valuación razonable para una empresa de su calidad",
+        "Crecimiento de ingresos del 18.3% supera ampliamente el mínimo requerido del 5%",
+        "Crecimiento de ganancias del 23.4% demuestra una expansión sólida y acelerada de la rentabilidad",
+        "Margen de ganancia del 39.3% es excepcional para el sector tecnológico, reflejando un negocio con fuerte poder de fijación de precios",
+        "ROE del 34% indica una gestión altamente eficiente del capital de los accionistas",
+        "P/E forward de 21.51 sugiere que el mercado anticipa mayor crecimiento, mejorando aún más la valuación futura",
+        "Precio objetivo de analistas en $560.77 representa un upside potencial del 35.6% desde el precio actual"
+      ],
+      "weaknesses": [
+        "Datos de Deuda/Equity y Current Ratio no disponibles, lo que impide verificar el cumplimiento de esos criterios del perfil inversor",
+        "Beta de 1.093 indica volatilidad ligeramente superior al mercado, lo que puede generar oscilaciones importantes para un inversor moderado",
+        "Dividend yield del 0.86% es muy bajo, ofreciendo escaso retorno por dividendos para quienes buscan ingresos pasivos",
+        "Market cap de más de 3 billones de dólares limita el potencial de crecimiento explosivo en comparación con empresas más pequeñas"
+      ],
+      "flags": [
+        "⚠️ Deuda/Equity no disponible: no se puede confirmar que esté por debajo del máximo de 2.0 requerido por el perfil",
+        "⚠️ Current Ratio no disponible: no se puede confirmar que supere el mínimo de 1.0 requerido por el perfil",
+        "⚠️ Free Cash Flow no disponible: dato clave para evaluar la salud financiera real de la empresa"
+      ],
+      "summary": "Microsoft presenta fundamentales sólidos que se alinean muy bien con el perfil de un inversor moderado principiante: valuación razonable, crecimiento robusto y márgenes excepcionales. La principal limitación del análisis es la ausencia de datos de liquidez y endeudamiento, que impide una verificación completa de todos los criterios del perfil. Con un upside potencial del 35% según los analistas y métricas de rentabilidad destacadas, se recomienda compra, idealmente validando previamente los ratios de deuda y liquidez."
+    },
+    "technical": {
+      "agent": "technical",
+      "ticker": "MSFT",
+      "verdict": "avoid",
+      "score": 3,
+      "trend": "bearish",
+      "entry_zone": "No hay zona de entrada válida actualmente. Esperar recuperación sobre MA200 ($467.51) con confirmación de volumen.",
+      "support_levels": [
+        396.44,
+        372.74
+      ],
+      "resistance_levels": [
+        424.82,
+        467.51
+      ],
+      "strengths": [
+        "RSI en 53.47 dentro del rango aceptable (30-75), sin condición de sobrecompra ni sobreventa extrema",
+        "Precio por encima de MA20 ($407.61) y MA50 ($396.44), mostrando recuperación de corto plazo",
+        "Rebote significativo desde mínimos de 52 semanas ($356.28), con recuperación de más del 16% desde el piso",
+        "Tendencia de cierres alcista en las últimas 2-3 semanas desde $356.77 hasta $413.62"
+      ],
+      "weaknesses": [
+        "Precio actual ($413.62) está un 11.5% POR DEBAJO de la MA200 ($467.51), violando la regla principal del inversor",
+        "Distancia al máximo de 52 semanas de -25.3%, indicando tendencia bajista de largo plazo dominante",
+        "Volumen reciente (28-31M) por debajo del pico de 70.9M registrado hace 3 días, sin confirmación de volumen sostenido en el rebote",
+        "El rally reciente desde $356 muestra signos de agotamiento con cierre de $413.62 tras tocar $432.92"
+      ],
+      "flags": [
+        "REGLA VIOLADA: Precio ($413.62) operando POR DEBAJO de la MA200 ($467.51). La regla del inversor exige operar SOLO por encima de MA200.",
+        "ALERTA DE VOLUMEN: El rebote reciente no está acompañado de volumen consistente y creciente. El volumen más alto (70.9M) coincidió con una vela de caída ($429.25 → $407.78), sugiriendo distribución.",
+        "TENDENCIA PRIMARIA BAJISTA: La estructura de largo plazo sigue siendo bajista mientras el precio esté debajo de MA200."
+      ],
+      "summary": "MSFT no cumple la condición fundamental del inversor de operar por encima de la MA200 ($467.51), estando actualmente un 11.5% por debajo de ese nivel, lo que genera una señal de 'avoid' inapelable desde el marco de reglas establecido. Si bien se observa un rebote técnico de corto plazo desde mínimos anuales y el RSI se encuentra en zona neutral, el volumen más alto reciente coincidió con una vela bajista que sugiere presión vendedora institucional. La operación solo debería reconsiderarse si el precio logra recuperar y sostenerse por encima de $467.51 con confirmación de volumen alcista."
+    },
+    "indicators": {
+      "agent": "indicators",
+      "ticker": "MSFT",
+      "verdict": "buy",
+      "score": 6,
+      "momentum": "bullish",
+      "rsi_interpretation": "RSI en 53.47, zona neutral-alcista, con amplio margen antes de sobrecompra (75). No hay señales de agotamiento ni sobreventa.",
+      "macd_interpretation": "MACD línea en 16.854 con señal bullish, indicando momentum alcista activo y presión compradora sostenida.",
+      "bollinger_interpretation": "Precio dentro de las bandas al 57.3% desde la banda inferior, posicionado ligeramente por encima de la media (407.61), sugiriendo sesgo alcista moderado sin sobreextensión.",
+      "volume_interpretation": "Volumen estable con variación de solo +2.3% respecto a los últimos 20 días. La confirmación de volumen requerida no muestra expansión significativa, lo cual limita la convicción de la señal.",
+      "strengths": [
+        "Precio por encima de MA20 (407.61) y MA50 (396.44), confirmando tendencia de corto y mediano plazo alcista",
+        "MACD con señal bullish y valor positivo elevado (16.854), indicando impulso comprador vigente",
+        "RSI dentro del rango permitido (30-75) con espacio de recorrido alcista disponible",
+        "Precio bien alejado de la banda inferior de Bollinger, sin señales de presión vendedora extrema"
+      ],
+      "weaknesses": [
+        "Precio significativamente por debajo de MA200 (467.51), indicando que la tendencia de largo plazo sigue siendo bajista o de recuperación",
+        "Volumen estable pero sin expansión, lo que debilita la confirmación alcista requerida por las reglas del inversor",
+        "El precio necesita superar ~22% para recuperar la MA200, representando una resistencia estructural importante"
+      ],
+      "flags": [
+        "ALERTA: Confirmación de volumen requerida no satisfecha plenamente — el volumen es estable (+2.3%) pero no muestra expansión alcista clara que respalde el movimiento"
+      ],
+      "summary": "MSFT muestra momentum alcista de corto y mediano plazo con precio sobre MA20 y MA50, MACD bullish y RSI en zona saludable. Sin embargo, la MA200 en 467.51 actúa como resistencia de largo plazo relevante y el volumen no confirma con expansión el movimiento alcista. Se emite señal de compra moderada con score 6/10, condicionada a monitorear expansión de volumen para mayor convicción."
+    },
+    "sentiment": {
+      "agent": "sentiment",
+      "ticker": "MSFT",
+      "verdict": "buy",
+      "score": 7,
+      "market_sentiment": "bullish",
+      "news_tone": "positive",
+      "news_summary": "Las noticias recientes destacan a Microsoft como una de las mejores acciones de infraestructura de software, con expansión de alianzas estratégicas en IA y cobertura positiva de analistas que mantienen ratings de outperform. El único ruido negativo es la presión relativa frente a Alphabet en el corto plazo y el recorte marginal del precio objetivo de Scotiabank.",
+      "competitive_position": "Microsoft ocupa una posición dominante en infraestructura de software empresarial, cloud computing (Azure) e inteligencia artificial, con ecosistemas profundamente integrados en corporaciones globales. Su alianza expandida con ServiceNow para gobernanza de agentes de IA y los nuevos acuerdos con organismos de seguridad de IA en EE.UU. y Reino Unido refuerzan su liderazgo en el segmento de IA empresarial regulada.",
+      "sector_outlook": "El sector de software e infraestructura tecnológica mantiene perspectivas positivas impulsadas por el gasto masivo en IA y centros de datos. Aunque existe debate sobre la rentabilidad de corto plazo del gasto en IA, los grandes operadores como Microsoft están convirtiendo esa inversión en ventaja competitiva estructural. La demanda cloud sigue siendo robusta y los márgenes del sector permanecen elevados.",
+      "key_risks": [
+        "Presión competitiva de Alphabet (Google Cloud) que muestra mejor performance bursátil reciente y mayor crecimiento relativo en IA generativa",
+        "Valoración aún exigente a pesar del descuento del 25% respecto al máximo anual; cualquier decepción en guidance puede generar volatilidad significativa",
+        "Riesgo regulatorio creciente en IA a nivel global que podría ralentizar el despliegue de productos y servicios de inteligencia artificial"
+      ],
+      "key_catalysts": [
+        "Expansión acelerada de Azure y Copilot en el ecosistema empresarial global con contratos de largo plazo que generan ingresos recurrentes",
+        "Nuevos acuerdos de gobernanza y seguridad de IA que posicionan a Microsoft como el proveedor de referencia para empresas que necesitan cumplimiento regulatorio en IA"
+      ],
+      "investor_fit": "Microsoft es adecuada para el perfil del inversor tanto en swing trade como en largo plazo. Para swing trade, el RSI neutral (53) y la distancia al máximo del 25% ofrecen recorrido alcista con riesgo moderado. Para largo plazo, los fundamentals sólidos (ROE 34%, margen del 39%, crecimiento de ingresos del 18%) y el precio objetivo de analistas en $560 representan un upside del 35% que justifica la posición para un inversor principiante con horizonte extendido.",
+      "strengths": [
+        "Ecosistema empresarial extremadamente difícil de reemplazar: Office, Azure, Teams y LinkedIn crean un moat competitivo de alta retención",
+        "Liderazgo en IA aplicada al entorno corporativo con Copilot integrado en toda la suite de productividad, generando ingresos incrementales sobre base instalada masiva"
+      ],
+      "weaknesses": [
+        "Underperformance relativa reciente frente a Alphabet y otros Mag 7, lo que puede afectar el sentimiento institucional en el corto plazo y generar rotación de capital hacia competidores"
+      ],
+      "flags": [
+        "Jim Cramer señaló presión específica sobre Microsoft y Meta frente a Alphabet y Amazon post-earnings, lo que sugiere que el mercado percibe a MSFT como rezagada en el ciclo de beneficios de IA de corto plazo"
+      ],
+      "summary": "Microsoft mantiene un sentimiento de mercado positivo respaldado por fundamentals sólidos, posición de liderazgo en IA empresarial y cobertura de analistas constructiva con upside significativo respecto al precio actual. El principal riesgo de corto plazo es la presión competitiva de Alphabet y la percepción de que MSFT está monetizando la IA más lentamente que sus pares. Para un inversor principiante con horizonte de swing trade y largo plazo, MSFT representa una oportunidad de compra con riesgo controlado dado el descuento del 25% respecto a máximos y el consenso de analistas en $560."
+    }
+  },
+  "ceo_thesis": {
+    "final_verdict": "hold",
+    "conviction": "low",
+    "ceo_score": 5,
+    "price_target": 467.51,
+    "stop_loss": 380.53,
+    "take_profit": 496.34,
+    "time_horizon": "mediano plazo (1-3 meses)",
+    "analysts_agreement": "Conflicto significativo: 3 de 4 analistas recomiendan compra (fundamental, indicadores y sentimiento), pero el analista técnico emite un 'avoid' inapelable por regla violada: el precio está 11.5% por debajo de la MA200 ($467.51). Este conflicto no es menor — la regla de operar solo por encima de la MA200 es una condición de entrada establecida en el perfil del inversor, y su violación no puede ignorarse independientemente de cuántos analistas voten compra.",
+    "thesis": "Microsoft presenta fundamentales excepcionales y sentimiento de mercado positivo, pero el precio actual viola la regla técnica más importante del perfil de Bautista: operar exclusivamente por encima de la MA200. Entrar en este momento implicaría asumir un riesgo técnico estructural que no es apropiado para un inversor principiante con tolerancia moderada. La estrategia correcta es mantenerse en observación y esperar que el precio recupere y sostenga los $467.51 antes de construir posición, aprovechando mientras tanto el tiempo para monitorear los catalizadores fundamentales que justifican la tesis de largo plazo.",
+    "pros": [
+      "Fundamentales sobresalientes: P/E de 24.69, crecimiento de ingresos del 18.3%, margen neto del 39.3% y ROE del 34% posicionan a MSFT como una empresa de altísima calidad a valuación razonable",
+      "Precio objetivo de consenso de analistas en $560.77 representa un upside del 35.6% desde el precio actual, con catalizadores concretos en Azure, Copilot e IA empresarial",
+      "Momentum de corto plazo positivo: rebote del 16% desde mínimos anuales, precio sobre MA20 y MA50, MACD bullish y RSI en zona neutral-alcista con recorrido disponible",
+      "Liderazgo estructural en IA empresarial y cloud computing con ecosistema de alta retención que genera ventajas competitivas difíciles de replicar"
+    ],
+    "cons": [
+      "Violación de regla técnica crítica: precio ($413.62) está 11.5% por debajo de la MA200 ($467.51), lo que según el perfil del inversor impide cualquier entrada en este momento",
+      "El volumen más alto reciente coincidió con una vela bajista ($429.25 → $407.78), sugiriendo presión vendedora institucional o distribución, lo que debilita la convicción del rebote actual"
+    ],
+    "action_steps": [
+      "Paso 1: NO abrir posición ahora. Configurar una alerta de precio en $467.51 (MA200) para recibir notificación cuando el precio se aproxime a esa zona de recuperación técnica.",
+      "Paso 2: Monitorear semanalmente si el precio supera y sostiene los $467.51 durante al menos 3 sesiones consecutivas con volumen creciente. Solo ante esa confirmación evaluar entrada con no más del 10-15% del capital disponible.",
+      "Paso 3: Si se produce la entrada, aplicar stop loss en $430 (aprox. -8% desde $467) y take profit inicial en $560 (precio objetivo de analistas), ajustando el stop loss al alza a medida que el precio avance."
+    ],
+    "risk_warning": "Bautista, como inversor principiante con perfil moderado, es fundamental respetar las reglas de entrada establecidas en tu perfil. Ingresar a MSFT en este momento, con el precio por debajo de su media de 200 ruedas, implica nadar contra la tendencia de largo plazo y aumenta innecesariamente el riesgo de pérdida. El mercado puede castigar posiciones que se abren en tendencia bajista estructural incluso cuando los fundamentales son sólidos. La paciencia en este caso es la mejor herramienta de gestión de riesgo: MSFT no va a desaparecer, y una entrada técnicamente correcta en el futuro será mucho más favorable que una entrada apresurada hoy.",
+    "ceo_summary": "MSFT es una empresa extraordinaria con fundamentales de primer nivel, pero el momento técnico actual no permite una entrada responsable para tu perfil: el precio está por debajo de la MA200, lo que viola una regla de inversión clave que acordamos respetar. La decisión es 'hold' — vigilamos sin invertir. Cuando el precio recupere y sostenga los $467.51 con volumen confirmado, tendremos una oportunidad de compra sólida con upside potencial del 20% o más hacia el precio objetivo de $560. Por ahora, la paciencia protege tu capital."
+  }
+}

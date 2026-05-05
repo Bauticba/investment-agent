@@ -5,27 +5,30 @@
     "fundamental": {
       "agent": "fundamental",
       "ticker": "AAPL",
-      "verdict": "hold",
-      "score": 6,
+      "verdict": "buy",
+      "score": 8,
       "strengths": [
+        "P/E ratio de 33.88 se encuentra dentro del límite máximo aceptable de 40 para el perfil del inversor",
         "Crecimiento de ingresos del 16.6% supera ampliamente el mínimo requerido del 5%",
-        "Crecimiento de ganancias sólido del 21.8%, indicando mejora en rentabilidad",
-        "Margen de ganancia neto del 27.15%, excepcionalmente alto para el sector",
-        "Free cash flow de más de $100 mil millones, demostrando una generación de caja extraordinaria",
-        "P/E ratio de 35.46 dentro del límite máximo aceptable de 40",
-        "P/E forward de 29.81 sugiere mejora esperada en valuación"
+        "Crecimiento de ganancias del 21.8% demuestra una expansión sólida y acelerada de la rentabilidad",
+        "Margen de ganancia neto del 27.2% refleja un negocio altamente eficiente y con fuerte poder de fijación de precios",
+        "ROE de 141.5% indica una capacidad excepcional de generar retornos sobre el capital de los accionistas",
+        "Precio objetivo de analistas en $300.65 representa un upside potencial del ~8.6% desde el precio actual",
+        "Beta de 1.065 indica volatilidad ligeramente superior al mercado, compatible con perfil moderado"
       ],
       "weaknesses": [
-        "Deuda/equity de 79.55 supera masivamente el límite máximo aceptable de 2.0",
-        "ROE de 141.47% aunque parece alto, está distorsionado por el elevado apalancamiento financiero",
-        "Current ratio de 1.07 apenas supera el mínimo requerido de 1.0, con muy poco margen de seguridad",
-        "Valuación elevada con market cap superior a $4 billones, limitando potencial de upside"
+        "Datos de Deuda/Equity no disponibles, impidiendo evaluar el nivel de apalancamiento financiero",
+        "Current Ratio no disponible, imposibilitando confirmar el cumplimiento del requisito mínimo de liquidez de 1.0",
+        "Free Cash Flow no reportado, limitando el análisis de generación de caja real del negocio",
+        "Dividend yield del 0.37% es muy bajo, ofreciendo escaso ingreso pasivo para el inversor",
+        "Capitalización bursátil de más de $4 billones limita el potencial de crecimiento explosivo futuro"
       ],
       "flags": [
-        "⚠️ VIOLACIÓN CRÍTICA: Deuda/equity de 79.55 excede ampliamente el máximo permitido de 2.0",
-        "⚠️ Current ratio de 1.07 está muy cerca del mínimo requerido de 1.0, riesgo de liquidez latente"
+        "ALERTA: Deuda/Equity no disponible — no se puede verificar el cumplimiento del límite máximo de 2.0 exigido por el perfil del inversor",
+        "ALERTA: Current Ratio no disponible — no se puede confirmar que supere el mínimo requerido de 1.0",
+        "ALERTA: Free Cash Flow no disponible — dato crítico para validar la calidad de las ganancias reportadas"
       ],
-      "summary": "Apple presenta fundamentos operativos muy sólidos con excelente crecimiento y generación de caja, pero viola de forma crítica el criterio de deuda/equity del perfil inversor al registrar un ratio de 79.55 versus el máximo de 2.0 permitido. Para un inversor principiante con riesgo moderado, este nivel de apalancamiento representa una señal de alerta importante que impide una recomendación de compra, sugiriendo mantener posiciones existentes pero no incrementarlas hasta clarificar la estructura de capital."
+      "summary": "Apple presenta fundamentales sólidos con crecimiento de ingresos y ganancias muy por encima de los requisitos del perfil moderado, un P/E razonable y márgenes excepcionales que justifican una recomendación de compra. Sin embargo, la ausencia de datos clave como Deuda/Equity, Current Ratio y Free Cash Flow introduce incertidumbre y obliga a proceder con cautela, sugiriendo verificar estos indicadores antes de tomar una posición. Para un inversor principiante con perfil moderado, Apple representa una opción de calidad dentro del rango aceptable de riesgo, con upside potencial respaldado por el consenso de analistas."
     },
     "technical": {
       "agent": "technical",
@@ -33,121 +36,118 @@
       "verdict": "hold",
       "score": 6,
       "trend": "bullish",
-      "entry_zone": "Esperar retroceso hacia zona $266-$270, confluencia entre MA20 y soporte reciente",
+      "entry_zone": "Zona de entrada sugerida entre $267 y $271, en retroceso hacia la MA20 con confirmación de volumen",
       "support_levels": [
-        266.36,
-        261.22
+        267.26,
+        261.46
       ],
       "resistance_levels": [
         280.14,
         288.62
       ],
       "strengths": [
-        "Precio por encima de MA20 ($266.36) y MA50 ($261.22), confirma tendencia alcista de corto y mediano plazo",
-        "Momentum alcista sólido con 10 velas consecutivas de avance desde $258 hasta $280",
-        "Volumen elevado en últimas dos sesiones (91.8M y 76M) confirma el breakout reciente con participación institucional",
-        "Precio a solo -2.94% del máximo de 52 semanas, mostrando fortaleza relativa"
+        "Precio por encima de MA20, MA50 y MA200, confirmando tendencia alcista de largo plazo",
+        "RSI de 61.94 dentro del rango aceptable (30-75), con momentum positivo sin sobrecompra extrema",
+        "Volumen elevado en las últimas dos sesiones (91.8M y 79.9M) sugiere interés institucional y confirma el impulso alcista reciente",
+        "Precio recuperó fuertemente desde el mínimo de 52 semanas ($243.42), ganando más de 13% desde los mínimos"
       ],
       "weaknesses": [
-        "RSI en 69.31, rozando el límite máximo permitido de 75, indica condición de sobrecompra incipiente",
-        "MA200 no disponible, impidiendo validar la regla crítica de operar solo por encima de ella",
-        "Precio extendido respecto a MA20 (~5.2%), aumentando el riesgo de entrada en máximos",
-        "Resistencia inmediata fuerte en máximo de 52 semanas ($288.62), poco margen de recorrido alcista a corto plazo"
+        "Precio actual a solo -4.08% del máximo de 52 semanas ($288.62), limitando el upside inmediato y aumentando riesgo de resistencia",
+        "El pico de volumen extraordinario (91.8M) coincide con el máximo reciente de $280.14, lo que podría indicar distribución en esa zona",
+        "Precio extendido respecto a la MA20 (~3.5% de distancia), sugiere que una entrada ahora implica mayor riesgo de pullback"
       ],
       "flags": [
-        "ALERTA: MA200 no disponible — regla 'Solo operar por encima de MA200' NO PUEDE VERIFICARSE. Entrada bloqueada hasta confirmar dato",
-        "ADVERTENCIA: RSI en 69.31 se aproxima al límite máximo permitido de 75. Margen de seguridad reducido",
-        "ADVERTENCIA: Volumen confirma movimiento, pero la entrada en el precio actual ($280.14) implica comprar cerca de máximos de 52 semanas"
+        "Sin violación de reglas: precio opera por encima de MA200 ($255.52) ✓",
+        "RSI 61.94 dentro del rango permitido (30-75) ✓",
+        "Volumen de confirmación presente en el impulso reciente ✓",
+        "ALERTA: Entrada en precio actual ($276.83) está alejada de soportes clave, relación riesgo/beneficio subóptima en este momento"
       ],
-      "summary": "AAPL muestra una tendencia alcista clara con precio por encima de sus medias móviles de corto y mediano plazo, respaldada por volumen institucional significativo en las últimas sesiones. Sin embargo, la ausencia del dato de MA200 impide validar la regla más importante del inversor, bloqueando una señal de compra formal. Se recomienda aguardar un retroceso saludable hacia la zona $266-$270 y la confirmación del valor de MA200 antes de considerar una entrada."
+      "summary": "AAPL muestra una tendencia alcista sólida con precio por encima de todas las medias móviles clave y RSI en zona saludable, cumpliendo todas las reglas del inversor. Sin embargo, el precio actual se encuentra extendido tras un fuerte impulso con volumen pico, a solo 4% del máximo anual, lo que deteriora la relación riesgo/beneficio para una entrada inmediata. Se recomienda aguardar un retroceso controlado hacia la zona $267-$271 (MA20) con confirmación de volumen decreciente para una entrada técnicamente más favorable."
     },
     "indicators": {
       "agent": "indicators",
       "ticker": "AAPL",
-      "verdict": "hold",
-      "score": 6,
+      "verdict": "buy",
+      "score": 7,
       "momentum": "bullish",
-      "rsi_interpretation": "RSI en 69.31, dentro del rango permitido (30-75) pero rozando la zona de sobrecompra. Deja poco margen antes de violar el límite máximo del inversor.",
-      "macd_interpretation": "MACD con señal alcista y línea MACD en 6.9, confirmando momentum positivo en el corto plazo. No hay divergencia negativa aparente.",
-      "bollinger_interpretation": "El precio ($280.14) se encuentra por encima de la banda superior ($279.71), lo cual indica sobreextensión y posible reversión o consolidación inminente. Señal de precaución.",
-      "volume_interpretation": "Volumen creciente (+11.5% en los últimos 10 días vs 20 días), confirmando el movimiento alcista. La confirmación de volumen requerida por el inversor está satisfecha.",
+      "rsi_interpretation": "RSI en 61.94, dentro del rango permitido (30-75). Indica momentum alcista moderado sin estar en zona de sobrecompra, con margen antes del límite máximo de 75.",
+      "macd_interpretation": "MACD line en 6.869 con señal bullish, confirmando presión compradora sostenida y divergencia positiva respecto a su línea de señal.",
+      "bollinger_interpretation": "Precio en $276.83 posicionado al 85.1% desde la banda inferior, acercándose a la banda superior ($280.88). Tendencia alcista dentro de las bandas pero con espacio limitado antes de posible resistencia o sobreextensión.",
+      "volume_interpretation": "Volumen creciente +12.9% en los últimos 10 días vs 20 días. Confirmación de volumen satisfecha, lo que valida el movimiento alcista con participación real del mercado.",
       "strengths": [
-        "MACD bullish con momentum positivo sostenido",
-        "Precio por encima de MA20 ($266.36) y MA50 ($261.22), estructura alcista clara",
-        "Volumen creciente confirma la tendencia (+11.5%)"
+        "Precio por encima de MA20 ($267.26), MA50 ($261.46) y MA200 ($255.52): alineación alcista completa de medias móviles",
+        "Volumen creciente confirma el movimiento alcista cumpliendo el requisito de confirmación del inversor",
+        "RSI en zona saludable con margen antes de sobrecompra, sin alertas de agotamiento inmediato",
+        "MACD bullish refuerza el consenso direccional alcista"
       ],
       "weaknesses": [
-        "Precio por encima de la banda superior de Bollinger, indicando sobrecompra técnica",
-        "RSI cercano al límite máximo del inversor (69.31 vs límite 75), con margen reducido",
-        "MA200 no disponible, impidiendo evaluar la tendencia de largo plazo"
+        "Precio al 85.1% de las Bandas de Bollinger sugiere proximidad a resistencia dinámica superior ($280.88), limitando el upside inmediato",
+        "RSI en 61.94 con tendencia alcista puede acercarse al límite máximo (75) si el precio continúa subiendo"
       ],
       "flags": [
-        "⚠️ Precio sobre banda superior de Bollinger ($280.14 > $279.71): alta probabilidad de consolidación o pullback",
-        "⚠️ RSI en 69.31 se aproxima al límite máximo permitido de 75. Un movimiento alcista adicional podría violar la regla del inversor",
-        "⚠️ MA200 no disponible: no es posible confirmar tendencia de largo plazo"
+        "PRECAUCIÓN: El precio ($276.83) está próximo a la banda superior de Bollinger ($280.88). Un cierre por encima podría indicar sobreextensión a corto plazo.",
+        "MONITOREAR: Si el RSI supera 75, se activa el límite máximo del inversor y la posición debería reevaluarse."
       ],
-      "summary": "AAPL muestra un momentum alcista respaldado por MACD positivo, precio sobre sus medias móviles y volumen creciente que satisface los requisitos del inversor. Sin embargo, el precio operando por encima de la banda superior de Bollinger y un RSI rozando la zona límite sugieren sobreextensión en el corto plazo, aumentando el riesgo de una corrección o lateralización. Se recomienda mantener posición existente o esperar un pullback hacia la banda media para una entrada de menor riesgo."
+      "summary": "AAPL muestra un momentum bullish sólido con todas las medias móviles alineadas al alza y confirmación de volumen creciente (+12.9%), cumpliendo los requisitos del inversor. El MACD bullish y el RSI en zona saludable (61.94) respaldan una señal de compra con score 7/10. El principal factor de cautela es la proximidad al techo de las Bandas de Bollinger ($280.88), que podría generar resistencia a corto plazo y limitar el recorrido alcista inmediato."
     },
     "sentiment": {
       "agent": "sentiment",
       "ticker": "AAPL",
-      "verdict": "hold",
-      "score": 6,
+      "verdict": "buy",
+      "score": 8,
       "market_sentiment": "bullish",
-      "competitive_position": "Apple mantiene una posición dominante en el ecosistema premium de consumo tecnológico, con una base de usuarios extremadamente leal y el ecosistema más integrado de la industria. Su transición hacia servicios (App Store, Apple TV+, iCloud, Apple Pay) le otorga ingresos recurrentes que reducen la dependencia del ciclo de hardware. Sin embargo, enfrenta presión regulatoria creciente en Europa y EE.UU. sobre su modelo de App Store y posición dominante.",
-      "sector_outlook": "El sector tecnológico de consumo enfrenta un entorno mixto: la IA generativa representa una oportunidad transformadora que Apple está integrando gradualmente (Apple Intelligence), mientras que el ciclo de reemplazo de smartphones permanece lento. La presión regulatoria antimonopolio es un viento en contra estructural. En el mediano plazo, el lanzamiento de nuevos factores de forma (Vision Pro y sus iteraciones futuras) y la expansión en India como mercado emergente son narrativas relevantes.",
+      "news_tone": "very_positive",
+      "news_summary": "Las noticias recientes están dominadas por el potencial acuerdo con Intel y Samsung para fabricar chips en EE.UU., lo que refuerza la narrativa de independencia tecnológica y reshoring. Adicionalmente, un reporte de CounterPoint destaca el dominio de Apple en el mercado global de smartphones en el primer trimestre.",
+      "competitive_position": "Apple mantiene una posición dominante en el segmento premium de smartphones globalmente, con una cuota de mercado sin precedentes según CounterPoint Research. Su ecosistema cerrado (hardware, software y servicios) genera un efecto de lock-in muy fuerte. La posible asociación con Intel para fabricación local de chips en EE.UU. reforzaría su independencia de la cadena de suministro asiática y mejoraría su posición ante riesgos geopolíticos.",
+      "sector_outlook": "El sector tecnológico muestra un momentum muy positivo con el Nasdaq tocando máximos históricos. La narrativa de IA, el reshoring de manufactura de chips y el gasto corporativo en tecnología impulsan el sector. Apple se beneficia de todos estos vientos de cola estructurales en el corto y mediano plazo.",
       "key_risks": [
-        "Valuación exigente: con market cap superior a $4T y un precio cerca de máximos históricos, el margen de seguridad es limitado para un inversor principiante",
-        "Dependencia de China tanto en manufactura como en ventas, con riesgo geopolítico latente y competencia creciente de marcas locales como Huawei",
-        "Presión regulatoria en Europa (DMA) y EE.UU. que podría erosionar los márgenes del negocio de servicios, especialmente App Store"
+        "Dependencia histórica de la cadena de suministro en China y potencial escalada de tensiones geopolíticas EE.UU.-China que afecte producción o ventas",
+        "Valuación exigente a $4.17T de market cap con un P/E implícitamente elevado, dejando poco margen de error ante decepciones en resultados",
+        "Intensificación de la competencia en mercados emergentes por parte de fabricantes chinos (Huawei, Xiaomi) que erosionen cuota en segmentos de precio medio-alto"
       ],
       "key_catalysts": [
-        "Expansión de Apple Intelligence y capacidades de IA integradas que podrían acelerar el ciclo de actualización del iPhone 16/17",
-        "Crecimiento sostenido del segmento de Servicios con márgenes superiores al 70%, que mejora el mix de rentabilidad general"
+        "Acuerdo formal con Intel para fabricación local de chips en EE.UU., lo que reduciría riesgos de cadena de suministro y generaría narrativa política favorable",
+        "Ciclo de actualización del iPhone potenciado por IA generativa (Apple Intelligence), que podría acelerar reemplazos y expandir márgenes en servicios"
       ],
-      "investor_fit": "Para un inversor principiante con horizonte de largo plazo, AAPL es una posición defensiva y comprensible, lo cual es positivo. Sin embargo, el componente de swing trade es problemático dado que el RSI de 69.31 indica que la acción está cerca de territorio sobrecomprado y cotiza a solo 3% de su máximo anual, reduciendo el upside de corto plazo. Para largo plazo es aceptable como parte de un portafolio diversificado, pero no como posición de trading activo en este momento.",
+      "investor_fit": "Apple es adecuada tanto para swing trading como para largo plazo en un perfil principiante. Para swing trade, el RSI en 61.94 sugiere momentum sin sobrecompra extrema y la cercanía al máximo de 52 semanas (-4.08%) indica potencial de ruptura. Para largo plazo, es una de las posiciones más seguras en tecnología dado su moat, generación de caja y marca global. El sector tecnológico está dentro de los permitidos del inversor.",
       "strengths": [
-        "Marca más valiosa del mundo con pricing power excepcional y lealtad de cliente difícil de replicar",
-        "Transición exitosa hacia modelo de ingresos por servicios que genera flujos de caja predecibles y márgenes superiores",
-        "Programa de recompra de acciones agresivo y dividendo creciente que sostiene el precio en correcciones"
+        "Marca global sin precedentes con el mayor nivel de lealtad de clientes en la industria tecnológica (NPS consistentemente alto)",
+        "Ecosistema integrado de hardware, software y servicios que genera ingresos recurrentes crecientes y márgenes de servicios superiores al 70%"
       ],
       "weaknesses": [
-        "Crecimiento de ingresos del 16.6% puede ser difícil de sostener dado el tamaño de la base y la saturación del mercado premium de smartphones",
-        "Apple Vision Pro no ha logrado tracción masiva, cuestionando la narrativa de la próxima plataforma de computing"
+        "Saturación del mercado premium de smartphones en economías desarrolladas limita el crecimiento orgánico de unidades y aumenta la dependencia de ciclos de reemplazo"
       ],
       "flags": [
-        "RSI de 69.31 indica momentum sobreextendido: riesgo de corrección técnica de corto plazo poco conveniente para estrategia swing trade",
-        "Valuación implícita superior a $4T deja poco margen de error ante cualquier decepción en resultados o guidance"
+        "El acuerdo con Intel está en etapa temprana ('early discussions'); si no se concreta, podría generar una corrección en el precio dado el impulso que ya ha generado en el mercado"
       ],
-      "summary": "Apple es una empresa de altísima calidad con posición competitiva casi inexpugnable y narrativa de servicios sólida, pero el momento de entrada actual no es ideal: el RSI elevado y la proximidad al máximo anual limitan el upside de corto plazo, haciendo que la estrategia swing trade sea riesgosa. Para el horizonte de largo plazo es una holding razonable, aunque el inversor principiante debería considerar esperar una corrección del 8-12% para construir posición con mayor margen de seguridad."
+      "summary": "Apple atraviesa un momento de sentimiento muy positivo impulsado por noticias de potencial manufactura local de chips con Intel, dominio confirmado en ventas globales de smartphones y un mercado tecnológico en máximos históricos. Los fundamentos sólidos (ROE de 141%, margen neto de 27%, crecimiento de ingresos del 16.6%) validan el optimismo del mercado, y el precio objetivo de analistas en $300.65 sugiere un upside del 8.6% desde niveles actuales. Para un inversor principiante con horizonte swing o largo plazo, AAPL representa una de las opciones de mejor relación riesgo/retorno en el sector tecnológico."
     }
   },
   "ceo_thesis": {
-    "final_verdict": "hold",
-    "conviction": "high",
-    "ceo_score": 6,
-    "price_target": 288.62,
-    "stop_loss": 257.73,
-    "take_profit": 288.62,
+    "final_verdict": "buy",
+    "conviction": "medium",
+    "ceo_score": 7,
+    "price_target": 300.65,
+    "stop_loss": 254.68,
+    "take_profit": 300.65,
     "time_horizon": "mediano plazo (1-3 meses)",
-    "analysts_agreement": "Consenso total entre los 4 analistas: todos recomiendan HOLD con score 6/10. No hay conflictos de dirección. Las razones convergen en tres puntos clave: (1) momentum alcista real pero con señales de sobreextensión técnica, (2) fundamentales operativos sólidos pero con violación crítica del ratio deuda/equity, y (3) valuación exigente con precio cerca de máximos históricos que limita el upside de corto plazo.",
-    "thesis": "Apple es una empresa de calidad excepcional con fundamentales operativos sobresalientes, pero el momento de entrada actual no es favorable para Bautista. El precio opera por encima de la banda superior de Bollinger, el RSI roza zona de sobrecompra, la MA200 no está disponible para validar la tendencia de largo plazo, y la estructura de capital viola el criterio máximo de deuda/equity del perfil inversor. La decisión correcta es mantener observación activa y esperar un retroceso hacia la zona $266-$270 para evaluar una entrada con mayor margen de seguridad y mejor relación riesgo/retorno.",
+    "analysts_agreement": "Tres de cuatro analistas (Fundamental 8/10, Indicadores 7/10 y Sentimiento 8/10) coinciden en 'buy' con fundamentos sólidos, momentum alcista y sentimiento muy positivo. El único conflicto proviene del Agente Técnico (6/10) que recomienda 'hold' por considerar el precio actual extendido respecto a soportes y con relación riesgo/beneficio subóptima en la zona actual ($276.83). Este conflicto es relevante pero no bloqueante: los tres agentes restantes superan su score y el técnico no niega la tendencia alcista, solo advierte sobre el timing de entrada.",
+    "thesis": "Apple presenta una combinación de fundamentos excepcionales (crecimiento de ingresos +16.6%, margen neto 27.2%, ROE 141.5%) con momentum técnico alcista confirmado por volumen creciente y todas las medias móviles alineadas al alza. El sentimiento del mercado es muy positivo impulsado por el potencial acuerdo con Intel y el dominio global en smartphones, con un precio objetivo de analistas en $300.65 que representa un upside del 8.6%. Se recomienda una entrada escalonada priorizando niveles cercanos a $267-$271 para mejorar la relación riesgo/beneficio, dado que el precio actual se encuentra extendido y próximo a la banda superior de Bollinger.",
     "pros": [
-      "Crecimiento de ingresos del 16.6% y ganancias del 21.8% con margen neto del 27.15%, indicadores operativos de clase mundial",
-      "Free cash flow superior a $100 mil millones y programa agresivo de recompra de acciones que sostiene el precio en correcciones",
-      "Tendencia alcista confirmada por precio sobre MA20 y MA50, con volumen institucional que valida el movimiento reciente"
+      "Fundamentos de clase mundial: crecimiento de ingresos +16.6%, ganancias +21.8%, margen neto 27.2% y ROE de 141.5% muy por encima de los requisitos del perfil moderado",
+      "Tendencia alcista estructural confirmada con precio por encima de MA20, MA50 y MA200, RSI saludable en 61.94 y volumen creciente +12.9% que valida el movimiento",
+      "Catalizadores concretos de corto/mediano plazo: posible acuerdo con Intel para chips locales, ciclo de actualización iPhone con Apple Intelligence y sector tecnológico en máximos históricos"
     ],
     "cons": [
-      "Ratio deuda/equity de 79.55 viola masivamente el límite máximo aceptable de 2.0 definido para el perfil de riesgo moderado de Bautista",
-      "Precio sobre banda superior de Bollinger, RSI en 69.31 rozando zona límite y proximidad al máximo de 52 semanas reducen el upside y elevan el riesgo de corrección inmediata",
-      "MA200 no disponible impide validar la regla más crítica del sistema técnico, bloqueando formalmente cualquier señal de compra"
+      "Precio actual extendido a solo 4% del máximo de 52 semanas y próximo a la banda superior de Bollinger ($280.88), lo que deteriora la relación riesgo/beneficio para una entrada inmediata al precio de mercado",
+      "Datos críticos no disponibles (Deuda/Equity, Current Ratio, Free Cash Flow) introducen incertidumbre en el análisis fundamental, y el upside al precio objetivo de analistas ($300.65) es de solo 8.6%, apenas por encima del stop loss del 8% configurado en el perfil"
     ],
     "action_steps": [
-      "Paso 1: NO realizar ninguna compra en el precio actual de $280.14. Colocar alerta de precio en $270 y $266 para monitorear el retroceso esperado hacia la zona de soporte.",
-      "Paso 2: Cuando el precio alcance la zona $266-$270, verificar que el RSI haya bajado por debajo de 60, que el precio esté por encima de MA200 (una vez disponible) y que el ratio deuda/equity de AAPL no haya empeorado en el último reporte trimestral.",
-      "Paso 3: Si se confirman las condiciones del Paso 2, evaluar una entrada con posición máxima del 15% del portafolio ($257.73 stop loss, target $288.62), aceptando que la violación del ratio deuda/equity es una limitación estructural de AAPL que el inversor debe ponderar conscientemente antes de proceder."
+      "Paso 1: No comprar al precio actual ($276.83). Colocar una orden límite de entrada escalonada: 50% de la posición en la zona $267-$271 (retroceso a MA20) y 50% adicional si el precio consolida con volumen decreciente en esa zona, mejorando así el precio promedio de entrada.",
+      "Paso 2: Configurar stop loss en $254.68 (equivalente al -8% desde un precio de entrada estimado de ~$269), por debajo del soporte clave de MA200 en $255.52. Establecer take profit inicial en $300.65 (precio objetivo de consenso de analistas, +20% es el take profit del perfil desde entrada en $269 sería ~$322, pero se prioriza el objetivo de analistas como meta conservadora).",
+      "Paso 3: Limitar la posición al 10% del portfolio (por debajo del máximo permitido del 15%) dado que Bautista es principiante y existen datos fundamentales no disponibles. Monitorear semanalmente: si el RSI supera 75, si el precio cierra por encima de la banda superior de Bollinger sin volumen o si el acuerdo con Intel no se concreta, reevaluar la posición."
     ],
-    "risk_warning": "Bautista, como inversor principiante con perfil de riesgo moderado, debés saber que AAPL viola un criterio fundamental importante de tu perfil: el ratio de deuda/equity de 79.55 supera ampliamente tu límite máximo de 2.0. Si bien Apple es una empresa globalmente reconocida y de alta calidad, esto no elimina los riesgos: comprar cerca de máximos históricos con señales de sobrecompra técnica aumenta la probabilidad de que actives tu stop loss del 8% antes de ver ganancias. No inviertas por FOMO ni porque 'Apple siempre sube'. Esperá la corrección.",
-    "ceo_summary": "AAPL es una empresa extraordinaria, pero no es el momento correcto para que Bautista ingrese. Los 4 analistas coinciden en HOLD con convicción: el precio está sobreextendido técnicamente, opera cerca de máximos de 52 semanas y viola el criterio de deuda del perfil inversor. La estrategia correcta es esperar pacientemente un retroceso del 5-8% hacia la zona $266-$270, confirmar que la MA200 esté disponible y validar las condiciones técnicas antes de evaluar la compra. Proteger el capital esperando una mejor entrada es una decisión de inversión tan válida como comprar. Por ahora, HOLD."
+    "risk_warning": "Bautista, como inversor principiante con perfil moderado, es importante que entiendas que aunque Apple es una empresa de altísima calidad, el precio actual se encuentra en una zona técnicamente extendida tras un fuerte rally. El upside al precio objetivo de analistas (~8.6%) es relativamente ajustado comparado con tu stop loss del 8%, lo que significa que la relación riesgo/beneficio actual no es la óptima. Adicionalmente, faltan datos clave (Deuda/Equity, Flujo de Caja Libre) que no pudieron verificarse. No inviertas más del 10% de tu capital en esta posición y esperá el retroceso sugerido antes de entrar.",
+    "ceo_summary": "Apple es una empresa de calidad excepcional con fundamentos sólidos y sentimiento de mercado muy positivo, por lo que la decisión es comprar, pero con paciencia en el timing. El precio actual de $276.83 está técnicamente extendido y cerca de resistencias, por lo que recomiendo esperar un retroceso a la zona $267-$271 antes de entrar. La posición debe limitarse al 10% del portfolio dado tu perfil principiante y la falta de algunos datos fundamentales. El stop loss se ubica en $254.68 y el objetivo inicial de precio es $300.65 según el consenso de analistas. Esta es una inversión de mediano plazo con convicción media: sólida en fundamentos, prudente en entrada."
   }
 }

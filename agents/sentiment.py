@@ -11,6 +11,9 @@ def analyze_sentiment(ticker: str, stock_data: dict, investor_profile: dict) -> 
     fundamental = stock_data.get("fundamental", {})
     price       = stock_data.get("price", {})
     technical   = stock_data.get("technical", {})
+    news        = stock_data.get("news", [])
+
+    news_block = _format_news(news) if news else "No hay noticias recientes disponibles."
 
     prompt = f"""
 Sos un analista de sentimiento de mercado. Tu trabajo es evaluar el contexto
@@ -25,12 +28,17 @@ que los otros agentes no capturan con números.
 - Market cap: ${price.get("market_cap"):,}
 - Descripción: {fundamental.get("description")}
 
-## Contexto cuantitativo disponible
+## Contexto cuantitativo
 - RSI actual: {technical.get("rsi_14")}
 - Distancia al máximo 52 semanas: {technical.get("price_vs_52w_high_pct")}%
 - Crecimiento de ingresos: {fundamental.get("revenue_growth")}
 - Margen de ganancia: {fundamental.get("profit_margin")}
 - ROE: {fundamental.get("return_on_equity")}
+- Beta: {fundamental.get("beta")}
+- Precio objetivo analistas: {fundamental.get("analyst_target")}
+
+## Noticias recientes (Finnhub — últimos 7 días)
+{news_block}
 
 ## Perfil del inversor
 - Nivel: {investor_profile.get("investor", {}).get("experience_level")}
@@ -38,9 +46,9 @@ que los otros agentes no capturan con números.
 - Sectores permitidos: {investor_profile.get("sectors", {}).get("allowed")}
 
 ## Tu tarea
-Basándote en tu conocimiento del sector, la empresa y el contexto macro actual,
-evaluá el sentimiento general. Considerá: posición competitiva, riesgos del sector,
-narrativa actual de la empresa, y si el perfil del inversor es compatible.
+Analizá las noticias recientes junto con el contexto del sector y la empresa.
+Evaluá el tono general de la cobertura mediática, posibles catalizadores o riesgos
+emergentes, y si el sentimiento actual es consistente con los fundamentos.
 
 Respondé ÚNICAMENTE con JSON válido, sin texto adicional:
 
@@ -50,6 +58,8 @@ Respondé ÚNICAMENTE con JSON válido, sin texto adicional:
   "verdict": "buy" | "sell" | "hold" | "avoid",
   "score": <número del 1 al 10>,
   "market_sentiment": "very_bullish" | "bullish" | "neutral" | "bearish" | "very_bearish",
+  "news_tone": "very_positive" | "positive" | "neutral" | "negative" | "very_negative",
+  "news_summary": "resumen de 1-2 oraciones sobre el tono de las noticias recientes",
   "competitive_position": "descripción de la posición competitiva de la empresa",
   "sector_outlook": "perspectiva del sector en el corto/mediano plazo",
   "key_risks": ["riesgo 1", "riesgo 2", "riesgo 3"],
@@ -68,19 +78,24 @@ Respondé ÚNICAMENTE con JSON válido, sin texto adicional:
         messages=[{"role": "user", "content": prompt}]
     )
 
-    text = response.content[0].text
-    start, end = text.find("{"), text.rfind("}")
-    raw = text[start:end + 1] if start != -1 and end != -1 else text.strip()
+    text  = response.content[0].text
+    start = text.find("{")
+    end   = text.rfind("}")
+    raw   = text[start:end + 1] if start != -1 and end != -1 else text.strip()
 
     try:
         return json.loads(raw)
     except json.JSONDecodeError:
-        return {
-            "agent": "sentiment",
-            "ticker": ticker,
-            "verdict": "error",
-            "raw_response": raw
-        }
+        return {"agent": "sentiment", "ticker": ticker, "verdict": "error", "raw_response": raw}
+
+
+def _format_news(articles: list) -> str:
+    lines = []
+    for i, a in enumerate(articles, 1):
+        lines.append(f"{i}. [{a['date']}] {a['source']}: {a['headline']}")
+        if a.get("summary"):
+            lines.append(f"   {a['summary']}")
+    return "\n".join(lines)
 
 
 if __name__ == "__main__":
@@ -91,7 +106,7 @@ if __name__ == "__main__":
     with open("instructions/investor_profile.json") as f:
         profile = json.load(f)
 
-    ticker = "AAPL"
+    ticker = sys.argv[1] if len(sys.argv) > 1 else "AAPL"
     print(f"Obteniendo datos de {ticker}...")
     stock_data = get_stock_data(ticker)
 
