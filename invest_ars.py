@@ -11,6 +11,7 @@ sys.path.insert(0, ".")
 from data.argentina import get_macro_data
 from data.instruments_ar import get_instruments_universe
 from agents.ars_advisor import recommend_allocation
+from data.cedears import get_top_cedears
 
 
 def main():
@@ -45,6 +46,11 @@ def main():
 
     # --- 4. Mostrar ---
     _print_recommendation(rec, args.capital, args.riesgo)
+
+    # --- 4b. Si hay CEDEARs en el portafolio recomendado, mostrar picks específicos ---
+    has_cedears = any(p.get("type") in ("cedear", "cedears") for p in rec.get("allocation", []))
+    if has_cedears:
+        _print_cedear_picks()
 
     # --- 5. Guardar ---
     output_file = f"storage/inversion_ars_{date.today().isoformat()}.json"
@@ -126,6 +132,27 @@ def _print_recommendation(rec: dict, capital: float, riesgo: str):
     print(f"  {rec.get('main_risk', '')}")
     print(f"\n  PRÓXIMA REVISIÓN: {rec.get('review_in', '?')}")
     print(f"{'='*62}\n")
+
+
+def _print_cedear_picks():
+    print(f"\n{'='*62}")
+    print(f"  CEDEARS RECOMENDADOS (basado en análisis cacheados)")
+    print(f"{'='*62}")
+    picks = get_top_cedears(max_count=3, min_score=6.0)
+    if not picks:
+        print("  No hay análisis cacheados de CEDEARs disponibles.")
+        print("  Ejecutá: python3 run_watchlist.py   para generarlos.\n")
+        return
+    for i, p in enumerate(picks, 1):
+        print(f"\n  {i}. {p['ticker']} — {p['name']}")
+        print(f"     Score CEO: {p['score']}/10 | Convicción: {p.get('conviction', '?').upper()}")
+        print(f"     Subyacente USA: ${p.get('us_price_usd', '?')} USD")
+        if p.get("parity_price_ars"):
+            print(f"     Paridad estimada ARS: ${p['parity_price_ars']:,.2f} (ratio 1:{p['ratio']})")
+        print(f"     Veredicto: {p.get('verdict', '')}")
+        print(f"     Tesis: {p.get('thesis', '')}")
+        print(f"     Cómo comprar: {p.get('how_to_buy', '')}")
+    print()
 
 
 def _parse_args():

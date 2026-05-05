@@ -13,7 +13,9 @@ sys.path.insert(0, ".")
 from ceo.orchestrator import run_analysis
 from agents.position_analyzer import analyze_position
 from agents.bond_analyzer import analyze_bond_position
+from agents.cedear_analyzer import analyze_cedear_position
 from data.argentina import get_bond_data, BOND_REGISTRY
+from data.cedears import get_cedear_data, CEDEAR_REGISTRY
 
 client = Anthropic()
 DELAY_BETWEEN_TICKERS = 12
@@ -38,9 +40,10 @@ def main():
     print(f"  Posiciones: {len(positions)} activos")
     print(f"  Cash: USD ${cash.get('USD', 0):,.0f} | ARS ${cash.get('ARS', 0):,.0f}\n")
 
-    # --- Separar bonos argentinos de acciones/ETFs ---
-    bond_positions  = [p for p in positions if _is_arg_bond(p)]
-    stock_positions = [p for p in positions if not _is_arg_bond(p)]
+    # --- Clasificar posiciones ---
+    bond_positions   = [p for p in positions if _is_arg_bond(p)]
+    cedear_positions = [p for p in positions if _is_cedear(p)]
+    stock_positions  = [p for p in positions if not _is_arg_bond(p) and not _is_cedear(p)]
 
     # --- 1a. Análisis de acciones (pipeline existente) ---
     analyses = {}
@@ -65,6 +68,22 @@ def main():
         src = bond_data_map[ticker].get("price_source", "?")
         price = bond_data_map[ticker].get("market_price")
         print(f"   Precio: ${price:,.2f} ARS (fuente: {src})" if price else f"   ⚠️  Precio no disponible")
+
+    # --- 1c. Datos de CEDEARs ---
+    cedear_data_map = {}
+    for p in cedear_positions:
+        ticker   = p["ticker"].upper()
+        override = p.get("current_price_override")
+        print(f"🌎 Obteniendo datos de {ticker} (CEDEAR)...")
+        cedear_data_map[ticker] = get_cedear_data(ticker, price_ars_override=override)
+        cd = cedear_data_map[ticker]
+        if cd.get("status") == "ok":
+            src   = cd.get("price_source", "?")
+            price = cd.get("market_price_ars")
+            par   = cd.get("parity_price_ars")
+            print(f"   ARS: ${price:,.2f} | Paridad: ${par:,.2f} (fuente: {src})")
+        else:
+            print(f"   ⚠️  {cd.get('message', 'error')}")
 
     # --- 2. Analizar cada posición ---
     print(f"\n{'='*55}")
@@ -98,6 +117,22 @@ def main():
         pnl_str = f"{report.get('pnl_pct', 0):+.1f}%" if report.get("pnl_pct") is not None else "N/A"
         print(f"  {emoji} {ticker}: {report.get('action','?').upper()} | "
               f"P&L: {pnl_str} | Urgencia: {report.get('urgency','?').upper()}")
+        if report.get("key_alert"):
+            print(f"     ⚠️  {report['key_alert']}")
+
+    for position in cedear_positions:
+        ticker = position["ticker"].upper()
+        cd = cedear_data_map.get(ticker, {})
+        print(f"  🌎 Analizando CEDEAR {ticker}...")
+        report = analyze_cedear_position(position, cd, profile)
+        position_reports.append(report)
+        emoji = {"hold": "⏸", "sell": "🔴", "add": "🟢", "reduce": "🟡",
+                 "sin_precio": "❓"}.get(report.get("action"), "❓")
+        pnl_str = f"{report.get('pnl_pct', 0):+.1f}%" if report.get("pnl_pct") is not None else "N/A"
+        premium = report.get("premium_discount_pct")
+        premium_str = f" | Paridad: {premium:+.1f}%" if premium is not None else ""
+        print(f"  {emoji} {ticker}: {report.get('action','?').upper()} | "
+              f"P&L: {pnl_str}{premium_str} | Urgencia: {report.get('urgency','?').upper()}")
         if report.get("key_alert"):
             print(f"     ⚠️  {report['key_alert']}")
 
@@ -272,10 +307,15 @@ def _print_summary(position_reports, thesis, cash):
 
 
 def _is_arg_bond(position: dict) -> bool:
-    """Determina si una posición es un bono argentino."""
     if position.get("asset_type") in ("bono_cer_argentino", "bono_argentino", "bono"):
         return True
     return position["ticker"].upper() in BOND_REGISTRY
+
+
+def _is_cedear(position: dict) -> bool:
+    if position.get("asset_type") == "cedear":
+        return True
+    return position["ticker"].upper() in CEDEAR_REGISTRY
 
 
 def _parse_args():
