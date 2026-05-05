@@ -16,6 +16,9 @@ python3 portfolio.py --capital 5000           # universo completo + construir po
 python3 portfolio.py --capital 5000 --use-cache  # ídem usando análisis ya guardados
 python3 analyze_portfolio.py                  # analizar portafolio propio (my_portfolio.json)
 python3 analyze_portfolio.py --use-cache      # ídem usando análisis cacheados
+python3 invest_ars.py --capital 500000 --riesgo moderado  # recomendación en ARS
+python3 invest_ars.py --capital 1000000 --riesgo bajo     # perfil conservador
+python3 invest_ars.py --capital 200000 --riesgo alto      # perfil agresivo
 ```
 
 ## Arquitectura — flujo completo
@@ -73,6 +76,27 @@ python3 analyze_portfolio.py --use-cache      # ídem usando análisis cacheados
                 │
                 ▼
   storage/portfolio_analysis_{fecha}.json
+```
+
+### Flujo recomendación en ARS (Paso 3)
+```
+  invest_ars.py --capital X --riesgo [bajo|moderado|alto]
+          │
+          ├── data/argentina.py          ← macro en tiempo real
+          │   (argentinadatos.com)         inflación, UVA, dólar oficial
+          │
+          ├── data/instruments_ar.py     ← universo de instrumentos
+          │   (estático + macro)           bonos CER, PF UVA, MEP, FCI, CEDEARs
+          │
+          └── agents/ars_advisor.py      ← Claude genera la distribución
+              (Claude API)                 adaptada al perfil de riesgo
+                    │
+                    ▼
+          Tabla de asignación + instrucciones
+          de ejecución en Bull Market
+                    │
+                    ▼
+          storage/inversion_ars_{fecha}.json
 ```
 
 ## Archivos — descripción detallada
@@ -174,6 +198,34 @@ Calcula P&L, distancia al stop loss y take profit.
 Recomienda: hold, sell, add, reduce, stop_loss_triggered.
 Devuelve JSON con: `action`, `urgency`, `rationale`, `key_alert`, P&L calculado.
 
+### `data/instruments_ar.py`
+Universo de instrumentos de inversión en ARS disponibles en Bull Market Brokers.
+Función principal: `get_instruments_universe(macro)` — devuelve lista de instrumentos con
+características actualizadas al contexto macro del momento.
+Instrumentos incluidos:
+- **Bonos CER**: TX26, TX28, TX30, DICP, CUAP — con días a vencimiento calculados dinámicamente
+- **Plazo fijo UVA**: cobertura CER, mínimo 90 días, garantizado SEDESA hasta $6M
+- **Plazo fijo tradicional**: tasa fija TNA — marcado como ineficiente si inflación lo supera
+- **Dólar MEP**: vía AL30/GD30, parking 24hs obligatorio, cobertura cambiaria total
+- **FCI Money Market**: liquidez inmediata, ~TNA mercado, rescate 24hs
+- **CEDEARs**: acciones extranjeras en ARS, referenciadas a USD implícito
+
+Cada instrumento incluye: `return_estimate`, `liquidity`, `risk_level`, `recommended_for`,
+`how_to_buy` (instrucciones exactas en Bull Market), `sovereign_risk`, `bank_risk`.
+TNA plazo fijo: intenta traer de `argentinadatos.com/v1/finanzas/tasas/depositos`;
+si falla, usa `TNA_PF_FALLBACK = 32.0%`.
+
+### `agents/ars_advisor.py`
+Agente Claude especializado en inversiones en pesos argentinos.
+Recibe: capital, perfil de riesgo (bajo/moderado/alto), universo de instrumentos, macro.
+Aplica reglas por perfil:
+- **Bajo**: PF UVA + FCI. Sin CEDEARs. Máx 20% bonos CER.
+- **Moderado**: 30-50% CER/UVA + 20-30% MEP + 10-20% CEDEARs + 10% FCI.
+- **Alto**: 30-40% CEDEARs + 20-30% MEP + 20% CER + 10% FCI.
+Descarta automáticamente PF tradicional si inflación mensual supera la TNA.
+Devuelve JSON con: `allocation[]` (instrument_id, %, amount_ars, rationale, how_to_buy),
+`inflation_coverage_pct`, `usd_exposure_pct`, `strategy_summary`, `main_risk`, `time_horizon`.
+
 ### `agents/bond_analyzer.py`
 Sub-agente especializado en **renta fija argentina** (bonos CER/UVA).
 Analiza posiciones en bonos soberanos como TX26, TX28, TX30, DICP.
@@ -240,11 +292,27 @@ Define las reglas y preferencias de Bautista:
 - Universo completo: 18 tickers en 5 sectores (technology, healthcare, finance, energy, consumer)
 - Sectores prohibidos: gambling, tobacco, weapons
 
+### `invest_ars.py`
+Script principal para recomendación de inversión en pesos argentinos.
+```bash
+python3 invest_ars.py --capital 500000 --riesgo moderado
+```
+Flujo:
+1. Trae macro en tiempo real (argentinadatos.com): inflación, UVA, dólar
+2. Construye universo de instrumentos (data/instruments_ar.py)
+3. Filtra los compatibles con el perfil de riesgo pedido
+4. Llama a agents/ars_advisor.py para generar la distribución óptima
+5. Imprime tabla de asignación + instrucciones paso a paso en Bull Market
+6. Guarda en `storage/inversion_ars_{fecha}.json`
+
+Argumentos: `--capital` (requerido, en ARS), `--riesgo` (bajo/moderado/alto, default: moderado).
+
 ### `storage/`
 JSONs de cada análisis completo.
-- `{TICKER}_analysis.json` — análisis de acciones (16 tickers disponibles; faltan WMT y HD)
+- `{TICKER}_analysis.json` — análisis de acciones (16 tickers; faltan WMT y HD)
 - `portfolio_{fecha}.json` — portafolio óptimo generado por `portfolio.py`
-- `portfolio_analysis_{fecha}.json` — análisis del portafolio propio por `analyze_portfolio.py`
+- `portfolio_analysis_{fecha}.json` — análisis del portafolio propio (`analyze_portfolio.py`)
+- `inversion_ars_{fecha}.json` — recomendación en ARS generada por `invest_ars.py`
 
 ## Variables de entorno (`.env`)
 ```
@@ -262,15 +330,25 @@ EMAIL_PASSWORD      — Gmail app password
 - **Watchlist (4 tickers)**: ~4-5 minutos
 - **Universo completo (18 tickers)**: ~20 minutos frescos / ~15 segundos con `--use-cache`
 - **Portafolio propio (bonos)**: ~15 segundos (sin re-análisis de mercado)
+- **Recomendación ARS (`invest_ars.py`)**: ~20 segundos (macro + Claude advisor)
 - Mejora clave: agentes en paralelo + yfinance cacheado = ~40% más rápido que versión original
 
 ## Stack
 Python 3.12 · anthropic · yfinance · requests · python-dotenv · smtplib · concurrent.futures
 
+## Roadmap — estado actual
+
+| Paso | Feature | Estado |
+|------|---------|--------|
+| 1 | CEDEARs + tipo de cambio | ⏳ pendiente |
+| 2 | Ingesta manual de portafolio | ✅ done (`my_portfolio.json` + `analyze_portfolio.py`) |
+| 3 | Análisis de posiciones existentes | ✅ done (`agents/position_analyzer.py` + `agents/bond_analyzer.py`) |
+| 3b | Recomendación "invertir $X ARS" | ✅ done (`invest_ars.py`) |
+| 4 | Integración broker API (Bull Market / IOL) | ⏳ pendiente — bajo prioridad |
+| 5 | Perfil de riesgo dinámico por usuario | ⏳ pendiente |
+
 ## Próximos pasos
-1. Paper trading — registrar predicciones en DB y validar rentabilidad histórica
-2. Automatización con cron — correr `portfolio.py` diariamente al cierre del mercado
-3. Agente de macro — contexto de tasas, inflación, VIX para el CEO
-4. Completar universo acciones — agregar WMT y HD al storage
-5. CEDEARs — agregar soporte para CEDEARs (cotizan en ARS, referenciados a acciones USA)
-6. Precio automático de bonos argentinos — explorar BYMA API con cuenta o scraping de Bull Market
+1. **CEDEARs** — análisis de los subyacentes americanos aplicado a CEDEARs (precio en ARS, ratio de conversión, dólar implícito)
+2. **Precio automático de bonos** — explorar IOL API (tiene auth) o BYMA con cuenta
+3. **Automatización con cron** — correr `invest_ars.py` y `portfolio.py` diariamente
+4. **Paper trading** — registrar predicciones en DB y validar rentabilidad histórica
