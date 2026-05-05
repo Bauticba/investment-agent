@@ -1,0 +1,48 @@
+{
+  "date": "2026-05-05",
+  "capital_ars": 500000.0,
+  "riesgo": "bajo",
+  "macro": {
+    "inflation_monthly": 3.4,
+    "inflation_annual": 32.6,
+    "uva": null,
+    "usd_oficial": 1425
+  },
+  "recommendation": {
+    "allocation": [
+      {
+        "instrument_id": "plazo_fijo_uva",
+        "name": "Plazo Fijo UVA",
+        "type": "plazo_fijo_uva",
+        "allocation_pct": 70,
+        "amount_ars": 350000,
+        "rationale": "Instrumento core para perfil bajo: ajusta por UVA (equivalente CER) garantizando cobertura total de inflación más un spread real positivo de ~1%, sin riesgo precio de mercado. Garantizado por SEDESA hasta $6M ARS, eliminando riesgo bancario significativo en este monto.",
+        "how_to_buy": "Bull Market > Ahorro > Plazo Fijo > UVA > Simular y confirmar. Seleccionar plazo mínimo de 90 días. Verificar tasa UVA ofrecida antes de confirmar."
+      },
+      {
+        "instrument_id": "tx26",
+        "name": "Bono del Tesoro CER 2026 (TX26)",
+        "type": "bono_cer",
+        "allocation_pct": 20,
+        "amount_ars": 100000,
+        "rationale": "Complementa la cobertura inflacionaria con un rendimiento real superior (CER + 4% anual), dentro del límite máximo del 20% permitido para perfil bajo. TX26 es el bono CER de vencimiento más corto disponible (noviembre 2026, ~188 días), minimizando la exposición a volatilidad de precios en el mercado secundario.",
+        "how_to_buy": "Bull Market > Cotizaciones > Bonos > Buscar TX26 > Comprar. Ingresar precio manualmente según cotización vigente en BYMA al momento de la operación. Liquidación T+1."
+      },
+      {
+        "instrument_id": "fci_money_market",
+        "name": "FCI Money Market (fondo de liquidez)",
+        "type": "fci_mm",
+        "allocation_pct": 10,
+        "amount_ars": 50000,
+        "rationale": "Reserva de liquidez inmediata (~24hs hábiles) para cubrir imprevistos sin resignar rentabilidad frente a una caja de ahorro tradicional. Rinde ~29% TNA diaria acumulable y no tiene plazo mínimo ni penalidad de rescate.",
+        "how_to_buy": "Bull Market > Fondos > Fondo Money Market > Suscribir. Ingresar monto $50,000 ARS y confirmar suscripción. El dinero queda disponible para rescate desde el día siguiente hábil."
+      }
+    ],
+    "inflation_coverage_pct": 90,
+    "usd_exposure_pct": 0,
+    "strategy_summary": "La cartera de Bautista está diseñada para preservar el poder adquisitivo en un contexto de inflación desacelerante pero aún elevada (3.4% mensual / 32.6% anual). El núcleo del 70% en Plazo Fijo UVA ofrece cobertura total de inflación sin riesgo de precio de mercado ni exposición soberana directa, siendo el instrumento más adecuado para un inversor principiante con perfil conservador. El 20% en TX26 agrega un spread real positivo de CER + 4% anual con vencimiento corto (noviembre 2026), limitando la volatilidad de precio, dentro del máximo permitido para este perfil. El 10% en FCI Money Market garantiza liquidez inmediata ante cualquier eventualidad, evitando la necesidad de rescatar posiciones ilíquidas en momentos desfavorables. Se descartaron el Plazo Fijo Tradicional (pierde en términos reales con inflación al 3.4% mensual) y cualquier instrumento en dólares o acciones, respetando estrictamente el perfil de riesgo bajo.",
+    "main_risk": "El riesgo principal es el riesgo soberano sobre el TX26 (20% del portafolio): ante un evento de stress fiscal o reestructuración de deuda en pesos, el precio de mercado del bono podría caer transitoriamente. Adicionalmente, el Plazo Fijo UVA tiene riesgo de liquidez durante los 90 días de inmovilización y riesgo bancario residual (mitigado por cobertura SEDESA hasta $6M ARS).",
+    "time_horizon": "3 a 6 meses, renovable según evolución de inflación y vencimiento del PF UVA. TX26 puede mantenerse hasta vencimiento (noviembre 2026) o venderse en mercado secundario si se necesita liquidez.",
+    "review_in": "Revisar en 30 días con el próximo dato de inflación del INDEC (IPC abril 2026). Evaluar si la desaceleración inflacionaria justifica rotar una porción del PF UVA hacia TX26 para capturar mayor spread real, o si conviene mantener la proporción actual."
+  }
+}
