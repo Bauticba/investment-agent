@@ -2,6 +2,7 @@ import json
 import os
 import sys
 from anthropic import Anthropic
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from dotenv import load_dotenv
 
 load_dotenv(override=True)
@@ -34,26 +35,37 @@ def run_analysis(ticker: str) -> dict:
     if stock_data.get("status") == "error":
         return {"status": "error", "message": stock_data.get("message")}
 
-    price = stock_data["price"]
+    price            = stock_data["price"]
     fundamental_info = stock_data["fundamental"]
-    print(f"   {fundamental_info['company_name']} — ${price['current_price']} USD\n")
+    company_name     = fundamental_info.get("company_name") or ticker
+    print(f"   {company_name} — ${price['current_price']} USD\n")
 
-    # --- 2. Correr los 4 sub-agentes ---
-    print("🔍 Agente Fundamental analizando...")
-    fundamental_report = analyze_fundamental(ticker, stock_data, profile)
-    print(f"   Veredicto: {fundamental_report.get('verdict')} | Score: {fundamental_report.get('score')}/10")
+    # --- 2. Correr los 4 sub-agentes en paralelo ---
+    print("🔍📈📊🧠 Agentes analizando en paralelo...")
+    agent_tasks = {
+        "fundamental": (analyze_fundamental, ticker, stock_data, profile),
+        "technical":   (analyze_technical,   ticker, stock_data, profile),
+        "indicators":  (analyze_indicators,  ticker, stock_data, profile),
+        "sentiment":   (analyze_sentiment,   ticker, stock_data, profile),
+    }
 
-    print("📈 Agente Técnico analizando...")
-    technical_report = analyze_technical(ticker, stock_data, profile)
-    print(f"   Veredicto: {technical_report.get('verdict')} | Score: {technical_report.get('score')}/10")
+    reports_raw = {}
+    with ThreadPoolExecutor(max_workers=4) as executor:
+        futures = {
+            executor.submit(fn, *args): name
+            for name, (fn, *args) in agent_tasks.items()
+        }
+        for future in as_completed(futures):
+            name = futures[future]
+            reports_raw[name] = future.result()
+            r = reports_raw[name]
+            print(f"   [{name:>12}] Veredicto: {r.get('verdict')} | Score: {r.get('score')}/10")
 
-    print("📊 Agente Indicadores analizando...")
-    indicators_report = analyze_indicators(ticker, stock_data, profile)
-    print(f"   Veredicto: {indicators_report.get('verdict')} | Score: {indicators_report.get('score')}/10")
-
-    print("🧠 Agente Sentimiento analizando...")
-    sentiment_report = analyze_sentiment(ticker, stock_data, profile)
-    print(f"   Veredicto: {sentiment_report.get('verdict')} | Score: {sentiment_report.get('score')}/10\n")
+    fundamental_report = reports_raw["fundamental"]
+    technical_report   = reports_raw["technical"]
+    indicators_report  = reports_raw["indicators"]
+    sentiment_report   = reports_raw["sentiment"]
+    print()
 
     # --- 3. CEO sintetiza todo ---
     print("🎯 CEO generando tesis de inversión...")
@@ -67,6 +79,8 @@ def run_analysis(ticker: str) -> dict:
     return {
         "status":    "ok",
         "ticker":    ticker,
+        "date":      price.get("fetched_at", "")[:10],
+        "price":     price,
         "reports":   {
             "fundamental": fundamental_report,
             "technical":   technical_report,

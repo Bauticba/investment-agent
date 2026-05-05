@@ -11,12 +11,18 @@ def get_fundamental(ticker: str) -> dict:
         return {"status": "no_key"}
 
     try:
-        resp = requests.get(
+        metrics_resp = requests.get(
             f"{FINNHUB_BASE}/stock/metric",
             params={"symbol": ticker, "metric": "all", "token": key},
             timeout=10,
         )
-        data = resp.json()
+        profile_resp = requests.get(
+            f"{FINNHUB_BASE}/stock/profile2",
+            params={"symbol": ticker, "token": key},
+            timeout=10,
+        )
+        data    = metrics_resp.json()
+        profile = profile_resp.json()
     except Exception as e:
         return {"status": "error", "message": str(e)}
 
@@ -24,10 +30,13 @@ def get_fundamental(ticker: str) -> dict:
         return {"status": "no_data"}
 
     m = data["metric"]
-    p = data.get("series", {}).get("annual", {})
 
     return {
         "status":          "ok",
+        "company_name":    profile.get("name"),
+        "sector":          profile.get("finnhubIndustry"),
+        "industry":        profile.get("finnhubIndustry"),
+        "description":     "",
         "pe_ratio":        m.get("peTTM"),
         "forward_pe":      m.get("peNormalizedAnnual"),
         "eps":             m.get("epsTTM"),

@@ -1,0 +1,153 @@
+{
+  "status": "ok",
+  "ticker": "UNH",
+  "reports": {
+    "fundamental": {
+      "agent": "fundamental",
+      "ticker": "UNH",
+      "verdict": "hold",
+      "score": 5,
+      "strengths": [
+        "P/E actual de 27.86 está dentro del límite máximo aceptable de 40, y el P/E forward de 20.2 sugiere mejora en rentabilidad futura",
+        "Beta de 0.646 indica baja volatilidad respecto al mercado, adecuado para un perfil moderado",
+        "Dividendo del 2.4% ofrece retorno pasivo mientras se espera apreciación de capital",
+        "Precio objetivo de analistas ($387.27) implica un upside del ~4.5% desde el precio actual",
+        "Es la mayor aseguradora de salud de EE.UU. por primas netas, con posición dominante en el mercado"
+      ],
+      "weaknesses": [
+        "Crecimiento de ingresos del 2% está muy por debajo del mínimo requerido del 5%, violando el criterio del inversor",
+        "Crecimiento de ganancias de apenas 0.7% es extremadamente bajo y preocupante",
+        "Margen de ganancia neto del 2.68% es muy delgado para una empresa de esta envergadura, dejando poco margen ante adversidades",
+        "ROE del 12.2% es moderado pero no excepcional para justificar una posición de compra clara",
+        "Datos clave ausentes (Deuda/Equity y Current Ratio) impiden una evaluación completa de la salud financiera"
+      ],
+      "flags": [
+        "ALERTA: Crecimiento de ingresos del 2% viola el mínimo requerido del 5%",
+        "ALERTA: Deuda/Equity no disponible, no se puede verificar cumplimiento del límite de 2.0",
+        "ALERTA: Current Ratio no disponible, no se puede verificar cumplimiento del mínimo de 1.0",
+        "ALERTA: Crecimiento de ganancias del 0.7% es insuficiente para justificar el precio actual"
+      ],
+      "summary": "UnitedHealth Group presenta una valuación razonable con un P/E dentro de los parámetros aceptables y baja volatilidad, pero el crecimiento de ingresos del 2% viola directamente el criterio mínimo del 5% establecido por el inversor. La ausencia de datos críticos como Deuda/Equity y Current Ratio genera incertidumbre adicional, por lo que se recomienda mantener posiciones existentes pero no iniciar nuevas hasta ver una recuperación en las métricas de crecimiento."
+    },
+    "technical": {
+      "agent": "technical",
+      "ticker": "UNH",
+      "verdict": "avoid",
+      "score": 4,
+      "trend": "bullish",
+      "entry_zone": "Esperar retroceso hacia zona $340-$350, idealmente con RSI entre 50-65 y confirmación de volumen creciente",
+      "support_levels": [
+        354.56,
+        337.1
+      ],
+      "resistance_levels": [
+        375.0,
+        381.0
+      ],
+      "strengths": [
+        "Precio por encima de MA20 ($337.10), MA50 ($302.87) y MA200 ($315.76), estructura de medias alcista alineada",
+        "Tendencia de precio fuertemente alcista en los últimos 30 días: suba de ~38% desde mínimos de $259",
+        "Precio cerca del máximo de 52 semanas ($381), solo a -2.69%, mostrando fortaleza relativa"
+      ],
+      "weaknesses": [
+        "RSI en 83.74, zona de sobrecompra extrema, muy por encima del máximo aceptable de 75",
+        "Volumen de los últimos 5 días claramente decreciente (10.6M → 9.0M → 6.9M → 4.9M → 4.9M), sin confirmación alcista",
+        "La suba vertiginosa desde $259 a $370 en 30 días sin consolidación aumenta el riesgo de reversión brusca",
+        "Riesgo de trampa alcista cerca del máximo de 52 semanas con momentum sobreextendido"
+      ],
+      "flags": [
+        "VIOLACIÓN: RSI 83.74 supera el máximo aceptable de 75 — condición de entrada no cumplida",
+        "VIOLACIÓN: Volumen decreciente en los últimos 5 sesiones — no hay confirmación de volumen para entrada",
+        "ALERTA: Precio a solo 2.69% del máximo de 52 semanas con RSI extremo, riesgo de resistencia fuerte"
+      ],
+      "summary": "UNH muestra una tendencia alcista estructuralmente sólida con precio por encima de todas las medias móviles relevantes, pero el RSI en 83.74 indica sobrecompra extrema que viola las reglas del inversor. El volumen decreciente en las últimas sesiones no confirma continuidad alcista, y la cercanía al máximo de 52 semanas aumenta la probabilidad de rechazo. Se recomienda esperar un retroceso saludable hacia la zona $340-$350 con normalización del RSI antes de considerar una entrada."
+    },
+    "indicators": {
+      "agent": "indicators",
+      "ticker": "UNH",
+      "verdict": "avoid",
+      "score": 4,
+      "momentum": "bullish",
+      "rsi_interpretation": "RSI en 83.74, significativamente sobrecomprado y por encima del máximo permitido de 75. Indica agotamiento del impulso alcista y alta probabilidad de corrección.",
+      "macd_interpretation": "MACD con señal bullish y línea en 30.47, confirmando tendencia alcista de fondo. Sin embargo, valores elevados pueden indicar sobreextensión del movimiento.",
+      "bollinger_interpretation": "Precio en 370.75 ubicado al 83.3% desde la banda inferior, cerca de la banda superior (387.62). Zona de sobrecompra técnica con poco margen antes de tocar resistencia dinámica.",
+      "volume_interpretation": "Volumen creciente (+14.2% últimos 10 días vs 20 días) confirma el movimiento alcista. Es una señal positiva que valida la tendencia, aunque combinado con RSI extremo puede señalar clímax de volumen.",
+      "strengths": [
+        "Precio por encima de MA20, MA50 y MA200, confirmando tendencia alcista estructural sólida",
+        "MACD en señal bullish con momentum positivo",
+        "Volumen creciente que confirma la dirección del precio"
+      ],
+      "weaknesses": [
+        "RSI de 83.74 indica zona de sobrecompra extrema con alta probabilidad de pullback",
+        "Precio cercano a la banda superior de Bollinger, limitando el upside de corto plazo",
+        "Relación riesgo/beneficio desfavorable para nuevas entradas en estos niveles"
+      ],
+      "flags": [
+        "⚠️ RSI VIOLA REGLA DEL INVERSOR: RSI actual 83.74 supera el máximo permitido de 75. Entrada prohibida según parámetros definidos.",
+        "⚠️ Activo en zona de sobrecompra técnica extrema, no apto para nueva posición bajo las reglas vigentes"
+      ],
+      "summary": "UNH muestra una tendencia alcista estructuralmente sólida con precio por encima de todas las medias móviles y volumen en aumento, pero el RSI de 83.74 viola la regla máxima del inversor (75) y señala sobrecompra extrema. El veredicto es 'avoid' ya que, aunque el momentum es alcista, las reglas del inversor impiden la entrada en estas condiciones de sobreextensión. Se recomienda aguardar una corrección que lleve el RSI por debajo de 75 antes de evaluar una posible entrada."
+    },
+    "sentiment": {
+      "agent": "sentiment",
+      "ticker": "UNH",
+      "verdict": "hold",
+      "score": 6,
+      "market_sentiment": "bullish",
+      "news_tone": "positive",
+      "news_summary": "Las noticias recientes muestran un tono constructivo: Goldman Sachs agregó UNH a su Conviction List con precio objetivo de $435, y la compañía anunció una reducción del 30% en requisitos de autorización previa, mejorando su imagen pública. Sin embargo, el sector asegurador enfrenta un test clave en el segundo trimestre por el rezago en datos de costos médicos.",
+      "competitive_position": "UnitedHealth es el mayor asegurador por primas netas en EE.UU. y uno de los líderes indiscutidos del sector de salud gestionada. Su escala, diversificación (Optum + UnitedHealthcare) y poder de negociación le otorgan ventajas competitivas estructurales difíciles de replicar.",
+      "sector_outlook": "El sector de planes de salud atraviesa un período de recuperación tras presiones por costos médicos elevados en 2024-2025. El segundo trimestre de 2026 será determinante para confirmar si las pérdidas por siniestralidad se han estabilizado. El contexto macro de inflación y posibles alzas de tasas añade presión sobre los márgenes financieros del sector.",
+      "key_risks": [
+        "El segundo trimestre es el 'test real' para los aseguradores, con datos incompletos de costos médicos Q1 que podrían revelar sorpresas negativas",
+        "Margen de ganancia muy comprimido (2.68%) que deja poco margen de error ante incrementos de siniestralidad o regulación adversa",
+        "Riesgo regulatorio y político creciente: la eliminación de autorizaciones previas podría incrementar costos médicos a corto plazo"
+      ],
+      "key_catalysts": [
+        "Goldman Sachs en Conviction List con precio objetivo $435, generando momentum institucional alcista",
+        "Reducción del 30% en autorizaciones previas mejora la imagen pública y reduce riesgo regulatorio/legislativo de corto plazo"
+      ],
+      "investor_fit": "Para un inversor beginner con horizonte swing trade y largo plazo, UNH ofrece estabilidad (beta 0.64) y respaldo institucional fuerte, pero el margen estrecho y la incertidumbre del Q2 lo hacen más adecuado para el largo plazo que para swing trade. Se recomienda precaución dado el RSI extremadamente sobrecomprado.",
+      "strengths": [
+        "Respaldo institucional sólido con Goldman Sachs en Conviction List y precio objetivo significativamente superior al actual",
+        "Liderazgo de mercado y escala incomparable que genera barreras de entrada y poder de negociación estructural",
+        "Movimientos proactivos para mejorar relaciones con reguladores y opinión pública, reduciendo riesgo político"
+      ],
+      "weaknesses": [
+        "Márgenes de ganancia históricamente bajos para el tamaño de la empresa, vulnerables a cualquier shock de costos médicos"
+      ],
+      "flags": [
+        "RSI de 83.74: zona de sobrecompra extrema que sugiere riesgo de corrección técnica en el corto plazo, especialmente relevante para swing traders"
+      ],
+      "summary": "UnitedHealth Group muestra un sentimiento de mercado constructivo respaldado por institucionales como Goldman Sachs y medidas que mejoran su imagen regulatoria, pero el RSI en 83.74 señala sobrecompra técnica importante que puede limitar el upside inmediato. Para inversores de largo plazo el perfil es atractivo dado su liderazgo sectorial, pero el test crítico del Q2 en costos médicos y los márgenes comprimidos exigen cautela antes de ampliar posición."
+    }
+  },
+  "ceo_thesis": {
+    "final_verdict": "avoid",
+    "conviction": "high",
+    "ceo_score": 4,
+    "price_target": 387.27,
+    "stop_loss": 341.09,
+    "take_profit": 444.9,
+    "time_horizon": "mediano plazo (1-3 meses)",
+    "analysts_agreement": "Hay consenso claro entre los 4 analistas en NO comprar ahora. Técnico e Indicadores coinciden en 'avoid' por RSI extremadamente sobrecomprado (83.74) y volumen decreciente. Fundamental y Sentimiento dicen 'hold' por crecimiento anémico y riesgos de Q2, pero ninguno recomienda compra activa. El único conflicto menor es que Sentimiento es más optimista por el respaldo institucional de Goldman Sachs, pero incluso así advierte sobre el RSI extremo. Score promedio de 4.8/10 confirma la postura defensiva.",
+    "thesis": "UNH es una empresa de alta calidad estructural y liderazgo indiscutido en su sector, pero el momento actual de entrada es técnicamente inadecuado para Bautista. El RSI de 83.74 viola directamente las reglas de entrada del inversor, la suba del 38% en 30 días sin consolidación eleva el riesgo de corrección brusca, y los fundamentales muestran un crecimiento de apenas 2% en ingresos que no justifica pagar el precio actual. La estrategia correcta es monitorear y esperar un retroceso saludable hacia la zona $340-$350 con normalización técnica antes de evaluar una entrada.",
+    "pros": [
+      "Liderazgo de mercado indiscutido: mayor aseguradora de EE.UU. con escala y diversificación (Optum + UnitedHealthcare) que generan ventajas competitivas estructurales difíciles de replicar",
+      "Respaldo institucional fuerte: Goldman Sachs la incluye en su Conviction List con precio objetivo de $435, lo que representa un upside potencial del ~17% desde el precio actual",
+      "Baja volatilidad (beta 0.64) y dividendo del 2.4% ofrecen estabilidad adecuada para un perfil moderado como el de Bautista en el largo plazo"
+    ],
+    "cons": [
+      "RSI de 83.74 viola explícitamente las reglas de entrada del inversor (máximo 75) y señala sobrecompra extrema con alta probabilidad de corrección técnica inminente",
+      "Crecimiento de ingresos del 2% y de ganancias del 0.7% violan el criterio mínimo del inversor del 5%, con márgenes netos de apenas 2.68% que dejan muy poco margen ante cualquier shock de costos médicos en Q2 2026",
+      "La suba vertiginosa del 38% en 30 días sin consolidación, combinada con volumen decreciente y proximidad al máximo de 52 semanas ($381), aumenta significativamente el riesgo de trampa alcista para un inversor sin experiencia"
+    ],
+    "action_steps": [
+      "Paso 1: NO realizar ninguna compra de UNH en el precio actual de $370.75. El RSI extremo y el momentum sobreextendido representan un riesgo de pérdida inmediata incompatible con el perfil moderado de Bautista.",
+      "Paso 2: Configurar una alerta de precio en $350 y otra en RSI < 65 para monitorear el retroceso esperado. Esperar consolidación en la zona $340-$355 con volumen estable y RSI normalizado antes de reconsiderar la entrada.",
+      "Paso 3: Si el precio retrocede a la zona objetivo con mejora en las métricas de crecimiento Q2 2026 y RSI dentro de parámetros, evaluar entrada con posición máxima del 15% del portafolio, stop loss en $341 (-8%) y take profit en $444 (+20%)."
+    ],
+    "risk_warning": "Bautista, como inversor principiante con perfil moderado, debés saber que UNH subió un 38% en solo 30 días y su RSI indica sobrecompra extrema. Comprar ahora sería como subirse a un tren que ya corrió la mayor parte del camino: el riesgo de corrección es alto y podría activar tu stop loss del 8% antes de que el activo recupere dirección. La paciencia es tu mejor herramienta aquí.",
+    "ceo_summary": "UNH es una empresa excelente a largo plazo, pero este NO es el momento de comprar. El RSI de 83.74 está en zona de sobrecompra extrema y viola nuestras propias reglas de inversión, el precio subió un 38% en un mes sin descanso, y los fundamentales muestran un crecimiento muy por debajo de nuestros estándares mínimos. La decisión es 'avoid' con alta convicción: protegemos el capital de Bautista esperando un retroceso saludable hacia $340-$350. Cuando el precio consolide y los indicadores se normalicen, UNH puede ser una oportunidad real; hoy, la disciplina vale más que el miedo a perderse la suba."
+  }
+}

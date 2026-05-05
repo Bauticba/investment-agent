@@ -41,6 +41,14 @@
 
   "watchlist": ["AAPL", "MSFT", "NVDA", "GOOGL"],
 
+  "universe": {
+    "technology":  ["AAPL", "MSFT", "NVDA", "GOOGL", "META", "AMZN", "TSLA"],
+    "healthcare":  ["JNJ", "UNH", "ABBV"],
+    "finance":     ["JPM", "V", "MA"],
+    "energy":      ["XOM", "CVX"],
+    "consumer":    ["COST", "WMT", "HD"]
+  },
+
   "notification": {
     "email": "bauticba3@gmail.com",
     "require_approval_before_action": true,

@@ -4,7 +4,7 @@ import time
 from ceo.orchestrator import run_analysis, print_thesis
 from notifications.email_sender import send_investment_email
 
-DELAY_BETWEEN_TICKERS = 15  # segundos — respeta rate limit Alpha Vantage (5 req/min)
+DELAY_BETWEEN_TICKERS = 12  # segundos — respeta rate limit Alpha Vantage (5 req/min = 12s entre calls)
 
 
 def run_watchlist(tickers: list[str]):

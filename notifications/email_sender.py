@@ -158,3 +158,126 @@ def send_investment_email(result: dict):
     except Exception as e:
         print(f"❌ Error enviando email: {e}")
         return False
+
+
+def send_portfolio_email(portfolio: dict, capital: float):
+    email_user = os.getenv("EMAIL_USER")
+    email_pass = os.getenv("EMAIL_PASSWORD")
+
+    if not email_user or not email_pass:
+        print("⚠️  Email no configurado en .env — saltando envío.")
+        return False
+
+    positions    = portfolio.get("positions", [])
+    total_inv    = portfolio.get("total_invested", 0)
+    cash         = portfolio.get("cash_reserve", 0)
+    cash_pct     = portfolio.get("cash_reserve_pct", 0)
+    thesis       = portfolio.get("portfolio_thesis", "")
+    main_risk    = portfolio.get("main_risk", "")
+    exp_return   = portfolio.get("expected_return", "")
+    sector_bdown = portfolio.get("sector_breakdown", {})
+
+    rows_html = ""
+    for p in positions:
+        conviction_color = {"high": "#2e7d32", "medium": "#f57c00", "low": "#c62828"}.get(
+            p.get("conviction", ""), "#555"
+        )
+        rows_html += f"""
+        <tr>
+          <td style="padding:10px;border:1px solid #ddd;font-weight:bold">{p['ticker']}</td>
+          <td style="padding:10px;border:1px solid #ddd">{p.get('shares')} acciones</td>
+          <td style="padding:10px;border:1px solid #ddd">${p.get('price', 0):.2f}</td>
+          <td style="padding:10px;border:1px solid #ddd"><b>${p.get('amount_usd', 0):,.2f}</b></td>
+          <td style="padding:10px;border:1px solid #ddd">{p.get('allocation_pct')}%</td>
+          <td style="padding:10px;border:1px solid #ddd;color:{conviction_color};font-weight:bold">{p.get('conviction','').upper()}</td>
+          <td style="padding:10px;border:1px solid #ddd">SL ${p.get('stop_loss')} / TP ${p.get('take_profit')}</td>
+        </tr>
+        <tr style="background:#f9f9f9">
+          <td colspan="7" style="padding:8px 10px;border:1px solid #ddd;color:#555;font-size:13px;font-style:italic">
+            {p.get('rationale', '')}
+          </td>
+        </tr>
+        """
+
+    sector_html = "".join(
+        f"<span style='display:inline-block;margin:4px;padding:4px 10px;background:#e3f2fd;border-radius:12px;font-size:13px'>"
+        f"<b>{s}</b>: {pct}%</span>"
+        for s, pct in sector_bdown.items()
+    )
+
+    html = f"""
+    <html><body style="font-family:Arial,sans-serif;max-width:720px;margin:auto;color:#222">
+
+    <div style="background:#0d2137;color:white;padding:24px;border-radius:8px 8px 0 0">
+      <h1 style="margin:0;font-size:22px">💼 Portafolio de Inversión</h1>
+      <p style="margin:8px 0 0;opacity:0.7;font-size:13px">
+        Capital: <b>${capital:,.0f} USD</b> ·
+        Invertido: <b>${total_inv:,.2f}</b> ·
+        Cash reserva: <b>${cash:,.2f} ({cash_pct}%)</b>
+      </p>
+    </div>
+
+    <div style="padding:20px;background:#f0f4f8;border-left:4px solid #0066cc">
+      <h3 style="margin:0 0 8px">📋 Tesis del Portafolio</h3>
+      <p style="margin:0;line-height:1.7;color:#333">{thesis}</p>
+    </div>
+
+    <div style="padding:20px;background:white;border:1px solid #e0e0e0;margin-top:2px">
+      <h3 style="color:#1a1a2e;margin:0 0 12px">📊 Posiciones</h3>
+      <table style="width:100%;border-collapse:collapse;font-size:14px">
+        <tr style="background:#1a1a2e;color:white">
+          <th style="padding:10px;text-align:left">Ticker</th>
+          <th style="padding:10px;text-align:left">Cantidad</th>
+          <th style="padding:10px;text-align:left">Precio</th>
+          <th style="padding:10px;text-align:left">Monto</th>
+          <th style="padding:10px;text-align:left">%</th>
+          <th style="padding:10px;text-align:left">Convicción</th>
+          <th style="padding:10px;text-align:left">Niveles</th>
+        </tr>
+        {rows_html}
+      </table>
+    </div>
+
+    <div style="padding:20px;background:white;border:1px solid #e0e0e0;margin-top:2px">
+      <h3 style="color:#1a1a2e;margin:0 0 10px">🗂 Diversificación sectorial</h3>
+      {sector_html}
+    </div>
+
+    <div style="padding:20px;background:white;border:1px solid #e0e0e0;margin-top:2px">
+      <table style="width:100%">
+        <tr>
+          <td style="vertical-align:top;width:50%;padding-right:10px">
+            <h3 style="color:#2e7d32;margin:0 0 8px">📈 Retorno esperado</h3>
+            <p style="color:#333;margin:0">{exp_return}</p>
+          </td>
+          <td style="vertical-align:top;width:50%">
+            <h3 style="color:#c62828;margin:0 0 8px">⚠️ Riesgo principal</h3>
+            <p style="color:#333;margin:0">{main_risk}</p>
+          </td>
+        </tr>
+      </table>
+    </div>
+
+    <p style="text-align:center;color:#999;font-size:12px;margin-top:20px">
+      Este análisis es generado automáticamente por IA y no constituye asesoramiento financiero.
+      Siempre consultá con un profesional antes de invertir.
+    </p>
+
+    </body></html>
+    """
+
+    msg = MIMEMultipart("alternative")
+    msg["Subject"] = f"[Portfolio] ${capital:,.0f} USD — {len(positions)} posiciones"
+    msg["From"]    = email_user
+    msg["To"]      = email_user
+    msg.attach(MIMEText(html, "html"))
+
+    try:
+        with smtplib.SMTP_SSL("smtp.gmail.com", 465) as server:
+            server.login(email_user, email_pass)
+            server.sendmail(email_user, email_user, msg.as_string())
+        print(f"✅ Email de portafolio enviado a {email_user}")
+        return True
+    except Exception as e:
+        print(f"❌ Error enviando email: {e}")
+        return False

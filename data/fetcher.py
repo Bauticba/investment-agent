@@ -12,22 +12,27 @@ load_dotenv(override=True)
 
 def get_stock_data(ticker: str) -> dict:
     try:
+        # --- yfinance: una sola llamada, reutilizada en todo el flujo ---
+        yf_ticker  = yf.Ticker(ticker)
+        yf_info    = yf_ticker.info
+        yf_history = yf_ticker.history(period="6mo")
+
         # --- Fundamental: Alpha Vantage → Finnhub → yfinance ---
-        fundamental_data, fundamental_source = _get_fundamental(ticker)
+        fundamental_data, fundamental_source = _get_fundamental(ticker, yf_info)
 
-        # --- Technical: Polygon → yfinance ---
-        technical_data, technical_source = _get_technical(ticker)
+        # --- Technical: Polygon → yfinance (con cache) ---
+        technical_data, technical_source = _get_technical(ticker, yf_info, yf_history)
 
-        # Si Polygon no trajo la serie de precios, la completamos con yfinance
+        # Si Polygon no trajo la serie de precios, la completamos con el cache
         if not technical_data.get("price_history_6mo"):
-            indicators_data = _get_yf_indicators(ticker)
+            indicators_data = _get_yf_indicators_from_cache(yf_history)
             technical_data.update(indicators_data)
 
         # --- Noticias: Finnhub News API ---
         news = fh_news(ticker, days=7)
 
-        # --- Precio: Polygon si disponible, si no yfinance ---
-        price_data = _build_price(ticker, technical_data, fundamental_data)
+        # --- Precio: Polygon si disponible, si no yfinance (cache) ---
+        price_data = _build_price(ticker, technical_data, yf_info)
 
         print(f"   Fuentes: fundamental={fundamental_source} | técnico={technical_source} | noticias={len(news)} artículos")
 
@@ -45,7 +50,7 @@ def get_stock_data(ticker: str) -> dict:
 
 # --- Fundamental ---
 
-def _get_fundamental(ticker: str) -> tuple[dict, str]:
+def _get_fundamental(ticker: str, yf_info: dict) -> tuple[dict, str]:
     result = av_fundamental(ticker)
     if result.get("status") == "ok":
         return result, "alpha_vantage"
@@ -54,11 +59,10 @@ def _get_fundamental(ticker: str) -> tuple[dict, str]:
     if result.get("status") == "ok":
         return result, "finnhub"
 
-    return _yf_fundamental(ticker), "yfinance"
+    return _yf_fundamental_from_cache(yf_info), "yfinance"
 
 
-def _yf_fundamental(ticker: str) -> dict:
-    info = yf.Ticker(ticker).info
+def _yf_fundamental_from_cache(info: dict) -> dict:
     return {
         "status":          "ok",
         "company_name":    info.get("longName"),
@@ -85,19 +89,15 @@ def _yf_fundamental(ticker: str) -> dict:
 
 # --- Technical ---
 
-def _get_technical(ticker: str) -> tuple[dict, str]:
+def _get_technical(ticker: str, yf_info: dict, yf_history) -> tuple[dict, str]:
     result = poly_technical(ticker)
     if result.get("status") == "ok":
         return result, "polygon"
 
-    return _yf_technical(ticker), "yfinance"
+    return _yf_technical_from_cache(yf_info, yf_history), "yfinance"
 
 
-def _yf_technical(ticker: str) -> dict:
-    stock   = yf.Ticker(ticker)
-    info    = stock.info
-    history = stock.history(period="6mo")
-
+def _yf_technical_from_cache(info: dict, history) -> dict:
     if history.empty:
         return {}
 
@@ -125,8 +125,7 @@ def _yf_technical(ticker: str) -> dict:
 
 # --- Indicadores (siempre yfinance — necesitamos serie para MACD/Bollinger) ---
 
-def _get_yf_indicators(ticker: str) -> dict:
-    history = yf.Ticker(ticker).history(period="6mo")
+def _get_yf_indicators_from_cache(history) -> dict:
     if history.empty:
         return {}
     closes  = history["Close"].tolist()
@@ -140,18 +139,14 @@ def _get_yf_indicators(ticker: str) -> dict:
 
 # --- Precio unificado ---
 
-def _build_price(ticker: str, technical: dict, fundamental: dict) -> dict:
+def _build_price(ticker: str, technical: dict, yf_info: dict) -> dict:
     current_price = technical.get("current_price")
 
     if not current_price:
-        info = yf.Ticker(ticker).info
-        current_price = info.get("currentPrice") or info.get("regularMarketPrice")
-        market_cap    = info.get("marketCap")
-        avg_volume    = info.get("averageVolume")
-    else:
-        stock      = yf.Ticker(ticker).info
-        market_cap = stock.get("marketCap")
-        avg_volume = stock.get("averageVolume")
+        current_price = yf_info.get("currentPrice") or yf_info.get("regularMarketPrice")
+
+    market_cap = yf_info.get("marketCap")
+    avg_volume = yf_info.get("averageVolume")
 
     return {
         "ticker":        ticker,

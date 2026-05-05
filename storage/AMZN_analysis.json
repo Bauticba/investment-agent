@@ -1,0 +1,150 @@
+{
+  "status": "ok",
+  "ticker": "AMZN",
+  "reports": {
+    "fundamental": {
+      "agent": "fundamental",
+      "ticker": "AMZN",
+      "verdict": "buy",
+      "score": 7,
+      "strengths": [
+        "P/E ratio de 32.04 se encuentra dentro del límite máximo aceptable de 40, con valoración razonable para una empresa de su magnitud",
+        "Crecimiento de ingresos del 16.6% supera ampliamente el mínimo requerido del 5%",
+        "Crecimiento de ganancias extraordinario del 74.8%, demostrando fuerte expansión de rentabilidad",
+        "ROE del 24.3% indica uso muy eficiente del capital de los accionistas",
+        "Margen de ganancia neta del 12.2% refleja mejora significativa en la eficiencia operativa",
+        "Posición dominante en e-commerce, cloud computing (AWS) e inteligencia artificial con múltiples motores de crecimiento",
+        "Precio objetivo de analistas en $307.6 representa un upside del ~13% sobre el precio actual"
+      ],
+      "weaknesses": [
+        "Datos de Deuda/Equity no disponibles, impidiendo verificar cumplimiento del límite de 2.0",
+        "Current ratio no disponible, imposibilitando validar la liquidez mínima requerida de 1.0",
+        "Free cash flow no reportado, limitando el análisis de generación de caja real",
+        "Beta de 1.468 indica volatilidad significativamente mayor al mercado, lo cual puede ser incómodo para un inversor moderado",
+        "No paga dividendos, lo que puede limitar el retorno para inversores que buscan ingresos pasivos"
+      ],
+      "flags": [
+        "DATO FALTANTE: Deuda/Equity no disponible — no se puede confirmar cumplimiento del límite máximo de 2.0 establecido por el inversor",
+        "DATO FALTANTE: Current ratio no disponible — no se puede confirmar liquidez mínima de 1.0 requerida",
+        "VOLATILIDAD: Beta de 1.468 excede la volatilidad típica recomendada para un perfil de riesgo moderado",
+        "DATO FALTANTE: Free cash flow no disponible, limitando el análisis de salud financiera completa"
+      ],
+      "summary": "Amazon presenta fundamentos sólidos con un crecimiento de ingresos del 16.6% y un impresionante crecimiento de ganancias del 74.8%, operando dentro del P/E máximo aceptable para el inversor. Sin embargo, la ausencia de datos críticos como Deuda/Equity y Current ratio genera incertidumbre sobre el cumplimiento total del perfil de riesgo moderado, y la beta de 1.468 implica mayor volatilidad de la ideal. Se recomienda compra con posición moderada, dado el potencial de upside del 13% según analistas y los sólidos fundamentales de negocio, pero se sugiere verificar los datos de deuda y liquidez antes de incrementar la exposición."
+    },
+    "technical": {
+      "agent": "technical",
+      "ticker": "AMZN",
+      "verdict": "hold",
+      "score": 5,
+      "trend": "bullish",
+      "entry_zone": "Esperar retroceso hacia zona $255-$260, idealmente con RSI normalizado entre 50-65",
+      "support_levels": [
+        255.08,
+        248.28
+      ],
+      "resistance_levels": [
+        272.05,
+        276.1
+      ],
+      "strengths": [
+        "Precio significativamente por encima de MA200 ($227.62), MA50 ($226.04) y MA20 ($250.33), confirmando tendencia alcista sólida",
+        "Alineación alcista perfecta de medias móviles (MA20 > MA50 > MA200)",
+        "Momentum alcista fuerte con 30 cierres mostrando tendencia ascendente sostenida desde $199.34",
+        "Volumen elevado en jornada reciente (100.9M el día -3) acompañó el impulso alcista, confirmando la tendencia"
+      ],
+      "weaknesses": [
+        "RSI de 79.44 en zona de sobrecompra severa, superando el máximo aceptable de 75",
+        "Precio a solo -1.47% del máximo de 52 semanas ($276.10), limitando el upside inmediato y aumentando riesgo de rechazo",
+        "Volumen de las últimas sesiones declinando respecto al pico (49M vs 100M), señal de agotamiento del impulso"
+      ],
+      "flags": [
+        "REGLA VIOLADA: RSI actual 79.44 supera el máximo aceptable de 75 — no cumple criterio de entrada",
+        "ALERTA: Precio en resistencia clave (máximo 52 semanas $276.10), alta probabilidad de consolidación o rechazo"
+      ],
+      "summary": "AMZN muestra una tendencia alcista técnicamente impecable, operando por encima de todas sus medias móviles clave con fuerte momentum. Sin embargo, el RSI de 79.44 viola la regla del inversor (máx. 75) indicando sobrecompra, y el precio se encuentra a menos del 2% del máximo anual, lo que reduce la relación riesgo/beneficio. Se recomienda esperar un retroceso saludable hacia la zona $255-$260 con normalización del RSI antes de considerar entrada."
+    },
+    "indicators": {
+      "agent": "indicators",
+      "ticker": "AMZN",
+      "verdict": "avoid",
+      "score": 5,
+      "momentum": "bullish",
+      "rsi_interpretation": "RSI en 79.44, zona de sobrecompra significativa. Viola el límite máximo permitido de 75 por el inversor, indicando que el activo puede estar extendido en el corto plazo.",
+      "macd_interpretation": "MACD con línea en 17.97 y señal alcista, confirma momentum positivo sostenido. Sin embargo, el valor elevado sugiere que gran parte del movimiento ya fue capturado.",
+      "bollinger_interpretation": "Precio en $272.05 dentro de las bandas pero posicionado al 86.9% desde la banda inferior, muy cercano a la banda superior de $279.77. Indica presión compradora pero con escaso margen antes de una posible reversión o compresión.",
+      "volume_interpretation": "Volumen con tendencia creciente +7.9% en los últimos 10 días respecto a los 20 días. Confirma el movimiento actual con participación del mercado, condición de confirmación satisfecha.",
+      "strengths": [
+        "Precio por encima de MA20, MA50 y MA200, estructura técnica alcista de largo plazo sólida",
+        "MACD en señal alcista con momentum positivo confirmado",
+        "Volumen creciente que valida el movimiento de precio"
+      ],
+      "weaknesses": [
+        "RSI en zona de sobrecompra extrema (79.44), potencial de corrección a corto plazo",
+        "Precio cerca de la banda superior de Bollinger, margen de suba limitado sin consolidación previa"
+      ],
+      "flags": [
+        "⚠️ RSI 79.44 supera el máximo permitido de 75 — regla del inversor VIOLADA. Entrada no habilitada bajo las condiciones actuales."
+      ],
+      "summary": "AMZN presenta un momentum claramente alcista con estructura técnica positiva: precio sobre todas las medias móviles, MACD bullish y volumen en expansión. Sin embargo, el RSI de 79.44 viola el límite máximo definido por el inversor (75), lo que impide una señal de compra bajo las reglas establecidas. Se recomienda esperar una corrección o consolidación que normalice el RSI antes de considerar una entrada."
+    },
+    "sentiment": {
+      "agent": "sentiment",
+      "ticker": "AMZN",
+      "verdict": "hold",
+      "score": 7,
+      "market_sentiment": "bullish",
+      "news_tone": "positive",
+      "news_summary": "Las noticias recientes destacan la expansión agresiva de Amazon en logística como servicio (competencia directa a FedEx/UPS/DHL) y el optimismo del CEO Andy Jassy sobre la monetización de la IA, lo que refuerza la narrativa de crecimiento estructural en múltiples frentes.",
+      "competitive_position": "Amazon mantiene una posición dominante en e-commerce y cloud computing (AWS), y ahora busca monetizar su red logística como plataforma para terceros, replicando el modelo exitoso de AWS. Su capacidad para convertir infraestructura interna en servicios B2B le otorga una ventaja competitiva difícil de replicar.",
+      "sector_outlook": "El sector de internet retail y tecnología en 2026 está fuertemente impulsado por la demanda de infraestructura de IA, cloud y automatización logística. La narrativa de 'AI payoff' está ganando fuerza y beneficia directamente a Amazon a través de AWS. El entorno competitivo se intensifica pero Amazon opera desde una posición de liderazgo.",
+      "key_risks": [
+        "RSI de 79.44 indica condición de sobrecompra técnica significativa, aumentando el riesgo de corrección a corto plazo",
+        "Competencia creciente en cloud (Microsoft Azure, Google Cloud) y en logística (FedEx, UPS adaptándose) podría presionar márgenes",
+        "Valuación exigente cerca de máximos de 52 semanas con beta de 1.47 implica alta volatilidad en escenarios de risk-off"
+      ],
+      "key_catalysts": [
+        "Apertura de la red logística a terceros (AWS-like logistics) representa un nuevo flujo de ingresos de alto margen con enorme mercado potencial",
+        "Aceleración del gasto en IA beneficia directamente a AWS, que es el principal motor de rentabilidad de la compañía"
+      ],
+      "investor_fit": "Para un inversor principiante con horizonte de swing trade y largo plazo, AMZN es apropiada para la porción de largo plazo dado su perfil de negocio diversificado y liderazgo sectorial. Sin embargo, para swing trade el RSI elevado (79.44) sugiere esperar una corrección antes de entrar, ya que el precio cerca de máximos aumenta el riesgo de entrada en timing desfavorable.",
+      "strengths": [
+        "Capacidad probada de convertir infraestructura operativa en plataformas de negocio monetizables (AWS, Marketplace, Advertising, y ahora Logistics)",
+        "Liderazgo narrativo en IA con Andy Jassy comunicando activamente la visión de retorno sobre inversión en inteligencia artificial, lo que sostiene la confianza institucional"
+      ],
+      "weaknesses": [
+        "El margen de ganancia del 12.2%, aunque en mejora, sigue siendo relativamente bajo para una empresa de esta valuación, lo que la hace vulnerable a cualquier deterioro en costos operativos o en AWS"
+      ],
+      "flags": [
+        "RSI de 79.44: nivel técnicamente sobrecomprado. Para un inversor principiante, entrar en este nivel implica riesgo elevado de corrección a corto plazo. Se recomienda esperar consolidación antes de iniciar posición en swing trade."
+      ],
+      "summary": "Amazon muestra un sentimiento de mercado bullish respaldado por catalizadores reales en logística-as-a-service e IA a través de AWS, con una narrativa corporativa sólida y precio objetivo de analistas un 13% por encima del precio actual. Sin embargo, el RSI en zona de sobrecompra extrema (79.44) y la proximidad a máximos históricos sugieren cautela táctica para nuevas entradas, especialmente para un inversor principiante. La acción es sólida para largo plazo pero requiere mejor punto de entrada para swing trade."
+    }
+  },
+  "ceo_thesis": {
+    "final_verdict": "hold",
+    "conviction": "medium",
+    "ceo_score": 6,
+    "price_target": 307.6,
+    "stop_loss": 250.29,
+    "take_profit": 326.46,
+    "time_horizon": "mediano plazo (1-3 meses)",
+    "analysts_agreement": "Hay consenso parcial: tres de cuatro analistas (técnico, indicadores y sentimiento) coinciden en no entrar ahora debido al RSI de 79.44 que viola la regla del inversor. El agente fundamental es el único que recomienda compra, respaldado por sólidos fundamentales de negocio. El punto de conflicto central es el timing: los fundamentos son atractivos pero las condiciones técnicas actuales no habilitan una entrada según las reglas establecidas por el propio inversor.",
+    "thesis": "Amazon es una empresa de calidad excepcional con crecimiento de ganancias del 74.8%, liderazgo en cloud e IA, y múltiples motores de ingresos, lo que la convierte en una inversión atractiva para mediano y largo plazo. Sin embargo, el precio actual presenta un RSI de 79.44 que viola explícitamente el límite máximo de 75 establecido en el perfil del inversor, y el precio se encuentra a menos del 2% de su máximo anual. La estrategia correcta es aguardar un retroceso a la zona de soporte $255-$260 para obtener un punto de entrada con mejor relación riesgo/beneficio y condiciones técnicas normalizadas. Respetar las reglas de entrada es fundamental para proteger el capital de un inversor con perfil moderado y experiencia inicial.",
+    "pros": [
+      "Fundamentos excepcionales: crecimiento de ganancias del 74.8%, ROE del 24.3% y margen neto del 12.2% con tendencia al alza",
+      "Múltiples motores de crecimiento estructural: AWS e IA, expansión logística como servicio y publicidad digital con narrativa corporativa sólida",
+      "Precio objetivo de analistas en $307.60 representa un upside del ~13% desde el nivel actual, y mayor desde la zona de entrada ideal"
+    ],
+    "cons": [
+      "RSI de 79.44 viola la regla explícita del inversor (máximo 75), indicando sobrecompra severa con alto riesgo de corrección a corto plazo",
+      "Precio a menos del 2% del máximo de 52 semanas con volumen declinante, limitando el upside inmediato y elevando el riesgo de entrada en mal timing para un inversor principiante"
+    ],
+    "action_steps": [
+      "Paso 1: No iniciar posición ahora. Colocar AMZN en lista de seguimiento activo y monitorear diariamente el RSI y el precio hasta que ambos se normalicen.",
+      "Paso 2: Definir zona de entrada en $255-$260, que coincide con soporte técnico clave y donde el RSI debería haberse normalizado por debajo de 65. En ese nivel, el stop loss al 8% queda en ~$234-$239 y el take profit al 20% en ~$306-$312, alineado con el precio objetivo de analistas.",
+      "Paso 3: Una vez alcanzada la zona de entrada con RSI normalizado, iniciar posición con no más del 8-10% del portafolio (por debajo del máximo del 15%) dado el perfil principiante, y activar stop loss y take profit automáticos desde el primer día."
+    ],
+    "risk_warning": "Bautista, como inversor principiante con perfil moderado, es fundamental respetar las reglas de entrada que vos mismo definiste. Comprar AMZN hoy con RSI en 79.44 implica asumir un riesgo técnico innecesario: el activo puede corregir un 5-10% sin que cambie la tesis de largo plazo, y eso activaría tu stop loss. Amazon es una excelente empresa, pero un mal punto de entrada puede convertir una buena inversión en una pérdida temporal frustrante. La paciencia ahora es parte de la estrategia.",
+    "ceo_summary": "Amazon es una empresa de primera calidad con fundamentos sólidos y catalizadores reales en IA y logística, pero no es el momento correcto para entrar. El RSI de 79.44 viola las reglas del inversor y el precio está pegado a sus máximos anuales, lo que aumenta el riesgo de corrección a corto plazo. La decisión es HOLD: seguimos de cerca la acción esperando un retroceso a la zona de $255-$260 donde el riesgo/beneficio sea favorable. Cuando ese nivel llegue con señales técnicas normalizadas, AMZN será una compra clara con upside hacia $307. Por ahora, proteger el capital significa no entrar apurados."
+  }
+}
