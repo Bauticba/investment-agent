@@ -1,0 +1,18 @@
+{
+  "broker": "Bull Market Brokers",
+  "positions": [
+    {
+      "ticker": "TX26",
+      "asset_type": "bono_argentino",
+      "shares": 1000,
+      "avg_buy_price": 1459.80,
+      "currency": "ARS",
+      "current_price_override": 1353.50,
+      "notes": ""
+    }
+  ],
+  "cash": {
+    "USD": 0,
+    "ARS": 0
+  }
+}

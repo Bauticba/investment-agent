@@ -13,10 +13,14 @@ python3 ceo/orchestrator.py AAPL              # analizar un ticker + email
 python3 run_watchlist.py                      # watchlist (AAPL, MSFT, NVDA, GOOGL)
 python3 run_watchlist.py AAPL MSFT            # tickers custom
 python3 portfolio.py --capital 5000           # universo completo + construir portafolio
-python3 portfolio.py --capital 5000 --use-cache  # ídem pero usando análisis ya guardados
+python3 portfolio.py --capital 5000 --use-cache  # ídem usando análisis ya guardados
+python3 analyze_portfolio.py                  # analizar portafolio propio (my_portfolio.json)
+python3 analyze_portfolio.py --use-cache      # ídem usando análisis cacheados
 ```
 
 ## Arquitectura — flujo completo
+
+### Flujo acciones americanas
 ```
                     ┌─────────────────────────┐
                     │      data/fetcher.py     │  ← orquesta las 3 fuentes
@@ -46,10 +50,35 @@ python3 portfolio.py --capital 5000 --use-cache  # ídem pero usando análisis y
                                          + email portafolio
 ```
 
+### Flujo portafolio propio (bonos argentinos + acciones)
+```
+          my_portfolio.json
+               │
+               ▼
+     analyze_portfolio.py
+          │           │
+          ▼           ▼
+  acciones/ETFs    bonos argentinos
+  (pipeline        (data/argentina.py
+   existente)       + argentinadatos.com)
+          │           │
+          ▼           ▼
+  agents/position_   agents/bond_
+  analyzer.py        analyzer.py
+          │           │
+          └─────┬─────┘
+                ▼
+         CEO portfolio
+         (síntesis final)
+                │
+                ▼
+  storage/portfolio_analysis_{fecha}.json
+```
+
 ## Archivos — descripción detallada
 
 ### `data/fetcher.py`
-Punto de entrada para obtener todos los datos de un ticker.
+Punto de entrada para obtener todos los datos de un ticker de acciones.
 **Optimización clave:** llama a `yf.Ticker(ticker)` una sola vez al inicio y reutiliza
 `yf_info` e `yf_history` en todas las funciones internas (antes se llamaba 2-3 veces).
 Orquesta las fuentes con fallback automático:
@@ -60,8 +89,22 @@ Orquesta las fuentes con fallback automático:
 
 Devuelve un dict unificado con claves: `price`, `fundamental`, `technical`, `news`.
 
+### `data/argentina.py`
+Fuente de datos para el mercado argentino. Sin API key requerida.
+- `get_bond_data(ticker, price_override)` — metadata del bono (vencimiento, cupón, CER) + macro
+- `get_macro_data()` — trae de **argentinadatos.com**:
+  - Inflación mensual IPC (último dato: 3.4% en marzo 2026)
+  - Inflación interanual (32.6%)
+  - UVA diaria
+  - Dólar oficial (compra/venta)
+- `BOND_REGISTRY` — dict estático con metadata de bonos conocidos: TX26, TX28, TX30, DICP, CUAP
+- **Precio del bono**: NO hay API pública gratuita para precios de bonos argentinos.
+  yfinance no tiene TX26.BA, IOL/BYMA requieren auth, Rava no responde.
+  → El usuario debe ingresar `current_price_override` en `my_portfolio.json`
+  (el precio se ve en Bull Market > Cotizaciones).
+
 ### `data/alpha_vantage.py`
-Fuente primaria para datos fundamentales.
+Fuente primaria para datos fundamentales de acciones americanas.
 Endpoint: `OVERVIEW` de Alpha Vantage.
 Trae: P/E, EPS, crecimiento ingresos/ganancias, márgenes, ROE, beta,
 analyst target price, dividend yield, 52w high/low.
@@ -69,7 +112,7 @@ analyst target price, dividend yield, 52w high/low.
 Retorna `{"status": "rate_limited"}` si se supera el límite (cae a Finnhub).
 
 ### `data/polygon.py`
-Fuente primaria para datos técnicos.
+Fuente primaria para datos técnicos de acciones americanas.
 Usa 5 endpoints de Polygon (límite del free tier: 5 req/min):
 1. `/v2/aggs` — OHLCV diario últimos 210 días (precio actual, 52w high/low)
 2. `/v1/indicators/sma` × 3 — MA20, MA50, MA200
@@ -124,6 +167,23 @@ Devuelve JSON con: `positions[]` (ticker, shares, amount_usd, allocation_pct, st
 take_profit, rationale), `cash_reserve`, `total_invested`, `portfolio_thesis`,
 `sector_breakdown`, `expected_return`, `main_risk`.
 
+### `agents/position_analyzer.py`
+Sub-agente que analiza una posición existente en acciones americanas.
+Recibe: detalles de la posición (ticker, shares, avg_buy_price) + análisis del activo.
+Calcula P&L, distancia al stop loss y take profit.
+Recomienda: hold, sell, add, reduce, stop_loss_triggered.
+Devuelve JSON con: `action`, `urgency`, `rationale`, `key_alert`, P&L calculado.
+
+### `agents/bond_analyzer.py`
+Sub-agente especializado en **renta fija argentina** (bonos CER/UVA).
+Analiza posiciones en bonos soberanos como TX26, TX28, TX30, DICP.
+Considera: precio sucio vs limpio, ajuste CER devengado, TIR real estimada,
+paridad vs valor técnico, comparación vs plazo fijo UVA y dolarización MEP,
+riesgo soberano argentino, tiempo a vencimiento.
+Requiere que el precio se ingrese manualmente vía `current_price_override`.
+Devuelve JSON con: `action`, `urgency`, `real_yield_estimate`, `paridad_assessment`,
+`vs_alternatives`, `sovereign_risk_note`, `rationale`, `key_alert`.
+
 ### `ceo/orchestrator.py`
 Función principal: `run_analysis(ticker)`.
 1. Llama a `data/fetcher.py` para obtener todos los datos
@@ -140,20 +200,29 @@ Al final imprime tabla resumen con veredicto, score, stop loss y take profit.
 Guarda cada análisis en `storage/` y envía email individual por ticker.
 
 ### `portfolio.py`
-Script principal para analizar el **universo completo** (18 tickers de todos los sectores)
-y construir un portafolio óptimo con el capital disponible.
+Script para analizar el **universo completo** (18 tickers) y construir portafolio óptimo.
+Flags: `--capital XXXX` (requerido), `--use-cache` (usa storage sin re-analizar).
+Flujo: analiza → filtra BUY con score ≥ 6 → allocator distribuye capital → email.
 
-Flags:
-- `--capital XXXX` (requerido) — capital a invertir en USD
-- `--use-cache` (opcional) — usa los análisis guardados en `storage/` sin re-analizar.
-  Acepta cualquier archivo con `status=ok` independientemente de la fecha.
-  Omite tickers sin cache en vez de analizarlos (útil cuando se agotan tokens de API).
+### `analyze_portfolio.py`
+Script para analizar el **portafolio propio** del usuario (lo que ya tiene comprado).
+Lee `my_portfolio.json` y detecta automáticamente el tipo de activo:
+- **Acciones americanas**: usa el pipeline existente (fetcher + 4 agentes)
+- **Bonos argentinos**: detecta por `asset_type` o si el ticker está en `BOND_REGISTRY`
 
-Flujo:
-1. Analiza todos los tickers del universo (o carga del cache con `--use-cache`)
-2. Filtra candidatos con `final_verdict == "buy"` y `ceo_score >= 6`
-3. Llama a `agents/allocator.py` para distribuir el capital
-4. Guarda en `storage/portfolio_{fecha}.json` y envía email
+Flags: `--portfolio my_portfolio.json` (default), `--use-cache`.
+Genera: análisis por posición + síntesis CEO del portafolio completo.
+Guarda en `storage/portfolio_analysis_{fecha}.json`.
+
+### `my_portfolio.json`
+Archivo que el usuario completa con sus posiciones reales. Campos por posición:
+- `ticker` — símbolo del activo (AAPL, TX26, etc.)
+- `asset_type` — `"bono_argentino"` para bonos; omitir para acciones
+- `shares` — cantidad de acciones/títulos
+- `avg_buy_price` — precio promedio de compra
+- `currency` — `"USD"` o `"ARS"`
+- `current_price_override` — **obligatorio para bonos argentinos** (precio actual desde Bull Market)
+- `notes` — notas opcionales
 
 ### `notifications/email_sender.py`
 Formatea la tesis del CEO en HTML y la envía vía Gmail SMTP (puerto 465, SSL).
@@ -172,26 +241,28 @@ Define las reglas y preferencias de Bautista:
 - Sectores prohibidos: gambling, tobacco, weapons
 
 ### `storage/`
-JSONs de cada análisis completo (precio, reportes de los 4 agentes, tesis CEO).
-Nombrados como `{TICKER}_analysis.json` y `portfolio_{fecha}.json`.
-Actualmente hay análisis guardados de: AAPL, MSFT, NVDA, GOOGL, META, AMZN, TSLA,
-JNJ, UNH, ABBV, JPM, V, MA, XOM, CVX, COST (16 tickers — faltan WMT y HD).
+JSONs de cada análisis completo.
+- `{TICKER}_analysis.json` — análisis de acciones (16 tickers disponibles; faltan WMT y HD)
+- `portfolio_{fecha}.json` — portafolio óptimo generado por `portfolio.py`
+- `portfolio_analysis_{fecha}.json` — análisis del portafolio propio por `analyze_portfolio.py`
 
 ## Variables de entorno (`.env`)
 ```
 ANTHROPIC_API_KEY   — Claude API
-ALPHA_VANTAGE_KEY   — fundamentals (25 req/día free)
+ALPHA_VANTAGE_KEY   — fundamentals acciones (25 req/día free)
 FINNHUB_KEY         — fundamentals fallback + noticias (60 req/min free)
-POLYGON_KEY         — técnico (5 req/min free, delay 15min)
+POLYGON_KEY         — técnico acciones (5 req/min free, delay 15min)
 EMAIL_USER          — Gmail address
 EMAIL_PASSWORD      — Gmail app password
 ```
+**Sin key requerida:** `data/argentina.py` usa argentinadatos.com (API pública).
 
 ## Performance
-- **1 ticker**: ~55 segundos (datos + 4 agentes paralelos + CEO + email)
+- **1 ticker acción**: ~55 segundos (datos + 4 agentes paralelos + CEO + email)
 - **Watchlist (4 tickers)**: ~4-5 minutos
-- **Universo completo (18 tickers)**: ~20 minutos (análisis frescos) / ~15 segundos (con `--use-cache`)
-- Mejora clave implementada: agentes en paralelo + yfinance cacheado = ~40% más rápido que versión original
+- **Universo completo (18 tickers)**: ~20 minutos frescos / ~15 segundos con `--use-cache`
+- **Portafolio propio (bonos)**: ~15 segundos (sin re-análisis de mercado)
+- Mejora clave: agentes en paralelo + yfinance cacheado = ~40% más rápido que versión original
 
 ## Stack
 Python 3.12 · anthropic · yfinance · requests · python-dotenv · smtplib · concurrent.futures
@@ -200,5 +271,6 @@ Python 3.12 · anthropic · yfinance · requests · python-dotenv · smtplib · 
 1. Paper trading — registrar predicciones en DB y validar rentabilidad histórica
 2. Automatización con cron — correr `portfolio.py` diariamente al cierre del mercado
 3. Agente de macro — contexto de tasas, inflación, VIX para el CEO
-4. Completar universo — agregar WMT y HD al storage (faltan análisis)
-5. Ajustar umbral de aprobación — actualmente score ≥ 6 + BUY; con mercado en HOLD generalizado puede quedar poco candidatos
+4. Completar universo acciones — agregar WMT y HD al storage
+5. CEDEARs — agregar soporte para CEDEARs (cotizan en ARS, referenciados a acciones USA)
+6. Precio automático de bonos argentinos — explorar BYMA API con cuenta o scraping de Bull Market
