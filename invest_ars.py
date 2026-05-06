@@ -96,12 +96,22 @@ def _print_recommendation(rec: dict, capital: float, riesgo: str):
     print(f"  {'-'*56}")
 
     type_emoji = {
-        "bono_cer":       "📈",
-        "plazo_fijo_uva": "🔒",
-        "plazo_fijo":     "🔒",
-        "dolar_mep":      "💵",
-        "fci_mm":         "💧",
-        "cedears":        "🌎",
+        "bono_cer":          "📈",
+        "lecer":             "📈",
+        "lecap":             "📋",
+        "caucion":           "🔐",
+        "plazo_fijo_uva":    "🔒",
+        "plazo_fijo":        "🔒",
+        "dolar_mep":         "💵",
+        "bono_hard_dollar":  "💲",
+        "on_usd":            "🏢",
+        "fci_mm":            "💧",
+        "fci_renta_fija":    "💧",
+        "fci_dolar_linked":  "💵",
+        "fci_acciones":      "📊",
+        "cedear":            "🌎",
+        "cedears":           "🌎",
+        "accion_merval":     "🇦🇷",
     }
 
     for pos in allocation:
