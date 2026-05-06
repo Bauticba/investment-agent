@@ -1,37 +1,33 @@
 import json
-import sys
 import time
-import os
 import argparse
 from datetime import date
-from ceo.orchestrator import run_analysis
 from agents.allocator import build_portfolio
 from notifications.email_sender import send_portfolio_email
+from core.cache import get_analysis_cached
 
 DELAY_BETWEEN_TICKERS = 12
 MIN_SCORE_TO_QUALIFY  = 6
 
 
-def main():
-    args = _parse_args()
-
+def run_portfolio(capital: float, use_cache: bool = False):
     with open("instructions/investor_profile.json") as f:
         profile = json.load(f)
 
     universe = _flatten_universe(profile["universe"])
     print(f"\n{'='*55}")
-    print(f"  PORTFOLIO BUILDER — Capital: ${args.capital:,.0f} USD")
+    print(f"  PORTFOLIO BUILDER — Capital: ${capital:,.0f} USD")
     print(f"{'='*55}")
     print(f"  Universo: {len(universe)} candidatos\n")
 
-    # --- 1. Analizar todos los candidatos (con cache diario) ---
+    # --- 1. Analizar todos los candidatos ---
     all_results = []
     for i, ticker in enumerate(universe):
         if i > 0:
             print(f"\n⏳ Esperando {DELAY_BETWEEN_TICKERS}s...\n")
             time.sleep(DELAY_BETWEEN_TICKERS)
 
-        result = _get_analysis(ticker, use_cache=args.use_cache)
+        result = get_analysis_cached(ticker, use_cache=use_cache)
         if result.get("status") == "ok":
             all_results.append(result)
 
@@ -51,51 +47,32 @@ def main():
 
     # --- 3. Agente allocator construye el portafolio ---
     print("💼 Allocator construyendo portafolio óptimo...")
-    portfolio = build_portfolio(args.capital, approved, profile)
+    portfolio = build_portfolio(capital, approved, profile)
 
     if "error" in portfolio:
         print(f"❌ Error en allocator: {portfolio.get('raw')}")
         return
 
     # --- 4. Mostrar resultados ---
-    _print_portfolio(portfolio, args.capital)
+    _print_portfolio(portfolio, capital)
 
     # --- 5. Guardar y notificar ---
     output_file = f"storage/portfolio_{date.today().isoformat()}.json"
     with open(output_file, "w") as f:
         json.dump({
-            "capital":   args.capital,
+            "capital":   capital,
             "date":      date.today().isoformat(),
             "screening": _screening_summary(all_results),
             "portfolio": portfolio,
         }, f, indent=2, ensure_ascii=False)
     print(f"\n💾 Guardado en {output_file}")
 
-    send_portfolio_email(portfolio, args.capital)
+    send_portfolio_email(portfolio, capital)
 
 
-def _get_analysis(ticker: str, use_cache: bool) -> dict:
-    cache_file = f"storage/{ticker}_analysis.json"
-
-    if use_cache and os.path.exists(cache_file):
-        with open(cache_file) as f:
-            cached = json.load(f)
-        if cached.get("status") == "ok":
-            print(f"📂 {ticker}: usando cache ({cached.get('date', 'fecha desconocida')})")
-            return cached
-
-    if use_cache and not os.path.exists(cache_file):
-        print(f"⚠️  {ticker}: sin cache, se omite (corré sin --use-cache para analizar)")
-        return {"status": "skipped", "ticker": ticker}
-
-    print(f"🔍 Analizando {ticker}...")
-    result = run_analysis(ticker)
-
-    if result.get("status") == "ok":
-        with open(cache_file, "w") as f:
-            json.dump(result, f, indent=2, ensure_ascii=False)
-
-    return result
+def main():
+    args = _parse_args()
+    run_portfolio(args.capital, use_cache=args.use_cache)
 
 
 def _filter_approved(results: list) -> list:

@@ -1,34 +1,29 @@
 import json
-import sys
 import time
-import os
 import argparse
 from datetime import date
 from anthropic import Anthropic
 from dotenv import load_dotenv
 
 load_dotenv()
-sys.path.insert(0, ".")
 
-from ceo.orchestrator import run_analysis
 from agents.position_analyzer import analyze_position
 from agents.bond_analyzer import analyze_bond_position
 from agents.cedear_analyzer import analyze_cedear_position
 from data.argentina import get_bond_data, BOND_REGISTRY
 from data.cedears import get_cedear_data, CEDEAR_REGISTRY
 from notifications.email_sender import send_portfolio_analysis_email
+from core.cache import get_analysis_cached
 
 client = Anthropic()
 DELAY_BETWEEN_TICKERS = 12
 
 
-def main():
-    args = _parse_args()
-
+def run_portfolio_analysis(portfolio_file: str = "my_portfolio.json", use_cache: bool = False):
     with open("instructions/investor_profile.json") as f:
         profile = json.load(f)
 
-    with open(args.portfolio) as f:
+    with open(portfolio_file) as f:
         portfolio_input = json.load(f)
 
     positions = portfolio_input.get("positions", [])
@@ -53,7 +48,7 @@ def main():
         if i > 0:
             print(f"⏳ Esperando {DELAY_BETWEEN_TICKERS}s (rate limit)...")
             time.sleep(DELAY_BETWEEN_TICKERS)
-        result = _get_analysis(ticker, args.use_cache)
+        result = get_analysis_cached(ticker, use_cache)
         if result.get("status") == "ok":
             analyses[ticker] = result
         else:
@@ -165,23 +160,12 @@ def main():
     print(f"💾 Guardado en {output_file}\n")
 
 
+def main():
+    args = _parse_args()
+    run_portfolio_analysis(args.portfolio, use_cache=args.use_cache)
+
+
 # --- Helpers ---
-
-def _get_analysis(ticker: str, use_cache: bool) -> dict:
-    cache_file = f"storage/{ticker}_analysis.json"
-    if use_cache and os.path.exists(cache_file):
-        with open(cache_file) as f:
-            cached = json.load(f)
-        if cached.get("status") == "ok":
-            print(f"📂 {ticker}: usando cache")
-            return cached
-    print(f"🔍 Analizando {ticker}...")
-    result = run_analysis(ticker)
-    if result.get("status") == "ok":
-        with open(cache_file, "w") as f:
-            json.dump(result, f, indent=2, ensure_ascii=False)
-    return result
-
 
 def _run_portfolio_ceo(position_reports, cash, profile, broker) -> dict:
     total_cost  = sum(r.get("cost_basis_usd", 0) for r in position_reports)

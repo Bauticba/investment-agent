@@ -15,12 +15,10 @@ from data.cedears import get_top_cedears
 from notifications.email_sender import send_ars_recommendation_email
 
 
-def main():
-    args = _parse_args()
-
+def run_ars(capital: float, riesgo: str = "moderado"):
     print(f"\n{'='*58}")
     print(f"  RECOMENDACIÓN DE INVERSIÓN EN PESOS ARGENTINOS")
-    print(f"  Capital: ${args.capital:,.0f} ARS  |  Riesgo: {args.riesgo.upper()}")
+    print(f"  Capital: ${capital:,.0f} ARS  |  Riesgo: {riesgo.upper()}")
     print(f"{'='*58}\n")
 
     # --- 1. Contexto macro ---
@@ -31,22 +29,22 @@ def main():
     # --- 2. Universo de instrumentos ---
     print("\n📋 Construyendo universo de instrumentos disponibles...")
     instruments = get_instruments_universe(macro)
-    relevant    = [i for i in instruments if args.riesgo in i.get("recommended_for", [])]
-    print(f"   {len(instruments)} instrumentos totales | {len(relevant)} compatibles con riesgo {args.riesgo.upper()}")
+    relevant    = [i for i in instruments if riesgo in i.get("recommended_for", [])]
+    print(f"   {len(instruments)} instrumentos totales | {len(relevant)} compatibles con riesgo {riesgo.upper()}")
 
     # --- 3. Recomendación ---
     with open("instructions/investor_profile.json") as f:
         profile = json.load(f)
 
     print(f"\n🤖 Generando recomendación personalizada...")
-    rec = recommend_allocation(args.capital, args.riesgo, instruments, macro, profile)
+    rec = recommend_allocation(capital, riesgo, instruments, macro, profile)
 
     if "error" in rec:
         print(f"❌ Error al generar la recomendación: {rec.get('raw', '')[:200]}")
         return
 
     # --- 4. Mostrar ---
-    _print_recommendation(rec, args.capital, args.riesgo)
+    _print_recommendation(rec, capital, riesgo)
 
     # --- 4b. Si hay CEDEARs en el portafolio recomendado, mostrar picks específicos ---
     has_cedears = any(p.get("type") in ("cedear", "cedears") for p in rec.get("allocation", []))
@@ -57,19 +55,24 @@ def main():
 
     # --- 4c. Enviar email ---
     print("📧 Enviando email...")
-    send_ars_recommendation_email(rec, args.capital, args.riesgo, macro, cedear_picks)
+    send_ars_recommendation_email(rec, capital, riesgo, macro, cedear_picks)
 
     # --- 5. Guardar ---
     output_file = f"storage/inversion_ars_{date.today().isoformat()}.json"
     with open(output_file, "w") as f:
         json.dump({
-            "date":       date.today().isoformat(),
-            "capital_ars": args.capital,
-            "riesgo":     args.riesgo,
-            "macro":      macro,
+            "date":           date.today().isoformat(),
+            "capital_ars":    capital,
+            "riesgo":         riesgo,
+            "macro":          macro,
             "recommendation": rec,
         }, f, indent=2, ensure_ascii=False)
     print(f"💾 Guardado en {output_file}\n")
+
+
+def main():
+    args = _parse_args()
+    run_ars(args.capital, args.riesgo)
 
 
 # --- helpers de presentación ---
