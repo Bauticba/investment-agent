@@ -59,7 +59,7 @@ def get_cedear_data(ticker: str, price_ars_override: float = None) -> dict:
         byma_price = _byma_price(ticker)
         if byma_price:
             market_price = byma_price
-            price_source = "yfinance_byma"
+            price_source = "iol_byma"
         else:
             market_price = parity
             price_source = "estimated_parity"
@@ -145,6 +145,16 @@ def _us_price(ticker: str) -> float | None:
 
 
 def _byma_price(ticker: str) -> float | None:
+    # Intentar IOL primero (precio real BYMA)
+    try:
+        from data.iol import get_price
+        data = get_price(ticker)
+        if data and data.get("ultimo_precio"):
+            return round(float(data["ultimo_precio"]), 2)
+    except Exception:
+        pass
+
+    # Fallback: yfinance .BA
     try:
         info = yf.Ticker(f"{ticker}.BA").info
         price = info.get("currentPrice") or info.get("regularMarketPrice") or info.get("previousClose")

@@ -53,15 +53,33 @@ BOND_REGISTRY = {
 def get_bond_data(ticker: str, price_override: float = None) -> dict:
     """
     Obtiene datos de un bono argentino.
-    Precio: solo disponible via price_override (no hay API pública gratuita para bonos).
+    Precio: override manual > IOL API > unavailable.
     Macro: argentinadatos.com (inflación, UVA, dólar oficial).
     """
     ticker = ticker.upper()
     meta   = BOND_REGISTRY.get(ticker, {})
     macro  = get_macro_data()
 
+    # Precio: override > IOL > unavailable
+    if price_override:
+        market_price = price_override
+        price_source = "manual"
+    else:
+        try:
+            from data.iol import get_price
+            iol_data = get_price(ticker)
+            if iol_data and iol_data.get("ultimo_precio"):
+                market_price = iol_data["ultimo_precio"]
+                price_source = "iol"
+            else:
+                market_price = None
+                price_source = "unavailable"
+        except Exception:
+            market_price = None
+            price_source = "unavailable"
+
     return {
-        "status":        "ok" if price_override else "no_price",
+        "status":        "ok" if market_price else "no_price",
         "ticker":        ticker,
         "name":          meta.get("name", ticker),
         "asset_type":    "bono_argentino",
@@ -70,8 +88,8 @@ def get_bond_data(ticker: str, price_override: float = None) -> dict:
         "coupon_annual": meta.get("coupon_annual"),
         "amortization":  meta.get("amortization", "bullet"),
         "currency":      meta.get("currency", "ARS"),
-        "market_price":  price_override,
-        "price_source":  "manual" if price_override else "unavailable",
+        "market_price":  market_price,
+        "price_source":  price_source,
         **macro,
     }
 
