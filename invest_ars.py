@@ -15,11 +15,12 @@ from data.cedears import get_top_cedears
 from notifications.email_sender import send_ars_recommendation_email
 
 
-def run_ars(capital: float, riesgo: str = "moderado"):
-    print(f"\n{'='*58}")
+def run_ars(capital: float, riesgo: str = "moderado", fecha_objetivo: str | None = None):
+    horizonte_str = f"  |  Fecha objetivo: {fecha_objetivo}" if fecha_objetivo else ""
+    print(f"\n{'='*62}")
     print(f"  RECOMENDACIÓN DE INVERSIÓN EN PESOS ARGENTINOS")
-    print(f"  Capital: ${capital:,.0f} ARS  |  Riesgo: {riesgo.upper()}")
-    print(f"{'='*58}\n")
+    print(f"  Capital: ${capital:,.0f} ARS  |  Riesgo: {riesgo.upper()}{horizonte_str}")
+    print(f"{'='*62}\n")
 
     # --- 1. Contexto macro ---
     print("📊 Obteniendo contexto macro argentino...")
@@ -37,7 +38,7 @@ def run_ars(capital: float, riesgo: str = "moderado"):
         profile = json.load(f)
 
     print(f"\n🤖 Generando recomendación personalizada...")
-    rec = recommend_allocation(capital, riesgo, instruments, macro, profile)
+    rec = recommend_allocation(capital, riesgo, instruments, macro, profile, fecha_objetivo=fecha_objetivo)
 
     if "error" in rec:
         print(f"❌ Error al generar la recomendación: {rec.get('raw', '')[:200]}")
@@ -72,7 +73,7 @@ def run_ars(capital: float, riesgo: str = "moderado"):
 
 def main():
     args = _parse_args()
-    run_ars(args.capital, args.riesgo)
+    run_ars(args.capital, args.riesgo, fecha_objetivo=args.fecha)
 
 
 # --- helpers de presentación ---
@@ -194,6 +195,11 @@ Ejemplos:
         "--riesgo", type=str, default="moderado",
         choices=["bajo", "moderado", "alto"],
         help="Perfil de riesgo: bajo, moderado o alto (default: moderado)"
+    )
+    parser.add_argument(
+        "--fecha", type=str, default=None,
+        metavar="YYYY-MM",
+        help="Fecha objetivo en que necesitás el dinero (ej: --fecha 2027-01)"
     )
     return parser.parse_args()
 

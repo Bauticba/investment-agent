@@ -80,6 +80,11 @@ def _build_parser() -> argparse.ArgumentParser:
         choices=["bajo", "moderado", "alto"],
         help="Perfil de riesgo (default: moderado)",
     )
+    inv.add_argument(
+        "--fecha", default=None,
+        metavar="YYYY-MM",
+        help="Fecha objetivo en que necesitás el dinero (ej: --fecha 2027-01)",
+    )
 
     return parser
 
@@ -106,7 +111,7 @@ def main():
 
     elif args.command == "invertir":
         from invest_ars import run_ars
-        run_ars(args.capital, args.riesgo)
+        run_ars(args.capital, args.riesgo, fecha_objetivo=args.fecha)
 
     else:
         parser.print_help()

@@ -26,12 +26,32 @@ with col2:
 with col3:
     send_email = st.checkbox("Enviar email con la recomendación", value=True)
 
-RIESGO_DESC = {
-    "bajo":     "PF UVA + FCI. Sin CEDEARs. Máx 20% bonos CER. Prioridad: preservar capital.",
-    "moderado": "30-50% CER/UVA + 20-30% MEP + 10-20% CEDEARs + 10% FCI.",
-    "alto":     "30-40% CEDEARs + 20-30% MEP + 20% CER + 10% FCI. Mayor exposición USD.",
-}
-st.info(RIESGO_DESC[riesgo])
+# Fecha objetivo
+from datetime import date, timedelta
+col_fecha, col_info = st.columns([2, 3])
+with col_fecha:
+    usar_fecha = st.checkbox("Tengo una fecha objetivo para retirar el dinero")
+    fecha_objetivo = None
+    if usar_fecha:
+        fecha_dt = st.date_input(
+            "¿Cuándo necesitás el dinero?",
+            value=date.today().replace(year=date.today().year + 1),
+            min_value=date.today() + timedelta(days=1),
+        )
+        fecha_objetivo = fecha_dt.strftime("%Y-%m")
+        meses = (fecha_dt.year - date.today().year) * 12 + (fecha_dt.month - date.today().month)
+        st.caption(f"Horizonte: {meses} meses desde hoy")
+
+with col_info:
+    RIESGO_DESC = {
+        "bajo":     "PF UVA + FCI. Sin CEDEARs. Máx 20% bonos CER. Prioridad: preservar capital.",
+        "moderado": "30-50% CER/UVA + 20-30% MEP + 10-20% CEDEARs + 10% FCI.",
+        "alto":     "30-40% CEDEARs + 20-30% MEP + 20% CER + 10% FCI. Mayor exposición USD.",
+    }
+    info = RIESGO_DESC[riesgo]
+    if fecha_objetivo and usar_fecha:
+        info += f" La recomendación priorizará instrumentos que venzan **antes de {fecha_objetivo}**."
+    st.info(info)
 
 # ── Ejecución ─────────────────────────────────────────────────────────────────
 if st.button("Generar recomendación", type="primary", use_container_width=True):
@@ -68,7 +88,7 @@ if st.button("Generar recomendación", type="primary", use_container_width=True)
 
     # Recomendación
     with st.spinner("🤖 Generando recomendación personalizada..."):
-        rec = recommend_allocation(capital, riesgo, instruments, macro, profile)
+        rec = recommend_allocation(capital, riesgo, instruments, macro, profile, fecha_objetivo=fecha_objetivo)
 
     if "error" in rec:
         st.error(f"Error: {rec.get('raw', '')[:300]}")
