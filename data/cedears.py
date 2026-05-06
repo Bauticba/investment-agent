@@ -6,23 +6,26 @@ from data.argentina import get_macro_data
 # Ratio = cantidad de CEDEARs necesarios para equivaler a 1 acción del subyacente USA.
 # Precio paridad ARS = precio_USD / ratio × CCL
 # Fuente: BYMA / Bull Market. Verificar periódicamente ante splits o cambios corporativos.
+# Ratios verificados contra precios reales IOL + yfinance (mayo 2026).
+# ratio = cantidad de CEDEARs necesarios para equivaler a 1 acción del subyacente USA.
+# Verificar ante splits o cambios corporativos usando: precio_USA × CCL / precio_CEDEAR_ARS
 CEDEAR_REGISTRY = {
-    "AAPL":  {"us_ticker": "AAPL",  "ratio": 10,  "name": "Apple Inc."},
-    "MSFT":  {"us_ticker": "MSFT",  "ratio": 8,   "name": "Microsoft Corp."},
-    "NVDA":  {"us_ticker": "NVDA",  "ratio": 35,  "name": "NVIDIA Corp."},
-    "GOOGL": {"us_ticker": "GOOGL", "ratio": 20,  "name": "Alphabet Inc."},
-    "AMZN":  {"us_ticker": "AMZN",  "ratio": 7,   "name": "Amazon.com Inc."},
-    "META":  {"us_ticker": "META",  "ratio": 3,   "name": "Meta Platforms Inc."},
-    "TSLA":  {"us_ticker": "TSLA",  "ratio": 10,  "name": "Tesla Inc."},
-    "JPM":   {"us_ticker": "JPM",   "ratio": 2,   "name": "JPMorgan Chase & Co."},
-    "V":     {"us_ticker": "V",     "ratio": 2,   "name": "Visa Inc."},
-    "MA":    {"us_ticker": "MA",    "ratio": 2,   "name": "Mastercard Inc."},
-    "COST":  {"us_ticker": "COST",  "ratio": 2,   "name": "Costco Wholesale Corp."},
-    "XOM":   {"us_ticker": "XOM",   "ratio": 2,   "name": "ExxonMobil Corp."},
-    "CVX":   {"us_ticker": "CVX",   "ratio": 2,   "name": "Chevron Corp."},
-    "JNJ":   {"us_ticker": "JNJ",   "ratio": 2,   "name": "Johnson & Johnson"},
-    "ABBV":  {"us_ticker": "ABBV",  "ratio": 2,   "name": "AbbVie Inc."},
-    "UNH":   {"us_ticker": "UNH",   "ratio": 5,   "name": "UnitedHealth Group Inc."},
+    "AAPL":  {"us_ticker": "AAPL",  "ratio": 20,  "name": "Apple Inc."},
+    "MSFT":  {"us_ticker": "MSFT",  "ratio": 29,  "name": "Microsoft Corp."},
+    "NVDA":  {"us_ticker": "NVDA",  "ratio": 23,  "name": "NVIDIA Corp."},
+    "GOOGL": {"us_ticker": "GOOGL", "ratio": 57,  "name": "Alphabet Inc."},
+    "AMZN":  {"us_ticker": "AMZN",  "ratio": 140, "name": "Amazon.com Inc."},
+    "META":  {"us_ticker": "META",  "ratio": 23,  "name": "Meta Platforms Inc."},
+    "TSLA":  {"us_ticker": "TSLA",  "ratio": 15,  "name": "Tesla Inc."},
+    "JPM":   {"us_ticker": "JPM",   "ratio": 15,  "name": "JPMorgan Chase & Co."},
+    "V":     {"us_ticker": "V",     "ratio": 18,  "name": "Visa Inc."},
+    "MA":    {"us_ticker": "MA",    "ratio": 32,  "name": "Mastercard Inc."},
+    "COST":  {"us_ticker": "COST",  "ratio": 47,  "name": "Costco Wholesale Corp."},
+    "XOM":   {"us_ticker": "XOM",   "ratio": 10,  "name": "ExxonMobil Corp."},
+    "CVX":   {"us_ticker": "CVX",   "ratio": 16,  "name": "Chevron Corp."},
+    "JNJ":   {"us_ticker": "JNJ",   "ratio": 15,  "name": "Johnson & Johnson"},
+    "ABBV":  {"us_ticker": "ABBV",  "ratio": 10,  "name": "AbbVie Inc."},
+    "UNH":   {"us_ticker": "UNH",   "ratio": 32,  "name": "UnitedHealth Group Inc."},
 }
 
 
