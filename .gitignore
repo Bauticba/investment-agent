@@ -2,5 +2,5 @@ venv/
 .env
 __pycache__/
 *.pyc
-storage/*.db
+storage/
 .DS_Store
