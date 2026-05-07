@@ -65,6 +65,17 @@ def _filter_by_horizon(instruments: list, meses: int) -> list:
     return result
 
 
+def _format_news_block(news: list | None) -> str:
+    if not news:
+        return "No se pudieron obtener noticias recientes."
+    lines = []
+    for a in news:
+        lines.append(f"- [{a['date']} — {a['source']}] {a['title']}")
+        if a.get("summary"):
+            lines.append(f"  {a['summary']}")
+    return "\n".join(lines)
+
+
 def recommend_allocation(
     capital: float,
     riesgo: str,
@@ -72,6 +83,7 @@ def recommend_allocation(
     macro: dict,
     profile: dict,
     fecha_objetivo: str | None = None,
+    news: list | None = None,
 ) -> dict:
     """
     Genera una recomendación de inversión en ARS para el capital y riesgo dados.
@@ -117,7 +129,9 @@ real (por encima de la inflación) cumpliendo el perfil de riesgo del inversor.
 - Dólar oficial: ${usd_oficial:,.0f} ARS/USD
 - UVA actual: {f'${uva:,.2f}' if uva else 'no disponible'}
 - Régimen cambiario: tipo de cambio unificado desde abril 2025 (acuerdo FMI)
-- Contexto: inflación desacelerando, crawling peg estable, riesgo soberano moderado
+
+## Noticias recientes (últimas horas — medios argentinos)
+{_format_news_block(news)}
 
 ## Universo de instrumentos disponibles (compatibles con perfil {riesgo.upper()})
 {json.dumps(relevant, ensure_ascii=False, indent=2)}

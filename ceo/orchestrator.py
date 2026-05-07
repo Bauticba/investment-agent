@@ -119,7 +119,7 @@ Tu responsabilidad es proteger el capital del inversor y generar retornos consis
 - Nombre: {fundamental.get("company_name")}
 - Sector: {fundamental.get("sector")}
 - Precio actual: ${price.get("current_price")}
-- Market cap: ${price.get("market_cap"):,}
+- Market cap: ${f"{price.get('market_cap'):,}" if price.get("market_cap") else "N/A"}
 
 ## Reportes de los sub-agentes
 ### Agente Fundamental (score: {scores["fundamental"]}/10)
@@ -230,7 +230,14 @@ if __name__ == "__main__":
     output_file = f"storage/{ticker}_analysis.json"
     with open(output_file, "w") as f:
         json.dump(result, f, indent=2, ensure_ascii=False)
-    print(f"Análisis guardado en {output_file}")
+
+    import os
+    from datetime import date as _date
+    os.makedirs("storage/history", exist_ok=True)
+    history_file = f"storage/history/{ticker}_analysis_{_date.today().isoformat()}.json"
+    with open(history_file, "w") as f:
+        json.dump(result, f, indent=2, ensure_ascii=False)
+    print(f"Análisis guardado en {output_file} | historial: {history_file}")
 
     # Enviar email con la tesis
     from notifications.email_sender import send_investment_email

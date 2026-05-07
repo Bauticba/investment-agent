@@ -10,6 +10,7 @@ sys.path.insert(0, ".")
 
 from data.argentina import get_macro_data
 from data.instruments_ar import get_instruments_universe
+from data.news_ar import get_argentina_news
 from agents.ars_advisor import recommend_allocation
 from data.cedears import get_top_cedears
 from notifications.email_sender import send_ars_recommendation_email
@@ -27,6 +28,11 @@ def run_ars(capital: float, riesgo: str = "moderado", fecha_objetivo: str | None
     macro = get_macro_data()
     _print_macro(macro)
 
+    # --- 1b. Noticias recientes ---
+    print("📰 Obteniendo noticias recientes...")
+    news = get_argentina_news(max_articles=12)
+    print(f"   {len(news)} titulares obtenidos de medios argentinos")
+
     # --- 2. Universo de instrumentos ---
     print("\n📋 Construyendo universo de instrumentos disponibles...")
     instruments = get_instruments_universe(macro)
@@ -38,7 +44,7 @@ def run_ars(capital: float, riesgo: str = "moderado", fecha_objetivo: str | None
         profile = json.load(f)
 
     print(f"\n🤖 Generando recomendación personalizada...")
-    rec = recommend_allocation(capital, riesgo, instruments, macro, profile, fecha_objetivo=fecha_objetivo)
+    rec = recommend_allocation(capital, riesgo, instruments, macro, profile, fecha_objetivo=fecha_objetivo, news=news)
 
     if "error" in rec:
         print(f"❌ Error al generar la recomendación: {rec.get('raw', '')[:200]}")
@@ -66,6 +72,7 @@ def run_ars(capital: float, riesgo: str = "moderado", fecha_objetivo: str | None
             "capital_ars":    capital,
             "riesgo":         riesgo,
             "macro":          macro,
+            "news":           news,
             "recommendation": rec,
         }, f, indent=2, ensure_ascii=False)
     print(f"💾 Guardado en {output_file}\n")

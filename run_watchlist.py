@@ -1,6 +1,8 @@
 import json
+import os
 import sys
 import time
+from datetime import date
 from ceo.orchestrator import run_analysis, print_thesis
 from notifications.email_sender import send_investment_email
 
@@ -26,7 +28,13 @@ def run_watchlist(tickers: list[str], send_email: bool = True):
             output_file = f"storage/{ticker}_analysis.json"
             with open(output_file, "w") as f:
                 json.dump(result, f, indent=2, ensure_ascii=False)
-            print(f"💾 Guardado en {output_file}")
+
+            os.makedirs("storage/history", exist_ok=True)
+            history_file = f"storage/history/{ticker}_analysis_{date.today().isoformat()}.json"
+            with open(history_file, "w") as f:
+                json.dump(result, f, indent=2, ensure_ascii=False)
+
+            print(f"💾 Guardado en {output_file} | historial: {history_file}")
 
     _print_summary(results)
 
