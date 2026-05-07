@@ -133,6 +133,7 @@ Interfaz web Streamlit. Arrancar con `streamlit run app.py`.
 - **pages/3_Mi_Portafolio.py** — lee `my_portfolio.json`, analiza acciones/bonos/CEDEARs, síntesis CEO
 - **pages/4_Invertir_ARS.py** — capital ARS + perfil riesgo, recomendación + picks de CEDEARs
 - **pages/5_Paper_Trading.py** — performance de señales históricas: win rate, P&L promedio, tabla filtrable por veredicto/fecha/estado, bar chart P&L por ticker, historial de ejecuciones por fecha
+- **pages/6_Perfil.py** — edición del perfil de inversión desde la UI: nivel de riesgo, stop/take profit, reglas fundamentales y técnicas, watchlist. Botón de restaurar defaults incluido.
 
 Todos los formularios tienen checkbox para enviar email y opción de usar cache.
 Los análisis largos (>30s) muestran `st.spinner` y barra de progreso en tiempo real.
@@ -507,7 +508,10 @@ Python 3.12 · anthropic · streamlit · yfinance · feedparser · requests · p
 | 9b | Historial de análisis por fecha | ✅ done (`storage/history/{TICKER}_analysis_{fecha}.json`) |
 | 10 | Paper trading — validar rentabilidad histórica | ✅ done (`paper_trading.py` — señales históricas vs precio actual, win rate, P&L) |
 | 11 | Alertas de precio | ✅ done (`alerts.py` — stop/target/near_stop, cron horario, email HTML) |
-| 12 | Perfil de riesgo dinámico por usuario | ⏳ pendiente |
+| 12 | Perfil de riesgo dinámico por usuario | ✅ done (`pages/6_Perfil.py` — sliders, checkboxes, watchlist, restaurar defaults) |
 
 ## Próximos pasos
-1. **Perfil de riesgo dinámico** — permitir cambiar el perfil desde la UI sin editar JSONs
+El roadmap original está completo. Posibles extensiones:
+1. **Notificaciones push / Telegram** — alertas además de email
+2. **Backtesting** — evaluar las reglas del perfil contra datos históricos
+3. **Multi-usuario** — perfiles separados por usuario en la UI
