@@ -1,6 +1,6 @@
 {
   "investor": {
-    "name": "Bautista",
+    "name": "Inversor",
     "experience_level": "beginner",
     "currency": "USD"
   },
@@ -128,7 +128,7 @@
     ]
   },
   "notification": {
-    "email": "bauticba3@gmail.com",
+    "email": "tu@email.com",
     "require_approval_before_action": true,
     "language": "spanish"
   }

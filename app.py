@@ -9,8 +9,12 @@ st.set_page_config(
     layout="wide",
 )
 
+with open("instructions/investor_profile.json") as _f:
+    _profile = __import__("json").load(_f)
+_investor_name = _profile.get("investor", {}).get("name", "")
+
 st.title("📈 Investment Agent")
-st.caption("Sistema multi-agente de análisis bursátil — Bautista")
+st.caption(f"Sistema multi-agente de análisis bursátil{f' — {_investor_name}' if _investor_name else ''}")
 
 # ── Macro ─────────────────────────────────────────────────────────────────────
 st.header("Contexto macro argentino")

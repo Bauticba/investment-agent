@@ -73,7 +73,7 @@ retorno ajustado por riesgo y cumpliendo las restricciones del inversor.
 8. Si el capital disponible no alcanza para 1 acción de un candidato, excluilo.
 
 ## Tu tarea
-Construí el portafolio óptimo para Bautista. Considerá la diversificación
+Construí el portafolio óptimo para {profile["investor"]["name"]}. Considerá la diversificación
 sectorial, la relación riesgo/retorno de cada posición y el horizonte de inversión.
 Si hay pocos candidatos con BUY, podés incluir alguno con conviction alta aunque
 el veredicto sea HOLD, pero justificalo.

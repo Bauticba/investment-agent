@@ -3,7 +3,7 @@
 ## Qué es esto
 Sistema multi-agente de análisis bursátil construido en Python.
 Cada agente usa la Claude API (claude-sonnet-4-6) como cerebro.
-El objetivo es generar tesis de inversión personalizadas para Bautista
+El objetivo es generar tesis de inversión personalizadas para el usuario
 basadas en datos reales de múltiples fuentes.
 
 ## Cómo correr
@@ -385,7 +385,7 @@ También envía el email del portafolio completo cuando se usa `portfolio.py`.
 Credenciales en `.env`: `EMAIL_USER` y `EMAIL_PASSWORD` (app password de Gmail).
 
 ### `instructions/investor_profile.json`
-Define las reglas y preferencias de Bautista:
+Define las reglas y preferencias del inversor:
 - Riesgo: moderado | stop loss 8% | take profit 20% | máx 15% por posición
 - Reglas fundamentales: P/E máx 40, crecimiento mínimo 5%, deuda/equity máx 2.0
 - Reglas técnicas: solo sobre MA200, RSI entre 30-75, confirmar volumen
