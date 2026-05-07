@@ -3,4 +3,4 @@ venv/
 __pycache__/
 *.pyc
 storage/
-.DS_Store
+.DS_Storelogs/*.log
