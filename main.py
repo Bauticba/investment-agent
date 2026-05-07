@@ -16,6 +16,9 @@ Investment Agent — punto de entrada unificado.
   python3 main.py comprar AAPL 10 185.50        # compraste 10 acciones a $185.50
   python3 main.py vender AAPL 5                 # vendiste 5 acciones de AAPL
   python3 main.py posiciones                    # muestra tu portafolio actual
+
+── Paper trading ─────────────────────────────────────────────────────────────
+  python3 main.py paper-trading                 # performance de todas las señales históricas
 """
 import argparse
 import json
@@ -130,6 +133,17 @@ def _build_parser() -> argparse.ArgumentParser:
         help="Mostrar el portafolio actual",
     )
 
+    # ── paper-trading ─────────────────────────────────────────────────────────
+    pt = sub.add_parser(
+        "paper-trading",
+        help="Ver performance de todas las señales históricas del CEO",
+    )
+    pt.add_argument(
+        "--dir", default="storage/history",
+        metavar="DIR",
+        help="Directorio con los análisis históricos (default: storage/history)",
+    )
+
     return parser
 
 
@@ -204,6 +218,11 @@ def main():
     # ── posiciones ────────────────────────────────────────────────────────────
     elif args.command == "posiciones":
         _print_positions()
+
+    # ── paper-trading ─────────────────────────────────────────────────────────
+    elif args.command == "paper-trading":
+        from paper_trading import run_paper_trading
+        run_paper_trading(args.dir)
 
     else:
         parser.print_help()

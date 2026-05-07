@@ -425,7 +425,21 @@ JSONs de cada análisis completo.
 Historial de análisis de acciones por fecha. Se crea automáticamente al correr `actualizar` o `watchlist`.
 - `{TICKER}_analysis_{fecha}.json` — snapshot del análisis de ese ticker en esa fecha
 - Nunca se sobreescribe — cada día de ejecución genera un archivo nuevo
-- Base para futuro paper trading: permite comparar predicciones vs precios reales posteriores
+- Es la fuente de datos para `paper_trading.py`
+
+### `paper_trading.py`
+Seguimiento de performance de las señales del CEO contra precios reales.
+Expone `run_paper_trading(history_dir)` — callable desde `main.py`.
+Flujo:
+1. Lee todos los `storage/history/*_analysis_*.json`
+2. Extrae por cada señal: ticker, fecha, veredicto, score, entrada, stop loss, take profit
+3. Obtiene precios actuales vía yfinance (bulk download, rápido)
+4. Calcula P&L% y status: `active`, `stop_hit`, `target_hit`, `correct` (para AVOID)
+5. Imprime tabla ordenada por veredicto (BUY → HOLD → AVOID) y dentro de cada grupo por P&L desc
+6. Resumen con win rate, P&L promedio, mejor/peor señal
+
+**Cómo correr:** `python3 main.py paper-trading`
+**Nota:** Solo tiene datos desde que se empezó a guardar `storage/history/` (2026-05-07). El historial crece automáticamente con el cron diario de las 5pm.
 
 ## Variables de entorno (`.env`)
 ```
@@ -466,8 +480,8 @@ Python 3.12 · anthropic · streamlit · yfinance · feedparser · requests · p
 | 8 | Noticias en tiempo real para ARS advisor | ✅ done (`data/news_ar.py` — Google News RSS + Ámbito, inyectadas en el prompt) |
 | 9 | Automatización diaria (cron/scheduler) | ✅ done (cron 5pm Argentina, `scripts/actualizar_diario.sh`, logs en `logs/actualizar.log`) |
 | 9b | Historial de análisis por fecha | ✅ done (`storage/history/{TICKER}_analysis_{fecha}.json`) |
-| 10 | Perfil de riesgo dinámico por usuario | ⏳ pendiente |
-| 11 | Paper trading — validar rentabilidad histórica | ⏳ pendiente |
+| 10 | Paper trading — validar rentabilidad histórica | ✅ done (`paper_trading.py` — señales históricas vs precio actual, win rate, P&L) |
+| 11 | Perfil de riesgo dinámico por usuario | ⏳ pendiente |
 | 12 | Alertas de precio | ⏳ pendiente |
 
 ## Próximos pasos
