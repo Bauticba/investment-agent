@@ -647,3 +647,88 @@ def send_portfolio_analysis_email(position_reports: list, thesis: dict, cash: di
     except Exception as e:
         print(f"❌ Error enviando email: {e}")
         return False
+
+def send_price_alert_email(alerts: list) -> bool:
+    """Email de alerta cuando un ticker toca stop loss, take profit, o se acerca al stop."""
+    email_user = os.getenv("EMAIL_USER")
+    email_pass = os.getenv("EMAIL_PASSWORD")
+    if not email_user or not email_pass:
+        print("⚠️  Email no configurado — saltando envío.")
+        return False
+
+    ALERT_META = {
+        "stop_hit":   {"label": "🚨 STOP LOSS TOCADO",      "color": "#b71c1c", "bg": "#ffebee"},
+        "near_stop":  {"label": "⚠️ CERCA DEL STOP LOSS",   "color": "#e65100", "bg": "#fff3e0"},
+        "target_hit": {"label": "✅ TAKE PROFIT ALCANZADO", "color": "#1b5e20", "bg": "#e8f5e9"},
+    }
+
+    priority = {"stop_hit": 0, "near_stop": 1, "target_hit": 2}
+    alerts   = sorted(alerts, key=lambda a: priority.get(a["alert_type"], 9))
+
+    subject_parts = [f"{a['ticker']} {ALERT_META.get(a['alert_type'],{}).get('label','?')}" for a in alerts]
+    subject = f"[Alerta] {' | '.join(subject_parts[:3])}"
+
+    rows_html = ""
+    for a in alerts:
+        meta        = ALERT_META.get(a["alert_type"], {"label": a["alert_type"], "color": "#555", "bg": "#fff"})
+        pnl         = a.get("pnl_pct", 0)
+        pnl_col     = "#2e7d32" if pnl >= 0 else "#c62828"
+        dist_stop   = (a["current"] - a["stop"])   / a["stop"]   * 100
+        dist_target = (a["target"] - a["current"]) / a["current"] * 100
+        rows_html += f"""
+        <div style="margin-bottom:16px;border-radius:8px;overflow:hidden;border:1px solid #ddd">
+          <div style="background:{meta['color']};color:white;padding:12px 16px">
+            <b style="font-size:18px">{a['ticker']}</b>&nbsp;&nbsp;
+            <span style="font-size:14px">{meta['label']}</span>
+          </div>
+          <div style="background:{meta['bg']};padding:14px 16px">
+            <table style="width:100%;font-size:14px">
+              <tr><td style="padding:4px 0;color:#555">Precio actual</td>
+                  <td style="text-align:right;font-weight:bold;font-size:16px">${a['current']:,.2f}</td></tr>
+              <tr><td style="padding:4px 0;color:#555">Entrada (análisis)</td>
+                  <td style="text-align:right">${a['entry']:,.2f}</td></tr>
+              <tr><td style="padding:4px 0;color:#555">P&amp;L desde análisis</td>
+                  <td style="text-align:right;color:{pnl_col};font-weight:bold">{pnl:+.1f}%</td></tr>
+              <tr><td colspan="2"><hr style="border:none;border-top:1px solid #ddd;margin:6px 0"></td></tr>
+              <tr><td style="padding:4px 0;color:#c62828">🛑 Stop Loss</td>
+                  <td style="text-align:right;color:#c62828">${a['stop']:,.2f}
+                    <span style="font-size:12px;color:#888">({dist_stop:+.1f}% desde actual)</span></td></tr>
+              <tr><td style="padding:4px 0;color:#2e7d32">🎯 Take Profit</td>
+                  <td style="text-align:right;color:#2e7d32">${a['target']:,.2f}
+                    <span style="font-size:12px;color:#888">({dist_target:+.1f}% hasta aquí)</span></td></tr>
+              <tr><td style="padding:4px 0;color:#555">Score CEO</td>
+                  <td style="text-align:right">{a.get('score','?')}/10 — veredicto: <b>{(a.get('verdict') or '?').upper()}</b>
+                    (análisis del {a.get('analysis_date','?')})</td></tr>
+            </table>
+          </div>
+        </div>"""
+
+    html = f"""
+    <html><body style="font-family:Arial,sans-serif;max-width:620px;margin:auto;color:#222">
+    <div style="background:#1a1a2e;color:white;padding:20px 24px;border-radius:8px 8px 0 0">
+      <h1 style="margin:0;font-size:20px">📡 Alertas de Precio</h1>
+      <p style="margin:6px 0 0;opacity:0.7;font-size:13px">{len(alerts)} alerta(s) · Investment Agent</p>
+    </div>
+    <div style="padding:20px;background:white;border:1px solid #e0e0e0">{rows_html}</div>
+    <div style="padding:14px 20px;background:#f5f5f5;border:1px solid #e0e0e0;border-radius:0 0 8px 8px">
+      <p style="margin:0;font-size:12px;color:#888">
+        Alertas automáticas del Investment Agent. No constituyen asesoramiento financiero.
+      </p>
+    </div>
+    </body></html>"""
+
+    msg = MIMEMultipart("alternative")
+    msg["Subject"] = subject
+    msg["From"]    = email_user
+    msg["To"]      = email_user
+    msg.attach(MIMEText(html, "html"))
+
+    try:
+        with smtplib.SMTP_SSL("smtp.gmail.com", 465) as server:
+            server.login(email_user, email_pass)
+            server.sendmail(email_user, email_user, msg.as_string())
+        print(f"✅ Email de alertas enviado a {email_user}")
+        return True
+    except Exception as e:
+        print(f"❌ Error enviando email de alertas: {e}")
+        return False
