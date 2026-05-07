@@ -363,9 +363,18 @@ Define las reglas y preferencias de Bautista:
 - Riesgo: moderado | stop loss 8% | take profit 20% | máx 15% por posición
 - Reglas fundamentales: P/E máx 40, crecimiento mínimo 5%, deuda/equity máx 2.0
 - Reglas técnicas: solo sobre MA200, RSI entre 30-75, confirmar volumen
-- Watchlist corta: AAPL, MSFT, NVDA, GOOGL
-- Universo completo: 18 tickers en 5 sectores (technology, healthcare, finance, energy, consumer)
+- Watchlist: AAPL, MSFT, NVDA, GOOGL, META, AMZN (6 tickers)
+- Universo completo: **50 tickers en 8 sectores**:
+  - technology (12): AAPL, MSFT, NVDA, GOOGL, META, AMZN, TSLA, AMD, ORCL, CRM, ADBE, PLTR
+  - healthcare (8): JNJ, UNH, ABBV, LLY, PFE, TMO, ISRG, AMGN
+  - finance (7): JPM, V, MA, BAC, GS, AXP, BLK
+  - energy (5): XOM, CVX, COP, EOG, OXY
+  - consumer (7): COST, WMT, HD, MCD, SBUX, NKE, TGT
+  - real_estate (3): O, PLD, AMT
+  - communications (3): DIS, NFLX, CMCSA
+  - etfs (5): SPY, QQQ, GLD, XLE, XLF
 - Sectores prohibidos: gambling, tobacco, weapons
+- **ETFs**: el agente fundamental usa un prompt especializado (sin P/E/EPS — evalúa diversificación, costo, exposición sectorial)
 
 ### `invest_ars.py`
 Expone `run_ars(capital, riesgo)` — callable desde `main.py` y Streamlit.

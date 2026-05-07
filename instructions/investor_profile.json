@@ -21,7 +21,7 @@
   },
 
   "sectors": {
-    "allowed": ["technology", "healthcare", "energy", "finance", "consumer"],
+    "allowed": ["technology", "healthcare", "energy", "finance", "consumer", "real_estate", "communications", "etfs"],
     "forbidden": ["gambling", "tobacco", "weapons"]
   },
 
@@ -39,14 +39,17 @@
     "require_volume_confirmation": true
   },
 
-  "watchlist": ["AAPL", "MSFT", "NVDA", "GOOGL"],
+  "watchlist": ["AAPL", "MSFT", "NVDA", "GOOGL", "META", "AMZN"],
 
   "universe": {
-    "technology":  ["AAPL", "MSFT", "NVDA", "GOOGL", "META", "AMZN", "TSLA"],
-    "healthcare":  ["JNJ", "UNH", "ABBV"],
-    "finance":     ["JPM", "V", "MA"],
-    "energy":      ["XOM", "CVX"],
-    "consumer":    ["COST", "WMT", "HD"]
+    "technology":     ["AAPL", "MSFT", "NVDA", "GOOGL", "META", "AMZN", "TSLA", "AMD", "ORCL", "CRM", "ADBE", "PLTR"],
+    "healthcare":     ["JNJ", "UNH", "ABBV", "LLY", "PFE", "TMO", "ISRG", "AMGN"],
+    "finance":        ["JPM", "V", "MA", "BAC", "GS", "AXP", "BLK"],
+    "energy":         ["XOM", "CVX", "COP", "EOG", "OXY"],
+    "consumer":       ["COST", "WMT", "HD", "MCD", "SBUX", "NKE", "TGT"],
+    "real_estate":    ["O", "PLD", "AMT"],
+    "communications": ["DIS", "NFLX", "CMCSA"],
+    "etfs":           ["SPY", "QQQ", "GLD", "XLE", "XLF"]
   },
 
   "notification": {

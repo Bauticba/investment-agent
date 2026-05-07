@@ -15,17 +15,25 @@ def analyze_sentiment(ticker: str, stock_data: dict, investor_profile: dict) -> 
 
     news_block = _format_news(news) if news else "No hay noticias recientes disponibles."
 
+    is_etf = ticker.upper() in ("SPY", "QQQ", "GLD", "XLE", "XLF", "VTI", "IWM", "VOO") or \
+             fundamental.get("quote_type", "").upper() in ("ETF", "MUTUALFUND")
+    asset_label = "ETF/Fondo indexado" if is_etf else "Empresa"
+    etf_note = "\nNOTA: Este es un ETF — evaluá el sentimiento del mercado/sector que representa, no de una empresa individual." if is_etf else ""
+
+    market_cap = price.get("market_cap")
+    market_cap_str = f"${market_cap:,}" if market_cap else "N/A"
+
     prompt = f"""
 Sos un analista de sentimiento de mercado. Tu trabajo es evaluar el contexto
-general del mercado, la narrativa alrededor de la empresa y señales cualitativas
-que los otros agentes no capturan con números.
+general del mercado, la narrativa alrededor del activo y señales cualitativas
+que los otros agentes no capturan con números.{etf_note}
 
-## Empresa analizada
+## {asset_label} analizado
 - Ticker: {ticker}
 - Nombre: {fundamental.get("company_name")}
 - Sector: {fundamental.get("sector")} / {fundamental.get("industry")}
 - Precio actual: ${price.get("current_price")}
-- Market cap: ${price.get("market_cap"):,}
+- Market cap: {market_cap_str}
 - Descripción: {fundamental.get("description")}
 
 ## Contexto cuantitativo
