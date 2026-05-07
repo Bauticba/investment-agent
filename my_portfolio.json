@@ -4,7 +4,7 @@
     {
       "ticker": "TX26",
       "asset_type": "bono_argentino",
-      "shares": 1000,
+      "shares": 1000.0,
       "avg_buy_price": 1459.80,
       "currency": "ARS",
       "notes": ""
