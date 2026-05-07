@@ -428,6 +428,24 @@ Historial de análisis de acciones por fecha. Se crea automáticamente al correr
 - Nunca se sobreescribe — cada día de ejecución genera un archivo nuevo
 - Es la fuente de datos para `paper_trading.py`
 
+### `alerts.py`
+Sistema de alertas de precio en tiempo real.
+Expone `run_alerts()` — llamado por el cron horario.
+Flujo:
+1. Lee todos los `storage/*_analysis.json` y extrae stop_loss y take_profit del CEO
+2. Obtiene precios actuales vía yfinance (bulk download, 50 tickers en segundos)
+3. Evalúa 3 tipos de alerta por ticker:
+   - `stop_hit` — precio ≤ stop_loss 🚨
+   - `near_stop` — precio ≤ stop_loss × 1.03 (a 3% del stop) ⚠️
+   - `target_hit` — precio ≥ take_profit ✅
+4. Filtra con `storage/alerts_state.json` para no mandar la misma alerta dos veces el mismo día
+5. Envía email HTML con detalles por ticker (precio actual, P&L, distancia al stop/target)
+
+**Cron:** cada hora de 14:30 a 21:00 Argentina (17:30–00:00 UTC), Lun–Vie
+(`30 17,18,19,20,21,22,23,0 * * 1-5 scripts/check_alerts.sh`)
+**Logs:** `logs/alerts.log`
+**Estado:** `storage/alerts_state.json` — registra última alerta enviada por ticker y tipo
+
 ### `paper_trading.py`
 Seguimiento de performance de las señales del CEO contra precios reales.
 Expone `run_paper_trading(history_dir)` — callable desde `main.py`.
@@ -454,6 +472,12 @@ IOL_USERNAME        — usuario de Invertir Online (email completo, ej: usuario@
 IOL_PASSWORD        — contraseña normal de IOL (no es una app password)
 ```
 **Sin key requerida:** `data/argentina.py` usa argentinadatos.com y dolarapi.com (APIs públicas).
+
+## Crons activos
+| Schedule | Script | Qué hace |
+|----------|--------|----------|
+| `0 20 * * 1-5` (5pm AR) | `scripts/actualizar_diario.sh` | Re-analiza las acciones del portafolio |
+| `30 17-23,0 * * 1-5` (cada hora, horario mercado) | `scripts/check_alerts.sh` | Chequea stop loss y take profit de 50 tickers |
 
 ## Performance
 - **1 ticker acción**: ~55 segundos (datos + 4 agentes paralelos + CEO + email)
@@ -482,10 +506,8 @@ Python 3.12 · anthropic · streamlit · yfinance · feedparser · requests · p
 | 9 | Automatización diaria (cron/scheduler) | ✅ done (cron 5pm Argentina, `scripts/actualizar_diario.sh`, logs en `logs/actualizar.log`) |
 | 9b | Historial de análisis por fecha | ✅ done (`storage/history/{TICKER}_analysis_{fecha}.json`) |
 | 10 | Paper trading — validar rentabilidad histórica | ✅ done (`paper_trading.py` — señales históricas vs precio actual, win rate, P&L) |
-| 11 | Perfil de riesgo dinámico por usuario | ⏳ pendiente |
-| 12 | Alertas de precio | ⏳ pendiente |
+| 11 | Alertas de precio | ✅ done (`alerts.py` — stop/target/near_stop, cron horario, email HTML) |
+| 12 | Perfil de riesgo dinámico por usuario | ⏳ pendiente |
 
 ## Próximos pasos
-1. **Paper trading** — usar `storage/history/` para registrar predicciones y comparar contra precios reales al cierre (SQLite o CSV)
-2. **Perfil de riesgo dinámico** — permitir cambiar el perfil desde la UI sin editar JSONs
-3. **Alertas de precio** — notificar cuando un ticker toque stop loss o take profit
+1. **Perfil de riesgo dinámico** — permitir cambiar el perfil desde la UI sin editar JSONs
