@@ -7,7 +7,7 @@ from notifications.email_sender import send_investment_email
 DELAY_BETWEEN_TICKERS = 12  # segundos — respeta rate limit Alpha Vantage (5 req/min = 12s entre calls)
 
 
-def run_watchlist(tickers: list[str]):
+def run_watchlist(tickers: list[str], send_email: bool = True):
     results = []
 
     for i, ticker in enumerate(tickers):
@@ -20,7 +20,8 @@ def run_watchlist(tickers: list[str]):
 
         if result.get("status") == "ok":
             results.append(result)
-            send_investment_email(result)
+            if send_email:
+                send_investment_email(result)
 
             output_file = f"storage/{ticker}_analysis.json"
             with open(output_file, "w") as f:
