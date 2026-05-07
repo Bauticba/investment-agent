@@ -5,3 +5,4 @@ __pycache__/
 storage/
 .DS_Store
 logs/*.log
+my_portfolio.json
