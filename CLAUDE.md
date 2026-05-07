@@ -132,6 +132,7 @@ Interfaz web Streamlit. Arrancar con `streamlit run app.py`.
 - **pages/2_Portafolio_USD.py** — capital + checkbox cache, screening completo + allocator
 - **pages/3_Mi_Portafolio.py** — lee `my_portfolio.json`, analiza acciones/bonos/CEDEARs, síntesis CEO
 - **pages/4_Invertir_ARS.py** — capital ARS + perfil riesgo, recomendación + picks de CEDEARs
+- **pages/5_Paper_Trading.py** — performance de señales históricas: win rate, P&L promedio, tabla filtrable por veredicto/fecha/estado, bar chart P&L por ticker, historial de ejecuciones por fecha
 
 Todos los formularios tienen checkbox para enviar email y opción de usar cache.
 Los análisis largos (>30s) muestran `st.spinner` y barra de progreso en tiempo real.
