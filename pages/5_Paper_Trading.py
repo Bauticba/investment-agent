@@ -33,27 +33,28 @@ holds  = [r for r in results if r["verdict"] == "hold"  and r["pnl_pct"] is not 
 avoids = [r for r in results if r["verdict"] == "avoid" and r["pnl_pct"] is not None]
 fechas = sorted(set(r["date"] for r in results))
 
+targets_hit = sum(1 for r in buys if r["status"] == "target_hit")
+stops_hit   = sum(1 for r in buys if r["status"] == "stop_hit")
+win_rate    = targets_hit / len(buys) * 100 if buys else None
+avg_pnl     = sum(r["pnl_pct"] for r in buys) / len(buys) if buys else None
+
 m1, m2, m3, m4, m5 = st.columns(5)
 m1.metric("Señales totales", len(results), help=f"{len(fechas)} fechas distintas")
-m2.metric("Señales BUY",  len(buys))
-m3.metric("Señales HOLD", len(holds))
-m4.metric("Señales AVOID",len(avoids))
+m2.metric("Señales BUY",   len(buys))
+m3.metric("Señales HOLD",  len(holds))
+m4.metric("Señales AVOID", len(avoids))
+m5.metric("Win rate BUY",  f"{win_rate:.0f}%" if win_rate is not None else "—",
+          help="Targets alcanzados / total señales BUY")
+
+st.divider()
 
 if buys:
-    targets_hit = sum(1 for r in buys if r["status"] == "target_hit")
-    stops_hit   = sum(1 for r in buys if r["status"] == "stop_hit")
-    win_rate    = targets_hit / len(buys) * 100
-    avg_pnl     = sum(r["pnl_pct"] for r in buys) / len(buys)
-    m5.metric("Win rate BUY", f"{win_rate:.0f}%", help="Targets alcanzados / total señales BUY")
-
-    st.divider()
     c1, c2, c3, c4 = st.columns(4)
     c1.metric("P&L promedio BUY", f"{avg_pnl:+.1f}%",
               delta_color="normal" if avg_pnl >= 0 else "inverse")
     c2.metric("Targets ✅",  targets_hit)
     c3.metric("Stops ❌",    stops_hit)
     c4.metric("Activas 🟡",  sum(1 for r in buys if r["status"] == "active"))
-else:
     st.divider()
 
 # ── Filtros ───────────────────────────────────────────────────────────────────
