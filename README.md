@@ -128,6 +128,32 @@ IOL_PASSWORD=...
 
 > **Mínimo requerido:** solo `ANTHROPIC_API_KEY` para correr. yfinance funciona sin key. Las demás mejoran la calidad de los datos con fallback automático.
 
+Crear `my_portfolio.json` con tus posiciones (el archivo no se incluye en el repo):
+
+```json
+{
+  "broker": "Tu broker",
+  "positions": [
+    {
+      "ticker": "AAPL",
+      "shares": 10,
+      "avg_buy_price": 185.50,
+      "currency": "USD"
+    },
+    {
+      "ticker": "TX26",
+      "asset_type": "bono_argentino",
+      "shares": 1000,
+      "avg_buy_price": 1450.00,
+      "currency": "ARS"
+    }
+  ],
+  "cash": { "USD": 0, "ARS": 0 }
+}
+```
+
+> `asset_type` puede ser `"bono_argentino"` o `"cedear"`. Para acciones americanas omitirlo. El campo `current_price_override` es opcional — si no se completa, el precio se obtiene automáticamente vía IOL o yfinance.
+
 ---
 
 ## Automatización
