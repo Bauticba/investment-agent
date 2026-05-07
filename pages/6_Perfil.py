@@ -28,10 +28,12 @@ st.subheader("Perfil de riesgo")
 c1, c2 = st.columns(2)
 
 with c1:
+    _nivel_map = {"low": "bajo", "moderate": "moderado", "high": "alto"}
+    _nivel_actual = _nivel_map.get(rp.get("level", "moderado"), rp.get("level", "moderado"))
     nivel = st.selectbox(
         "Nivel de riesgo",
         ["bajo", "moderado", "alto"],
-        index=["bajo", "moderado", "alto"].index(rp.get("level", "moderado")),
+        index=["bajo", "moderado", "alto"].index(_nivel_actual) if _nivel_actual in ["bajo", "moderado", "alto"] else 1,
     )
     stop_loss = st.slider(
         "Stop loss %",

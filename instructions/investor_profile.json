@@ -4,54 +4,129 @@
     "experience_level": "beginner",
     "currency": "USD"
   },
-
   "risk_profile": {
-    "level": "moderate",
+    "level": "moderado",
     "max_loss_per_trade_pct": 5,
     "max_portfolio_allocation_per_stock_pct": 15,
     "stop_loss_pct": 8,
     "take_profit_pct": 20
   },
-
   "investment_style": {
-    "horizons": ["swing_trade", "long_term"],
-    "preferred_markets": ["US_equities"],
+    "horizons": [
+      "swing_trade",
+      "long_term"
+    ],
+    "preferred_markets": [
+      "US_equities"
+    ],
     "min_market_cap_usd": 1000000000,
     "min_avg_daily_volume": 500000
   },
-
   "sectors": {
-    "allowed": ["technology", "healthcare", "energy", "finance", "consumer", "real_estate", "communications", "etfs"],
-    "forbidden": ["gambling", "tobacco", "weapons"]
+    "allowed": [
+      "technology",
+      "healthcare",
+      "energy",
+      "finance",
+      "consumer",
+      "real_estate",
+      "communications",
+      "etfs"
+    ],
+    "forbidden": [
+      "gambling",
+      "tobacco",
+      "weapons"
+    ]
   },
-
   "fundamental_rules": {
     "max_pe_ratio": 40,
     "min_revenue_growth_pct": 5,
     "max_debt_to_equity": 2.0,
     "min_current_ratio": 1.0
   },
-
   "technical_rules": {
     "only_above_200_day_ma": true,
     "min_rsi": 30,
     "max_rsi": 75,
     "require_volume_confirmation": true
   },
-
-  "watchlist": ["AAPL", "MSFT", "NVDA", "GOOGL", "META", "AMZN"],
-
+  "watchlist": [
+    "AAPL",
+    "MSFT",
+    "NVDA",
+    "GOOGL",
+    "META",
+    "AMZN"
+  ],
   "universe": {
-    "technology":     ["AAPL", "MSFT", "NVDA", "GOOGL", "META", "AMZN", "TSLA", "AMD", "ORCL", "CRM", "ADBE", "PLTR"],
-    "healthcare":     ["JNJ", "UNH", "ABBV", "LLY", "PFE", "TMO", "ISRG", "AMGN"],
-    "finance":        ["JPM", "V", "MA", "BAC", "GS", "AXP", "BLK"],
-    "energy":         ["XOM", "CVX", "COP", "EOG", "OXY"],
-    "consumer":       ["COST", "WMT", "HD", "MCD", "SBUX", "NKE", "TGT"],
-    "real_estate":    ["O", "PLD", "AMT"],
-    "communications": ["DIS", "NFLX", "CMCSA"],
-    "etfs":           ["SPY", "QQQ", "GLD", "XLE", "XLF"]
+    "technology": [
+      "AAPL",
+      "MSFT",
+      "NVDA",
+      "GOOGL",
+      "META",
+      "AMZN",
+      "TSLA",
+      "AMD",
+      "ORCL",
+      "CRM",
+      "ADBE",
+      "PLTR"
+    ],
+    "healthcare": [
+      "JNJ",
+      "UNH",
+      "ABBV",
+      "LLY",
+      "PFE",
+      "TMO",
+      "ISRG",
+      "AMGN"
+    ],
+    "finance": [
+      "JPM",
+      "V",
+      "MA",
+      "BAC",
+      "GS",
+      "AXP",
+      "BLK"
+    ],
+    "energy": [
+      "XOM",
+      "CVX",
+      "COP",
+      "EOG",
+      "OXY"
+    ],
+    "consumer": [
+      "COST",
+      "WMT",
+      "HD",
+      "MCD",
+      "SBUX",
+      "NKE",
+      "TGT"
+    ],
+    "real_estate": [
+      "O",
+      "PLD",
+      "AMT"
+    ],
+    "communications": [
+      "DIS",
+      "NFLX",
+      "CMCSA"
+    ],
+    "etfs": [
+      "SPY",
+      "QQQ",
+      "GLD",
+      "XLE",
+      "XLF"
+    ]
   },
-
   "notification": {
     "email": "bauticba3@gmail.com",
     "require_approval_before_action": true,
