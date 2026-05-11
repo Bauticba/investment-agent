@@ -1,7 +1,7 @@
 {
   "investor": {
     "name": "Inversor",
-    "experience_level": "beginner",
+    "experience_level": "intermediate",
     "currency": "USD"
   },
   "risk_profile": {
@@ -33,11 +33,7 @@
       "communications",
       "etfs"
     ],
-    "forbidden": [
-      "gambling",
-      "tobacco",
-      "weapons"
-    ]
+    "forbidden": []
   },
   "fundamental_rules": {
     "max_pe_ratio": 40,
@@ -72,7 +68,14 @@
       "ORCL",
       "CRM",
       "ADBE",
-      "PLTR"
+      "PLTR",
+      "BABA",
+      "BIDU",
+      "NIO",
+      "TSM",
+      "SONY",
+      "INFY",
+      "SE"
     ],
     "healthcare": [
       "JNJ",
@@ -91,14 +94,25 @@
       "BAC",
       "GS",
       "AXP",
-      "BLK"
+      "BLK",
+      "NU",
+      "GGAL"
     ],
     "energy": [
       "XOM",
       "CVX",
       "COP",
       "EOG",
-      "OXY"
+      "OXY",
+      "VALE",
+      "PAM",
+      "SLB",
+      "HAL",
+      "PBR",
+      "TTE",
+      "PAAS",
+      "GOLD",
+      "HMY"
     ],
     "consumer": [
       "COST",
@@ -107,7 +121,10 @@
       "MCD",
       "SBUX",
       "NKE",
-      "TGT"
+      "TGT",
+      "MO",
+      "JD",
+      "MELI"
     ],
     "real_estate": [
       "O",
@@ -117,14 +134,19 @@
     "communications": [
       "DIS",
       "NFLX",
-      "CMCSA"
+      "CMCSA",
+      "T"
     ],
     "etfs": [
       "SPY",
       "QQQ",
       "GLD",
       "XLE",
-      "XLF"
+      "XLF",
+      "IWM",
+      "DIA",
+      "EEM",
+      "EWZ"
     ]
   },
   "notification": {

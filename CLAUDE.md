@@ -386,20 +386,21 @@ Credenciales en `.env`: `EMAIL_USER` y `EMAIL_PASSWORD` (app password de Gmail).
 
 ### `instructions/investor_profile.json`
 Define las reglas y preferencias del inversor:
+- Experiencia: **intermediate**
 - Riesgo: moderado | stop loss 8% | take profit 20% | máx 15% por posición
 - Reglas fundamentales: P/E máx 40, crecimiento mínimo 5%, deuda/equity máx 2.0
 - Reglas técnicas: solo sobre MA200, RSI entre 30-75, confirmar volumen
 - Watchlist: AAPL, MSFT, NVDA, GOOGL, META, AMZN (6 tickers)
-- Universo completo: **50 tickers en 8 sectores**:
-  - technology (12): AAPL, MSFT, NVDA, GOOGL, META, AMZN, TSLA, AMD, ORCL, CRM, ADBE, PLTR
+- Universo completo: **76 tickers en 8 sectores**:
+  - technology (19): AAPL, MSFT, NVDA, GOOGL, META, AMZN, TSLA, AMD, ORCL, CRM, ADBE, PLTR, BABA, BIDU, NIO, TSM, SONY, INFY, SE
   - healthcare (8): JNJ, UNH, ABBV, LLY, PFE, TMO, ISRG, AMGN
-  - finance (7): JPM, V, MA, BAC, GS, AXP, BLK
-  - energy (5): XOM, CVX, COP, EOG, OXY
-  - consumer (7): COST, WMT, HD, MCD, SBUX, NKE, TGT
+  - finance (9): JPM, V, MA, BAC, GS, AXP, BLK, NU, GGAL
+  - energy (14): XOM, CVX, COP, EOG, OXY, VALE, PAM, SLB, HAL, PBR, TTE, PAAS, GOLD, HMY
+  - consumer (10): COST, WMT, HD, MCD, SBUX, NKE, TGT, MO, JD, MELI
   - real_estate (3): O, PLD, AMT
-  - communications (3): DIS, NFLX, CMCSA
-  - etfs (5): SPY, QQQ, GLD, XLE, XLF
-- Sectores prohibidos: gambling, tobacco, weapons
+  - communications (4): DIS, NFLX, CMCSA, T
+  - etfs (9): SPY, QQQ, GLD, XLE, XLF, IWM, DIA, EEM, EWZ
+- Sectores prohibidos: ninguno
 - **ETFs**: el agente fundamental usa un prompt especializado (sin P/E/EPS — evalúa diversificación, costo, exposición sectorial)
 
 ### `invest_ars.py`
@@ -418,7 +419,7 @@ Flags CLI: `--capital` (requerido, ARS), `--riesgo` (bajo/moderado/alto, default
 
 ### `storage/`
 JSONs de cada análisis completo.
-- `{TICKER}_analysis.json` — análisis de acciones más reciente (50 tickers, se sobreescribe en cada `actualizar`)
+- `{TICKER}_analysis.json` — análisis de acciones más reciente (76 tickers, se sobreescribe en cada `actualizar`)
 - `portfolio_{fecha}.json` — portafolio óptimo generado por `portfolio.py`
 - `portfolio_analysis_{fecha}.json` — análisis del portafolio propio (`analyze_portfolio.py`)
 - `inversion_ars_{fecha}.json` — recomendación en ARS; incluye campos `macro`, `news` y `recommendation`
@@ -478,12 +479,12 @@ IOL_PASSWORD        — contraseña normal de IOL (no es una app password)
 | Schedule | Script | Qué hace |
 |----------|--------|----------|
 | `0 20 * * 1-5` (5pm AR) | `scripts/actualizar_diario.sh` | Re-analiza las acciones del portafolio |
-| `30 17-23,0 * * 1-5` (cada hora, horario mercado) | `scripts/check_alerts.sh` | Chequea stop loss y take profit de 50 tickers |
+| `30 17-23,0 * * 1-5` (cada hora, horario mercado) | `scripts/check_alerts.sh` | Chequea stop loss y take profit de 76 tickers |
 
 ## Performance
 - **1 ticker acción**: ~55 segundos (datos + 4 agentes paralelos + CEO + email)
 - **Watchlist (4 tickers)**: ~4-5 minutos
-- **Universo completo (18 tickers)**: ~20 minutos frescos / ~15 segundos con `--cache`
+- **Universo completo (76 tickers)**: ~90 minutos frescos / ~15 segundos con `--cache`
 - **Portafolio propio (bonos/CEDEARs)**: ~15 segundos (IOL provee precios automáticamente)
 - **Recomendación ARS**: ~20 segundos (macro + Claude advisor)
 - **Interfaz Streamlit**: muestra progreso en tiempo real con `st.spinner` y barra de progreso
