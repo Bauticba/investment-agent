@@ -112,7 +112,7 @@ python3 ceo/orchestrator.py AAPL              # analizar un solo ticker
                     │
                     ▼
           Tabla de asignación + instrucciones
-          de ejecución en Bull Market
+          de ejecución en IOL (Invertir Online)
                     │
                     ▼
           storage/inversion_ars_{fecha}.json  ← incluye campo "news"

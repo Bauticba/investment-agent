@@ -28,7 +28,7 @@ def analyze_bond_position(position: dict, bond_data: dict, investor_profile: dic
             "rationale":       (
                 "No se pudo obtener el precio de mercado automáticamente. "
                 "Agregá el precio actual en my_portfolio.json con el campo "
-                "\"current_price_override\" (el precio lo encontrás en la app de Bull Market)."
+                "\"current_price_override\" (el precio lo encontrás en la app de IOL)."
             ),
             "key_alert":       "Precio no disponible — completar manualmente",
             "shares":          shares,
@@ -61,7 +61,7 @@ ajustados por inflación (CER/UVA) para inversores minoristas argentinos.
 - Nombre: {investor_profile["investor"]["name"]}
 - Experiencia: {investor_profile["investor"]["experience_level"]}
 - Riesgo: {investor_profile["risk_profile"]["level"]}
-- Contexto: inversor argentino en pesos, usa Bull Market Brokers
+- Contexto: inversor argentino en pesos, usa Invertir Online (IOL)
 
 ## Posición: {ticker} — {bond_data.get("name", ticker)}
 - Tipo: Bono soberano argentino ajustado por {adjusts_by}

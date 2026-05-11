@@ -42,7 +42,7 @@ MERVAL_STOCKS = {
 
 def get_instruments_universe(macro: dict = None) -> list[dict]:
     """
-    Devuelve el universo completo de instrumentos en ARS/USD disponibles en Bull Market,
+    Devuelve el universo completo de instrumentos en ARS/USD disponibles en IOL (Invertir Online),
     con características actualizadas al contexto macro del momento.
     """
     if macro is None:
@@ -82,8 +82,8 @@ def get_instruments_universe(macro: dict = None) -> list[dict]:
             "bank_risk":          False,
             "risk_level":         risk,
             "recommended_for":    recommended,
-            "how_to_buy":         f"Bull Market > Cotizaciones > Bonos > {ticker} > Comprar",
-            "notes":              "Capital ajustado diariamente por CER. Precio ingresarlo desde Bull Market.",
+            "how_to_buy":         f"IOL > Operar > Renta Fija > Bonos > buscar {ticker} > Comprar",
+            "notes":              "Capital ajustado diariamente por CER. Precio visible en IOL.",
         })
 
     # ─── LECAP (Letras del Tesoro a tasa fija) ────────────────────────────────
@@ -103,7 +103,7 @@ def get_instruments_universe(macro: dict = None) -> list[dict]:
         "bank_risk":          False,
         "risk_level":         "bajo-medio (riesgo si inflación supera la tasa fija)",
         "recommended_for":    ["bajo", "moderado"],
-        "how_to_buy":         "Bull Market > Cotizaciones > Letras > LECAP > Comprar (serie con mayor volumen operado)",
+        "how_to_buy":         "IOL > Operar > Renta Fija > Letras > buscar LECAP > Comprar (elegir serie con mayor volumen operado)",
         "notes":              f"No ajusta por CER. Si inflación mensual supera {(tna_pf+10)/12:.1f}%/mes, pierde en términos reales. Ideal cuando se espera desinflación.",
     })
 
@@ -124,7 +124,7 @@ def get_instruments_universe(macro: dict = None) -> list[dict]:
         "bank_risk":          False,
         "risk_level":         "bajo-medio",
         "recommended_for":    ["bajo", "moderado"],
-        "how_to_buy":         "Bull Market > Cotizaciones > Letras > LECER > Comprar",
+        "how_to_buy":         "IOL > Operar > Renta Fija > Letras > buscar LECER > Comprar",
         "notes":              "Equivalente a un bono CER de muy corto plazo. Menos volatilidad de precio que TX26/TX28 por su duration menor.",
     })
 
@@ -146,7 +146,7 @@ def get_instruments_universe(macro: dict = None) -> list[dict]:
         "bank_risk":          False,
         "risk_level":         "muy bajo (garantía: cartera de valores del prestatario)",
         "recommended_for":    ["bajo", "moderado", "alto"],
-        "how_to_buy":         "Bull Market > Cauciones > Colocar > elegir plazo 1 o 7 días > confirmar monto",
+        "how_to_buy":         "IOL > Operar > Cauciones > Colocar > elegir plazo 1 o 7 días > confirmar monto",
         "notes":              "Equivalente a un préstamo garantizado con títulos bursátiles. Sin riesgo crediticio directo. Ideal para liquidez de cortísimo plazo con rendimiento superior al FCI MM.",
     })
 
@@ -167,7 +167,7 @@ def get_instruments_universe(macro: dict = None) -> list[dict]:
         "bank_risk":          True,
         "risk_level":         "bajo",
         "recommended_for":    ["bajo", "moderado"],
-        "how_to_buy":         "Bull Market > Ahorro > Plazo Fijo > UVA > Simular y confirmar",
+        "how_to_buy":         "IOL > Operar > Plazo Fijo > UVA > Simular y confirmar",
         "notes":              f"Garantizado por SEDESA hasta $6M ARS. UVA actual: ${uva:,.2f}. Sin riesgo precio." if uva else "Garantizado por SEDESA hasta $6M ARS.",
     })
 
@@ -188,7 +188,7 @@ def get_instruments_universe(macro: dict = None) -> list[dict]:
         "bank_risk":          True,
         "risk_level":         "bajo-medio (riesgo inflacionario real)",
         "recommended_for":    ["bajo"],
-        "how_to_buy":         "Bull Market > Ahorro > Plazo Fijo > Tradicional",
+        "how_to_buy":         "IOL > Operar > Plazo Fijo > Tradicional",
         "notes":              f"Solo conveniente si inflación baja de {tna_pf/12:.1f}%/mes. Actualmente inflación = {inflation_monthly:.1f}%/mes → el PF tradicional PIERDE en términos reales.",
     })
 
@@ -210,7 +210,7 @@ def get_instruments_universe(macro: dict = None) -> list[dict]:
         "bank_risk":          False,
         "risk_level":         "muy bajo en términos reales (cobertura total vs devaluación)",
         "recommended_for":    ["moderado", "alto"],
-        "how_to_buy":         "Bull Market > Dólar MEP: comprar AL30 con pesos, esperar 24hs hábiles (parking CNV), vender AL30D por dólares",
+        "how_to_buy":         "IOL > Operar > Dólar MEP > comprar AL30 con pesos, esperar 24hs hábiles (parking CNV), vender AL30D por dólares",
         "notes":              "No tributa bienes personales si se mantiene como USD. Requiere 1 día hábil de parking obligatorio.",
     })
 
@@ -238,7 +238,7 @@ def get_instruments_universe(macro: dict = None) -> list[dict]:
             "bank_risk":          False,
             "risk_level":         risk_level,
             "recommended_for":    recommended,
-            "how_to_buy":         f"Bull Market > Cotizaciones > Bonos > {ticker} > Comprar (precio en USD, se paga en ARS al tipo de cambio MEP implícito)",
+            "how_to_buy":         f"IOL > Operar > Renta Fija > Bonos > buscar {ticker} > Comprar (precio en USD, liquidación en ARS al tipo de cambio MEP implícito)",
             "notes":              "Riesgo soberano argentino. Precio en USD. Permite dolarización dentro del sistema financiero local. Históricamente alta volatilidad ante eventos políticos.",
         })
 
@@ -264,7 +264,7 @@ def get_instruments_universe(macro: dict = None) -> list[dict]:
             "bank_risk":          False,
             "risk_level":         "medio (riesgo corporativo argentino, sin riesgo soberano directo)",
             "recommended_for":    ["moderado", "alto"],
-            "how_to_buy":         f"Bull Market > Cotizaciones > Obligaciones Negociables > {ticker} > Comprar",
+            "how_to_buy":         f"IOL > Operar > Renta Fija > ONs > buscar {ticker} > Comprar",
             "notes":              f"Emisor: {meta['issuer']}. Rating: {meta['rating']}. USD hard. Menor riesgo que soberanos pero menor liquidez. Cupones pagados en USD o ARS al tipo de cambio.",
         })
 
@@ -285,7 +285,7 @@ def get_instruments_universe(macro: dict = None) -> list[dict]:
         "bank_risk":          False,
         "risk_level":         "muy bajo",
         "recommended_for":    ["bajo", "moderado", "alto"],
-        "how_to_buy":         "Bull Market > Fondos > Fondo Money Market > Suscribir",
+        "how_to_buy":         "IOL > Operar > Fondos > Money Market > Suscribir (ej: IOL Money Market, Balanz Ahorro)",
         "notes":              "Ideal para la reserva de liquidez. Rinde más que caja de ahorro. Sin plazo mínimo.",
     })
 
@@ -306,7 +306,7 @@ def get_instruments_universe(macro: dict = None) -> list[dict]:
         "bank_risk":          False,
         "risk_level":         "bajo-medio",
         "recommended_for":    ["bajo", "moderado"],
-        "how_to_buy":         "Bull Market > Fondos > Renta Fija en Pesos > Suscribir (ej: Balanz Renta Fija, SBS Renta Pesos)",
+        "how_to_buy":         "IOL > Operar > Fondos > Renta Fija > Suscribir (ej: Balanz Renta Fija, SBS Renta Pesos)",
         "notes":              "Invierte en bonos CER cortos, LECAPs y cauciones. Más rendimiento que MM a cambio de algo de volatilidad en el NAV. Buena opción para liquidez de mediano plazo.",
     })
 
@@ -327,7 +327,7 @@ def get_instruments_universe(macro: dict = None) -> list[dict]:
         "bank_risk":          False,
         "risk_level":         "medio (cubre devaluación pero no garantiza retorno real)",
         "recommended_for":    ["moderado", "alto"],
-        "how_to_buy":         "Bull Market > Fondos > Dólar Linked > Suscribir (ej: Balanz Dólar Linked, SBS Dólar)",
+        "how_to_buy":         "IOL > Operar > Fondos > Dólar Linked > Suscribir (ej: Balanz Dólar Linked, SBS Dólar)",
         "notes":              "Sigue al tipo de cambio oficial, no al MEP. Conveniente si se espera devaluación del oficial. En contexto de crawling peg estable, puede perder vs CER.",
     })
 
@@ -348,7 +348,7 @@ def get_instruments_universe(macro: dict = None) -> list[dict]:
         "bank_risk":          False,
         "risk_level":         "alto",
         "recommended_for":    ["alto"],
-        "how_to_buy":         "Bull Market > Fondos > Renta Variable > Suscribir (ej: Balanz Capital, Santander Acciones)",
+        "how_to_buy":         "IOL > Operar > Fondos > Renta Variable > Suscribir (ej: Balanz Capital, Santander Acciones)",
         "notes":              "Exposición diversificada al MERVAL (GGAL, YPFD, BMA, PAMP, TXAR, etc.). Horizonte mínimo 12–24 meses. No recomendado para capital que pueda necesitarse en el corto plazo.",
     })
 
@@ -369,7 +369,7 @@ def get_instruments_universe(macro: dict = None) -> list[dict]:
         "bank_risk":          False,
         "risk_level":         "alto",
         "recommended_for":    ["alto"],
-        "how_to_buy":         "Bull Market > Cotizaciones > Acciones > [TICKER] > Comprar. Principales: GGAL (bancos), YPFD (energía), BMA (banco), PAMP (energía), TXAR (industria).",
+        "how_to_buy":         "IOL > Operar > Acciones > buscar [TICKER] > Comprar. Principales: GGAL (bancos), YPFD (energía), BMA (banco), PAMP (energía), TXAR (industria).",
         "notes":              "Empresas argentinas listadas en BYMA. Muy alta volatilidad vs acciones USA. Se ven afectadas por riesgo político, fiscal y cambiario local. Recomendado solo para perfil ALTO con horizonte 12–24 meses. Stocks destacados: GGAL, YPFD, BMA, PAMP, TXAR, TECO2.",
     })
 
@@ -390,7 +390,7 @@ def get_instruments_universe(macro: dict = None) -> list[dict]:
         "bank_risk":          False,
         "risk_level":         "medio-alto (volatilidad equity + tipo de cambio)",
         "recommended_for":    ["moderado", "alto"],
-        "how_to_buy":         "Bull Market > Cotizaciones > CEDEARs > [TICKER] > Comprar",
+        "how_to_buy":         "IOL > Operar > CEDEARs > buscar [TICKER] > Comprar",
         "notes":              "Exposición en USD sin salir del sistema en pesos. Este sistema analiza: AAPL, MSFT, NVDA, GOOGL, META, AMZN, JPM, TSLA, V, MA, COST, XOM, CVX, JNJ, ABBV, UNH. Usar los análisis cacheados para elegir cuál comprar.",
     })
 

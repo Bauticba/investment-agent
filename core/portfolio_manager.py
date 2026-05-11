@@ -8,7 +8,7 @@ from datetime import date
 PORTFOLIO_FILE = "my_portfolio.json"
 
 _DEFAULTS = {
-    "broker": "Bull Market Brokers",
+    "broker": "Invertir Online (IOL)",
     "positions": [],
     "cash": {"USD": 0, "ARS": 0},
 }

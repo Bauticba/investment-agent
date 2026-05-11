@@ -5,7 +5,7 @@ from data.argentina import get_macro_data
 
 # Ratio = cantidad de CEDEARs necesarios para equivaler a 1 acción del subyacente USA.
 # Precio paridad ARS = precio_USD / ratio × CCL
-# Fuente: BYMA / Bull Market. Verificar periódicamente ante splits o cambios corporativos.
+# Fuente: BYMA / IOL. Verificar periódicamente ante splits o cambios corporativos.
 # Ratios verificados contra precios reales IOL + yfinance (mayo 2026).
 # ratio = cantidad de CEDEARs necesarios para equivaler a 1 acción del subyacente USA.
 # Verificar ante splits o cambios corporativos usando: precio_USA × CCL / precio_CEDEAR_ARS
@@ -130,7 +130,7 @@ def get_top_cedears(max_count: int = 3, min_score: float = 6.0) -> list[dict]:
             "parity_price_ars": parity,
             "analysis_date":    analysis.get("date"),
             "thesis":           ceo.get("thesis", "")[:200],
-            "how_to_buy":       f"Bull Market > Cotizaciones > CEDEARs > {ticker} > Comprar",
+            "how_to_buy":       f"IOL > Operar > CEDEARs > buscar {ticker} > Comprar",
         })
 
     picks.sort(key=lambda x: x.get("score", 0), reverse=True)

@@ -113,7 +113,7 @@ real (por encima de la inflación) cumpliendo el perfil de riesgo del inversor.
 - Experiencia: {profile["investor"]["experience_level"]}
 - Riesgo solicitado: {riesgo.upper()}
 - Descripción del riesgo: {riesgo_desc}
-- Broker: Bull Market Brokers (Argentina)
+- Broker: Invertir Online — IOL (Argentina)
 
 ## Capital a invertir
 - Monto: ${capital:,.0f} ARS
@@ -186,7 +186,7 @@ Respondé ÚNICAMENTE con JSON válido, sin texto adicional:
       "allocation_pct": <número, porcentaje del capital>,
       "amount_ars": <monto en ARS, entero>,
       "rationale": "1–2 oraciones justificando esta posición en el contexto macro actual",
-      "how_to_buy": "instrucciones exactas de cómo comprar en Bull Market"
+      "how_to_buy": "instrucciones exactas de cómo comprar en IOL (Invertir Online)"
     }}
   ],
   "inflation_coverage_pct": <% del portafolio con cobertura inflacionaria real (CER/UVA/LECER)>,

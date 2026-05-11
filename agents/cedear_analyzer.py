@@ -28,7 +28,7 @@ def analyze_cedear_position(position: dict, cedear_data: dict, investor_profile:
             "rationale":         (
                 "No se pudo obtener el precio de mercado del CEDEAR automáticamente. "
                 "Agregá el precio actual en ARS en my_portfolio.json con el campo "
-                "\"current_price_override\" (lo encontrás en la app de Bull Market)."
+                "\"current_price_override\" (lo encontrás en la app de IOL)."
             ),
             "key_alert":         "Precio no disponible — completar manualmente",
             "shares":            shares,
@@ -65,14 +65,14 @@ def analyze_cedear_position(position: dict, cedear_data: dict, investor_profile:
 
     prompt = f"""
 Sos un analista especializado en CEDEARs argentinos. Los CEDEARs son certificados que
-replican acciones extranjeras que cotizan en pesos en BYMA. El inversor tiene en Bull
-Market Brokers una posición en {ticker} (CEDEAR).
+replican acciones extranjeras que cotizan en pesos en BYMA. El inversor tiene en IOL (Invertir Online)
+una posición en {ticker} (CEDEAR).
 
 ## Perfil del inversor
 - Nombre: {investor_profile["investor"]["name"]}
 - Experiencia: {investor_profile["investor"]["experience_level"]}
 - Riesgo: {investor_profile["risk_profile"]["level"]}
-- Broker: Bull Market Brokers (Argentina)
+- Broker: Invertir Online — IOL (Argentina)
 
 ## Posición: CEDEAR {ticker} — {cedear_data.get("name", ticker)}
 - Ratio de conversión: {ratio} CEDEARs = 1 acción en USA
@@ -107,7 +107,7 @@ Analizá la posición considerando:
 2. **Premium/Discount vs paridad**: si cotiza muy por encima de la paridad teórica, el CEDEAR puede estar caro en términos relativos
 3. **CCL implícito**: compará el CCL implícito en el CEDEAR vs el CCL oficial; históricamente el CEDEAR tenía premium por ser una forma de dolarizarse, hoy con el mercado unificado la brecha tiende a 0
 4. **Fundamentales del subyacente**: si el score CEO del subyacente en USD es alto, eso apoya mantener/agregar; si es bajo, reconsiderar
-5. **Perfil del inversor**: moderado, principiante. La recomendación debe ser clara y accionable en Bull Market
+5. **Perfil del inversor**: moderado, principiante. La recomendación debe ser clara y accionable en IOL
 
 Respondé ÚNICAMENTE con JSON válido, sin texto adicional:
 
