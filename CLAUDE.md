@@ -516,3 +516,81 @@ El roadmap original está completo. Posibles extensiones:
 1. **Notificaciones push / Telegram** — alertas además de email
 2. **Backtesting** — evaluar las reglas del perfil contra datos históricos
 3. **Multi-usuario** — perfiles separados por usuario en la UI
+
+---
+
+## Plan: Migración a sistema Argentina-focused
+
+**Motivación:** El sistema actual tiene dos mundos separados (análisis USA en USD y recomendaciones ARS) que no se integran bien. El usuario opera en IOL (Invertir Online) en ARS — nunca compra acciones directamente en NYSE. El objetivo es hacer del pipeline de análisis USA el *motor interno* que informa qué CEDEARs comprar, y unificar toda la salida en ARS con instrucciones de IOL.
+
+**Lo que NO cambia:** el pipeline de análisis USA (fetcher + 4 agentes + CEO orchestrator) se mantiene como motor de inteligencia para determinar qué CEDEARs son buenos. Solo cambia que su output alimenta recomendaciones en ARS en lugar de un portafolio USD.
+
+### Fase 1 — MERVAL como asset class real
+*Archivos nuevos, sin romper nada existente.*
+
+**`data/merval.py`** (crear)
+- Lista de acciones MERVAL con tickers IOL: GGAL, YPFD, BMA, PAMP, TXAR, TECO2, BBAR, MIRG, ALUA, LOMA
+- `get_merval_data(ticker)` → precio ARS vía IOL + indicadores básicos (52w high/low, volumen, variación)
+- Reutilizar `get_macro_data()` de `data/argentina.py` para contexto macro
+
+**`agents/merval_analyzer.py`** (crear)
+- Analiza acción argentina: valuación en ARS, relación con dólar implícito, contexto macro local
+- Reglas distintas a acciones USA: no aplica MA200 en USD, evalúa en términos de dólar CCL y cobertura inflacionaria
+- Devuelve: `action`, `score/10`, `rationale`, `how_to_buy` (instrucciones IOL exactas)
+
+### Fase 2 — Integración profunda CEDEAR ↔ análisis USA
+*Modifica archivos existentes sin cambiar la interfaz externa.*
+
+**`agents/ars_advisor.py`** (modificar)
+- Hoy recibe solo el `ceo_score` (número). Pasar la **tesis completa**: pros, contras, stop_loss, take_profit, thesis
+- El advisor genera recomendaciones de CEDEARs con fundamento real en ARS
+- Agregar MERVAL como categoría de instrumento con picks concretos
+
+**`data/instruments_ar.py`** (modificar)
+- Agregar sección MERVAL con los 10 tickers y sus características (liquidez, riesgo, cómo comprar en IOL)
+- Si hay CEDEARs con score ≥ 7, incluirlos como picks específicos con nombre, ratio, precio paridad y precio IOL
+
+**`data/cedears.py`** (modificar)
+- Expandir `CEDEAR_REGISTRY` de 16 a ~25 tickers (agregar AMD, TSLA, COP, COST, WMT, etc.)
+- Verificar ratios con fórmula: `ratio = us_price_USD × CCL / market_price_ARS`
+
+### Fase 3 — Comando unificado en ARS
+*El cambio más visible para el usuario.*
+
+**`invest_ars.py`** (modificar)
+- Antes de llamar al advisor: correr `get_top_cedears()` Y nuevo `get_top_merval()`
+- El advisor recibe: macro + noticias + instrumentos + **análisis completo de mejores CEDEARs** + **análisis MERVAL**
+- Output: una sola tabla en ARS con todo mezclado (CEDEARs, MERVAL, bonos, cash) + instrucciones IOL
+
+**`main.py`** (modificar)
+- Deprecar/ocultar comando `portafolio` (USD) o convertirlo en herramienta interna
+- Hacer `invertir` el comando principal: `python3 main.py invertir --capital 500000`
+
+### Fase 4 — Streamlit actualizado
+*Últimos cambios, cuando el backend esté listo.*
+
+**`pages/2_Portafolio_USD.py`** → reemplazar por **`pages/2_CEDEARs.py`**
+- Tabla de todos los CEDEARs del registry: precio IOL, paridad, premium/discount, score CEO
+- Semáforo: verde (score ≥ 7), amarillo (5-6), rojo (<5)
+- Calculadora: "¿cuánto equivale X USD en ARS vía este CEDEAR?"
+
+**`pages/4_Invertir_ARS.py`** (enriquecer)
+- Sección MERVAL en los resultados
+- Tesis completa de cada CEDEAR recomendado (no solo el nombre)
+- Slider de horizonte temporal (corto/mediano/largo plazo)
+
+**`pages/6_Perfil.py`** (modificar)
+- Agregar sección "Acciones argentinas (MERVAL)" con lista toggleable
+- Reemplazar referencias a "universo USD" por "universo CEDEAR + MERVAL"
+
+### Orden de implementación
+
+| # | Tarea | Archivos | Prioridad |
+|---|-------|----------|-----------|
+| 1 | Crear `data/merval.py` + `agents/merval_analyzer.py` | 2 nuevos | Alta |
+| 2 | Expandir `CEDEAR_REGISTRY` en `data/cedears.py` | existente | Alta |
+| 3 | Pasar tesis completa al advisor en `agents/ars_advisor.py` | existente | Alta |
+| 4 | Integrar MERVAL en `data/instruments_ar.py` + `invest_ars.py` | existentes | Media |
+| 5 | Reemplazar `pages/2_Portafolio_USD.py` por dashboard CEDEARs | existente | Media |
+| 6 | Enriquecer `pages/4_Invertir_ARS.py` con MERVAL + tesis | existente | Media |
+| 7 | Deprecar comando `portafolio` USD en `main.py` | existente | Baja |

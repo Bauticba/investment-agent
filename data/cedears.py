@@ -10,6 +10,7 @@ from data.argentina import get_macro_data
 # ratio = cantidad de CEDEARs necesarios para equivaler a 1 acción del subyacente USA.
 # Verificar ante splits o cambios corporativos usando: precio_USA × CCL / precio_CEDEAR_ARS
 CEDEAR_REGISTRY = {
+    # --- Tecnología ---
     "AAPL":  {"us_ticker": "AAPL",  "ratio": 20,  "name": "Apple Inc."},
     "MSFT":  {"us_ticker": "MSFT",  "ratio": 29,  "name": "Microsoft Corp."},
     "NVDA":  {"us_ticker": "NVDA",  "ratio": 23,  "name": "NVIDIA Corp."},
@@ -17,15 +18,33 @@ CEDEAR_REGISTRY = {
     "AMZN":  {"us_ticker": "AMZN",  "ratio": 140, "name": "Amazon.com Inc."},
     "META":  {"us_ticker": "META",  "ratio": 23,  "name": "Meta Platforms Inc."},
     "TSLA":  {"us_ticker": "TSLA",  "ratio": 15,  "name": "Tesla Inc."},
-    "JPM":   {"us_ticker": "JPM",   "ratio": 15,  "name": "JPMorgan Chase & Co."},
-    "V":     {"us_ticker": "V",     "ratio": 18,  "name": "Visa Inc."},
-    "MA":    {"us_ticker": "MA",    "ratio": 32,  "name": "Mastercard Inc."},
-    "COST":  {"us_ticker": "COST",  "ratio": 47,  "name": "Costco Wholesale Corp."},
-    "XOM":   {"us_ticker": "XOM",   "ratio": 10,  "name": "ExxonMobil Corp."},
-    "CVX":   {"us_ticker": "CVX",   "ratio": 16,  "name": "Chevron Corp."},
+    "AMD":   {"us_ticker": "AMD",   "ratio": 5,   "name": "Advanced Micro Devices"},
+    # --- Salud ---
     "JNJ":   {"us_ticker": "JNJ",   "ratio": 15,  "name": "Johnson & Johnson"},
     "ABBV":  {"us_ticker": "ABBV",  "ratio": 10,  "name": "AbbVie Inc."},
     "UNH":   {"us_ticker": "UNH",   "ratio": 32,  "name": "UnitedHealth Group Inc."},
+    "LLY":   {"us_ticker": "LLY",   "ratio": 35,  "name": "Eli Lilly and Co."},
+    "PFE":   {"us_ticker": "PFE",   "ratio": 1,   "name": "Pfizer Inc."},
+    "AMGN":  {"us_ticker": "AMGN",  "ratio": 10,  "name": "Amgen Inc."},
+    # --- Finanzas ---
+    "JPM":   {"us_ticker": "JPM",   "ratio": 15,  "name": "JPMorgan Chase & Co."},
+    "V":     {"us_ticker": "V",     "ratio": 18,  "name": "Visa Inc."},
+    "MA":    {"us_ticker": "MA",    "ratio": 32,  "name": "Mastercard Inc."},
+    "BAC":   {"us_ticker": "BAC",   "ratio": 2,   "name": "Bank of America Corp."},
+    "GS":    {"us_ticker": "GS",    "ratio": 25,  "name": "Goldman Sachs Group Inc."},
+    # --- Consumo ---
+    "COST":  {"us_ticker": "COST",  "ratio": 47,  "name": "Costco Wholesale Corp."},
+    "WMT":   {"us_ticker": "WMT",   "ratio": 3,   "name": "Walmart Inc."},
+    "MCD":   {"us_ticker": "MCD",   "ratio": 10,  "name": "McDonald's Corp."},
+    "SBUX":  {"us_ticker": "SBUX",  "ratio": 3,   "name": "Starbucks Corp."},
+    "NKE":   {"us_ticker": "NKE",   "ratio": 3,   "name": "Nike Inc."},
+    "MELI":  {"us_ticker": "MELI",  "ratio": 90,  "name": "MercadoLibre Inc."},
+    # --- Energía ---
+    "XOM":   {"us_ticker": "XOM",   "ratio": 10,  "name": "ExxonMobil Corp."},
+    "CVX":   {"us_ticker": "CVX",   "ratio": 16,  "name": "Chevron Corp."},
+    # --- Comunicaciones ---
+    "DIS":   {"us_ticker": "DIS",   "ratio": 4,   "name": "Walt Disney Co."},
+    "NFLX":  {"us_ticker": "NFLX",  "ratio": 50,  "name": "Netflix Inc."},
 }
 
 

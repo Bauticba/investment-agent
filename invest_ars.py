@@ -13,6 +13,7 @@ from data.instruments_ar import get_instruments_universe
 from data.news_ar import get_argentina_news
 from agents.ars_advisor import recommend_allocation
 from data.cedears import get_top_cedears
+from agents.merval_analyzer import get_top_merval
 from notifications.email_sender import send_ars_recommendation_email
 
 
@@ -39,28 +40,46 @@ def run_ars(capital: float, riesgo: str = "moderado", fecha_objetivo: str | None
     relevant    = [i for i in instruments if riesgo in i.get("recommended_for", [])]
     print(f"   {len(instruments)} instrumentos totales | {len(relevant)} compatibles con riesgo {riesgo.upper()}")
 
-    # --- 3. Recomendación ---
+    # --- 3. Picks específicos (CEDEARs + MERVAL) ---
     with open("instructions/investor_profile.json") as f:
         profile = json.load(f)
 
+    print("\n📈 Obteniendo picks de CEDEARs...")
+    cedear_picks = get_top_cedears(max_count=5, min_score=5.0)
+    print(f"   {len(cedear_picks)} CEDEARs con análisis disponible")
+
+    merval_picks = None
+    if riesgo in ("moderado", "alto"):
+        print("🇦🇷 Analizando acciones MERVAL...")
+        merval_picks = get_top_merval(profile, min_score=6.0, max_count=3)
+        print(f"   {len(merval_picks)} acciones MERVAL con score ≥ 6")
+
+    # --- 4. Recomendación ---
     print(f"\n🤖 Generando recomendación personalizada...")
-    rec = recommend_allocation(capital, riesgo, instruments, macro, profile, fecha_objetivo=fecha_objetivo, news=news)
+    rec = recommend_allocation(
+        capital, riesgo, instruments, macro, profile,
+        fecha_objetivo=fecha_objetivo, news=news,
+        cedear_picks=cedear_picks, merval_picks=merval_picks,
+    )
 
     if "error" in rec:
         print(f"❌ Error al generar la recomendación: {rec.get('raw', '')[:200]}")
         return
 
-    # --- 4. Mostrar ---
+    # --- 5. Mostrar ---
     _print_recommendation(rec, capital, riesgo)
 
-    # --- 4b. Si hay CEDEARs en el portafolio recomendado, mostrar picks específicos ---
+    # --- 5b. Mostrar picks de CEDEARs si el portafolio los incluye ---
     has_cedears = any(p.get("type") in ("cedear", "cedears") for p in rec.get("allocation", []))
-    cedear_picks = None
-    if has_cedears:
-        _print_cedear_picks()
-        cedear_picks = get_top_cedears(max_count=3, min_score=6.0)
+    if has_cedears and cedear_picks:
+        _print_cedear_picks_detail(cedear_picks)
 
-    # --- 4c. Enviar email ---
+    # --- 5c. Mostrar picks MERVAL si el portafolio los incluye ---
+    has_merval = any(p.get("type") == "accion_merval" for p in rec.get("allocation", []))
+    if has_merval and merval_picks:
+        _print_merval_picks_detail(merval_picks)
+
+    # --- 6. Enviar email ---
     print("📧 Enviando email...")
     send_ars_recommendation_email(rec, capital, riesgo, macro, cedear_picks)
 
@@ -162,24 +181,41 @@ def _print_recommendation(rec: dict, capital: float, riesgo: str):
     print(f"{'='*62}\n")
 
 
-def _print_cedear_picks():
+def _print_cedear_picks_detail(picks: list):
     print(f"\n{'='*62}")
-    print(f"  CEDEARS RECOMENDADOS (basado en análisis cacheados)")
+    print(f"  CEDEARS RECOMENDADOS (análisis del sistema)")
     print(f"{'='*62}")
-    picks = get_top_cedears(max_count=3, min_score=6.0)
     if not picks:
-        print("  No hay análisis cacheados de CEDEARs disponibles.")
-        print("  Ejecutá: python3 run_watchlist.py   para generarlos.\n")
+        print("  No hay análisis cacheados. Ejecutá: python3 main.py watchlist")
         return
     for i, p in enumerate(picks, 1):
         print(f"\n  {i}. {p['ticker']} — {p['name']}")
-        print(f"     Score CEO: {p['score']}/10 | Convicción: {p.get('conviction', '?').upper()}")
-        print(f"     Subyacente USA: ${p.get('us_price_usd', '?')} USD")
+        print(f"     Score CEO: {p.get('score', p.get('ceo_score','?'))}/10 | Veredicto: {p.get('verdict', '?')}")
+        if p.get("us_price_usd"):
+            print(f"     Subyacente USA: ${p['us_price_usd']} USD")
         if p.get("parity_price_ars"):
-            print(f"     Paridad estimada ARS: ${p['parity_price_ars']:,.2f} (ratio 1:{p['ratio']})")
-        print(f"     Veredicto: {p.get('verdict', '')}")
-        print(f"     Tesis: {p.get('thesis', '')}")
-        print(f"     Cómo comprar: {p.get('how_to_buy', '')}")
+            print(f"     Paridad ARS: ${p['parity_price_ars']:,.0f} (ratio 1:{p['ratio']})")
+        if p.get("thesis"):
+            print(f"     Tesis: {p['thesis'][:200]}")
+        how = p.get("how_to_buy") or f"IOL > Operar > CEDEARs > buscar {p['ticker']} > Comprar"
+        print(f"     Cómo comprar: {how}")
+    print()
+
+
+def _print_merval_picks_detail(picks: list):
+    print(f"\n{'='*62}")
+    print(f"  ACCIONES MERVAL RECOMENDADAS (análisis del sistema)")
+    print(f"{'='*62}")
+    for i, p in enumerate(picks, 1):
+        print(f"\n  {i}. {p['ticker']} — {p['name']}")
+        print(f"     Score: {p.get('score','?')}/10 | Acción: {p.get('action','?').upper()}")
+        if p.get("market_price_ars"):
+            ccl_str = f" | CCL impl: ${p['ccl_implicit']:,.0f}" if p.get("ccl_implicit") else ""
+            print(f"     Precio ARS: ${p['market_price_ars']:,.0f}{ccl_str}")
+        if p.get("rationale"):
+            print(f"     Análisis: {p['rationale'][:200]}")
+        how = p.get("how_to_buy") or f"IOL > Operar > Acciones > buscar {p['ticker']} > Comprar"
+        print(f"     Cómo comprar: {how}")
     print()
 
 

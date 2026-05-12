@@ -65,6 +65,58 @@ def _filter_by_horizon(instruments: list, meses: int) -> list:
     return result
 
 
+def _format_cedear_picks(picks: list | None) -> str:
+    if not picks:
+        return "No hay análisis cacheados de CEDEARs disponibles. Recomendar CEDEARs por sector (tech, finanzas, energía) sin ticker específico."
+    lines = ["Los siguientes CEDEARs tienen análisis actualizado y son candidatos concretos:"]
+    for p in picks:
+        ticker  = p.get("ticker", "?")
+        name    = p.get("name", ticker)
+        score   = p.get("score") or p.get("ceo_score", "?")
+        verdict = p.get("verdict", p.get("final_verdict", "?"))
+        parity  = p.get("parity_price_ars")
+        ratio   = p.get("ratio", "?")
+        thesis  = p.get("thesis", p.get("ceo_thesis", {}).get("thesis", ""))[:300] if isinstance(p.get("thesis"), str) else ""
+        pros    = p.get("pros", [])
+        cons    = p.get("cons", [])
+        lines.append(f"\n  [{ticker}] {name} — Score: {score}/10 | Veredicto: {verdict}")
+        if parity:
+            lines.append(f"    Precio paridad ARS: ${parity:,.0f} (ratio 1:{ratio})")
+        if thesis:
+            lines.append(f"    Tesis: {thesis}")
+        if pros:
+            top_pros = pros[:2] if isinstance(pros, list) else []
+            for pro in top_pros:
+                lines.append(f"    ✓ {str(pro)[:120]}")
+        if cons:
+            top_cons = cons[:1] if isinstance(cons, list) else []
+            for con in top_cons:
+                lines.append(f"    ✗ {str(con)[:120]}")
+    return "\n".join(lines)
+
+
+def _format_merval_picks(picks: list | None) -> str:
+    if not picks:
+        return "No hay análisis de acciones MERVAL disponibles para esta sesión."
+    lines = ["Las siguientes acciones argentinas tienen análisis actualizado:"]
+    for p in picks:
+        ticker  = p.get("ticker", "?")
+        name    = p.get("name", ticker)
+        score   = p.get("score", "?")
+        action  = p.get("action", "?")
+        price   = p.get("market_price_ars")
+        ccl     = p.get("ccl_implicit")
+        rat     = p.get("rationale", "")[:200]
+        lines.append(f"\n  [{ticker}] {name} — Score: {score}/10 | Acción: {action.upper()}")
+        if price:
+            lines.append(f"    Precio: ${price:,.0f} ARS" + (f" | CCL implícito: ${ccl:,.0f}" if ccl else ""))
+        if rat:
+            lines.append(f"    Análisis: {rat}")
+        how = p.get("how_to_buy", f"IOL > Operar > Acciones > buscar {ticker} > Comprar")
+        lines.append(f"    Cómo comprar: {how}")
+    return "\n".join(lines)
+
+
 def _format_news_block(news: list | None) -> str:
     if not news:
         return "No se pudieron obtener noticias recientes."
@@ -84,6 +136,8 @@ def recommend_allocation(
     profile: dict,
     fecha_objetivo: str | None = None,
     news: list | None = None,
+    cedear_picks: list | None = None,
+    merval_picks: list | None = None,
 ) -> dict:
     """
     Genera una recomendación de inversión en ARS para el capital y riesgo dados.
@@ -133,6 +187,14 @@ real (por encima de la inflación) cumpliendo el perfil de riesgo del inversor.
 ## Noticias recientes (últimas horas — medios argentinos)
 {_format_news_block(news)}
 
+## Picks específicos recomendados por el sistema de análisis
+
+### CEDEARs con análisis actualizado
+{_format_cedear_picks(cedear_picks)}
+
+### Acciones MERVAL con análisis actualizado
+{_format_merval_picks(merval_picks)}
+
 ## Universo de instrumentos disponibles (compatibles con perfil {riesgo.upper()})
 {json.dumps(relevant, ensure_ascii=False, indent=2)}
 
@@ -166,7 +228,8 @@ real (por encima de la inflación) cumpliendo el perfil de riesgo del inversor.
 ### Instrucciones adicionales
 - Entre bonos CER: preferir vencimiento más corto para riesgo BAJO/MODERADO (TX26 sobre TX28/TX30).
 - Entre bonos hard dollar: GD30 o AL30 para duraciones cortas (MODERADO); GD35/AL35/GD41 para ALTO.
-- CEDEARs: nombrar sectores preferidos (tech, energía, finanzas) pero NO nombrar tickers específicos — el usuario consultará el análisis separado.
+- CEDEARs: si hay picks disponibles en la sección anterior, NOMBRAR tickers específicos (ej: "NVDA CEDEAR", "LLY CEDEAR") con su precio paridad en ARS. Si no hay picks, mencionar sector preferido.
+- Acciones MERVAL: si hay picks disponibles, NOMBRAR tickers específicos (ej: "GGAL", "YPFD") con su precio ARS. Si no hay picks, mencionar el FCI Renta Variable como alternativa.
 - ONs USD: preferir emisores con mejor rating y vencimiento más próximo para MODERADO.
 - FCI Renta Variable solo para riesgo ALTO, horizonte mínimo 12 meses.
 - Cauciones: excelentes para liquidez de muy corto plazo (1–7 días), rendimiento superior al FCI MM.

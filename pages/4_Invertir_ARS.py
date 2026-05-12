@@ -1,6 +1,7 @@
-import streamlit as st
 import json
-from datetime import date
+from datetime import date, timedelta
+
+import streamlit as st
 
 st.set_page_config(page_title="Invertir ARS", page_icon="💵", layout="wide")
 st.title("💵 Recomendación de inversión en ARS")
@@ -26,8 +27,6 @@ with col2:
 with col3:
     send_email = st.checkbox("Enviar email con la recomendación", value=True)
 
-# Fecha objetivo
-from datetime import date, timedelta
 col_fecha, col_info = st.columns([2, 3])
 with col_fecha:
     usar_fecha = st.checkbox("Tengo una fecha objetivo para retirar el dinero")
@@ -53,18 +52,25 @@ with col_info:
         info += f" La recomendación priorizará instrumentos que venzan **antes de {fecha_objetivo}**."
     st.info(info)
 
+if riesgo in ("moderado", "alto"):
+    st.caption(
+        "⚠️ Con perfil moderado/alto se analizan acciones MERVAL en tiempo real (~60 s adicionales)."
+    )
+
 # ── Ejecución ─────────────────────────────────────────────────────────────────
 if st.button("Generar recomendación", type="primary", use_container_width=True):
     from data.argentina import get_macro_data
     from data.instruments_ar import get_instruments_universe
-    from agents.ars_advisor import recommend_allocation
+    from data.news_ar import get_argentina_news
     from data.cedears import get_top_cedears
+    from agents.ars_advisor import recommend_allocation
+    from agents.merval_analyzer import get_top_merval
     from notifications.email_sender import send_ars_recommendation_email
 
     with open("instructions/investor_profile.json") as f:
         profile = json.load(f)
 
-    # Macro
+    # ── Macro ─────────────────────────────────────────────────────────────────
     with st.spinner("📊 Obteniendo contexto macro..."):
         macro = get_macro_data()
 
@@ -74,21 +80,51 @@ if st.button("Generar recomendación", type="primary", use_container_width=True)
     uva    = macro.get("uva")
 
     m1, m2, m3, m4 = st.columns(4)
-    m1.metric("Inflación mensual",  f"{infl_m:.1f}%" if infl_m else "N/A")
-    m2.metric("Inflación anual",    f"{infl_a:.1f}%" if infl_a else "N/A")
-    m3.metric("Dólar oficial",      f"${usd:,.0f}" if usd else "N/A")
-    m4.metric("UVA",                f"${uva:,.2f}" if uva else "N/A")
+    m1.metric("Inflación mensual", f"{infl_m:.1f}%" if infl_m else "N/A")
+    m2.metric("Inflación anual",   f"{infl_a:.1f}%" if infl_a else "N/A")
+    m3.metric("Dólar oficial",     f"${usd:,.0f}" if usd else "N/A")
+    m4.metric("UVA",               f"${uva:,.2f}" if uva else "N/A")
 
-    # Instrumentos
+    # ── Noticias ──────────────────────────────────────────────────────────────
+    with st.spinner("📰 Obteniendo noticias recientes..."):
+        news = get_argentina_news(max_articles=12)
+
+    with st.expander(f"📰 Noticias del día ({len(news)} titulares)", expanded=False):
+        for a in news:
+            st.markdown(f"**[{a['date']} — {a['source']}]** {a['title']}")
+            if a.get("summary"):
+                st.caption(a["summary"])
+
+    # ── Instrumentos ─────────────────────────────────────────────────────────
     with st.spinner("📋 Construyendo universo de instrumentos..."):
         instruments = get_instruments_universe(macro)
 
     relevant = [i for i in instruments if riesgo in i.get("recommended_for", [])]
-    st.caption(f"{len(instruments)} instrumentos totales | {len(relevant)} compatibles con perfil {riesgo.upper()}")
+    st.caption(
+        f"{len(instruments)} instrumentos totales | {len(relevant)} compatibles con perfil {riesgo.upper()}"
+    )
 
-    # Recomendación
+    # ── CEDEARs picks ─────────────────────────────────────────────────────────
+    with st.spinner("📈 Cargando picks de CEDEARs..."):
+        cedear_picks = get_top_cedears(max_count=5, min_score=5.0)
+    st.caption(f"{len(cedear_picks)} CEDEARs con análisis cacheado disponibles")
+
+    # ── MERVAL picks ──────────────────────────────────────────────────────────
+    merval_picks = None
+    if riesgo in ("moderado", "alto"):
+        with st.spinner("🇦🇷 Analizando acciones MERVAL (puede tardar ~60 s)..."):
+            merval_picks = get_top_merval(profile, min_score=6.0, max_count=3)
+        st.caption(f"{len(merval_picks)} acciones MERVAL con score ≥ 6")
+
+    # ── Recomendación ─────────────────────────────────────────────────────────
     with st.spinner("🤖 Generando recomendación personalizada..."):
-        rec = recommend_allocation(capital, riesgo, instruments, macro, profile, fecha_objetivo=fecha_objetivo)
+        rec = recommend_allocation(
+            capital, riesgo, instruments, macro, profile,
+            fecha_objetivo=fecha_objetivo,
+            news=news,
+            cedear_picks=cedear_picks,
+            merval_picks=merval_picks,
+        )
 
     if "error" in rec:
         st.error(f"Error: {rec.get('raw', '')[:300]}")
@@ -111,11 +147,11 @@ if st.button("Generar recomendación", type="primary", use_container_width=True)
     for pos in allocation:
         emoji = type_emoji.get(pos.get("type", ""), "")
         rows.append({
-            "Instrumento": f"{emoji} {pos.get('name', '?')}",
-            "%":           f"{pos.get('allocation_pct', 0):.0f}%",
-            "Monto ARS":   pos.get("amount_ars", 0),
+            "Instrumento":  f"{emoji} {pos.get('name', '?')}",
+            "%":            f"{pos.get('allocation_pct', 0):.0f}%",
+            "Monto ARS":    pos.get("amount_ars", 0),
             "Cómo comprar": pos.get("how_to_buy", ""),
-            "Por qué":     pos.get("rationale", ""),
+            "Por qué":      pos.get("rationale", ""),
         })
     st.dataframe(rows, use_container_width=True, hide_index=True)
 
@@ -123,47 +159,67 @@ if st.button("Generar recomendación", type="primary", use_container_width=True)
     total_amt = sum(p.get("amount_ars", 0) for p in allocation)
     st.write(f"**Total: {total_pct:.0f}% — ${total_amt:,.0f} ARS**")
 
-    # Métricas
-    m1, m2, m3 = st.columns(3)
-    m1.metric("Cobertura inflacionaria", f"{rec.get('inflation_coverage_pct', '?')}%")
-    m2.metric("Exposición USD",          f"{rec.get('usd_exposure_pct', '?')}%")
-    m3.metric("Horizonte",               rec.get("time_horizon", "?"))
+    r1, r2, r3 = st.columns(3)
+    r1.metric("Cobertura inflacionaria", f"{rec.get('inflation_coverage_pct', '?')}%")
+    r2.metric("Exposición USD",          f"{rec.get('usd_exposure_pct', '?')}%")
+    r3.metric("Horizonte",               rec.get("time_horizon", "?"))
 
-    st.write("**Estrategia:**", rec.get("strategy_summary", ""))
-    st.write("**Riesgo principal:**", rec.get("main_risk", ""))
-    st.write("**Próxima revisión:**", rec.get("review_in", "?"))
+    st.write("**Estrategia:**",        rec.get("strategy_summary", ""))
+    st.write("**Riesgo principal:**",  rec.get("main_risk", ""))
+    st.write("**Próxima revisión:**",  rec.get("review_in", "?"))
 
-    # ── CEDEARs específicos ───────────────────────────────────────────────────
+    # ── CEDEARs picks detalle ─────────────────────────────────────────────────
     has_cedears = any(p.get("type") in ("cedear", "cedears") for p in allocation)
-    cedear_picks = None
-    if has_cedears:
-        picks = get_top_cedears(max_count=3, min_score=6.0)
-        if picks:
-            st.divider()
-            st.subheader("CEDEARs recomendados (basado en análisis cacheados)")
-            cedear_picks = picks
-            for p in picks:
-                with st.expander(f"🌎 {p['ticker']} — {p['name']} | Score: {p['score']}/10"):
-                    c1, c2, c3 = st.columns(3)
-                    c1.metric("Score CEO",    f"{p['score']}/10")
-                    c2.metric("Convicción",   (p.get("conviction") or "N/A").upper())
-                    c3.metric("Precio USD",   f"${p.get('us_price_usd', 'N/A')}")
-                    if p.get("parity_price_ars"):
-                        st.write(f"**Paridad estimada ARS:** ${p['parity_price_ars']:,.2f} (ratio 1:{p['ratio']})")
-                    st.write(f"**Veredicto:** {p.get('verdict', '')}")
-                    st.write(f"**Tesis:** {p.get('thesis', '')}")
-                    st.write(f"**Cómo comprar:** {p.get('how_to_buy', '')}")
-        else:
-            st.info("No hay análisis cacheados de CEDEARs. Ejecutá la página **Watchlist** primero.")
+    if has_cedears and cedear_picks:
+        st.divider()
+        st.subheader("CEDEARs recomendados")
+        for p in cedear_picks:
+            with st.expander(f"🌎 {p['ticker']} — {p['name']} | Score: {p['score']}/10"):
+                c1, c2, c3 = st.columns(3)
+                c1.metric("Score CEO",   f"{p['score']}/10")
+                c2.metric("Convicción",  (p.get("conviction") or "N/A").upper())
+                c3.metric("Precio USD",  f"${p.get('us_price_usd', 'N/A')}")
+                if p.get("parity_price_ars"):
+                    st.write(f"**Paridad ARS:** ${p['parity_price_ars']:,.0f} (ratio 1:{p['ratio']})")
+                st.write(f"**Veredicto:** {p.get('verdict', '')}")
+                st.write(f"**Tesis:** {p.get('thesis', '')}")
+                how = p.get("how_to_buy") or f"IOL > Operar > CEDEARs > buscar {p['ticker']} > Comprar"
+                st.write(f"**Cómo comprar:** {how}")
+    elif has_cedears and not cedear_picks:
+        st.info("No hay análisis cacheados de CEDEARs. Ejecutá la página **Watchlist** primero.")
+
+    # ── MERVAL picks detalle ──────────────────────────────────────────────────
+    has_merval = any(p.get("type") == "accion_merval" for p in allocation)
+    if has_merval and merval_picks:
+        st.divider()
+        st.subheader("Acciones MERVAL recomendadas")
+        for p in merval_picks:
+            with st.expander(
+                f"🇦🇷 {p['ticker']} — {p.get('name', p['ticker'])} | Score: {p.get('score','?')}/10"
+            ):
+                mc1, mc2, mc3 = st.columns(3)
+                mc1.metric("Score",     f"{p.get('score', '?')}/10")
+                mc2.metric("Acción",    p.get("action", "?").upper())
+                if p.get("market_price_ars"):
+                    mc3.metric("Precio ARS", f"${p['market_price_ars']:,.0f}")
+                if p.get("ccl_implicit"):
+                    st.caption(f"CCL implícito: ${p['ccl_implicit']:,.0f} ARS/USD")
+                if p.get("rationale"):
+                    st.write(f"**Análisis:** {p['rationale']}")
+                if p.get("vs_alternatives"):
+                    st.write(f"**Vs. alternativas:** {p['vs_alternatives']}")
+                how = p.get("how_to_buy") or f"IOL > Operar > Acciones > buscar {p['ticker']} > Comprar"
+                st.write(f"**Cómo comprar:** {how}")
 
     # ── Guardar y email ───────────────────────────────────────────────────────
     output_file = f"storage/inversion_ars_{date.today().isoformat()}.json"
     with open(output_file, "w") as f:
         json.dump({
-            "date": date.today().isoformat(),
-            "capital_ars": capital,
-            "riesgo": riesgo,
-            "macro": macro,
+            "date":           date.today().isoformat(),
+            "capital_ars":    capital,
+            "riesgo":         riesgo,
+            "macro":          macro,
+            "news":           news,
             "recommendation": rec,
         }, f, indent=2, ensure_ascii=False)
     st.caption(f"💾 Guardado en {output_file}")

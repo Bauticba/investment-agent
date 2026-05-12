@@ -1,24 +1,29 @@
 """
-Investment Agent — punto de entrada unificado.
+Investment Agent — sistema Argentina-focused. Broker: Invertir Online (IOL).
 
-── Actualizar datos ──────────────────────────────────────────────────────────
-  python3 main.py actualizar                    # refresca los 50 tickers del universo
-  python3 main.py actualizar AAPL MSFT NVDA     # refresca solo esos tickers
-
-── Recomendaciones (usan storage, respuesta instantánea) ─────────────────────
-  python3 main.py watchlist                     # analiza la watchlist con email
-  python3 main.py portafolio --capital 5000     # portafolio óptimo USD
-  python3 main.py mi-portafolio                 # qué hacer con lo que tenés
-  python3 main.py invertir --capital 500000 --riesgo moderado
+── RECOMENDACIONES PRINCIPALES (enfocadas en el mercado argentino) ───────────
+  python3 main.py invertir --capital 500000 --riesgo moderado   # asignación ARS completa
+  python3 main.py invertir --capital 500000 --riesgo alto       # perfil agresivo
+  python3 main.py invertir --capital 500000 --riesgo bajo       # conservador
   python3 main.py invertir --capital 500000 --riesgo moderado --fecha 2027-01
 
-── Gestión de portafolio ─────────────────────────────────────────────────────
-  python3 main.py comprar AAPL 10 185.50        # compraste 10 acciones a $185.50
-  python3 main.py vender AAPL 5                 # vendiste 5 acciones de AAPL
-  python3 main.py posiciones                    # muestra tu portafolio actual
+  python3 main.py merval                        # analiza todas las acciones del MERVAL
+  python3 main.py mi-portafolio                 # qué hacer con tus posiciones actuales
 
-── Paper trading ─────────────────────────────────────────────────────────────
-  python3 main.py paper-trading                 # performance de todas las señales históricas
+── ANÁLISIS DE ACCIONES USA (motor para picks de CEDEARs) ────────────────────
+  python3 main.py watchlist                     # analiza la watchlist (AAPL, MSFT, NVDA...)
+  python3 main.py watchlist AAPL TSLA META      # tickers custom
+  python3 main.py actualizar                    # refresca los 76 tickers del universo
+  python3 main.py actualizar AAPL MSFT NVDA     # refresca solo esos tickers
+
+── GESTIÓN DE PORTAFOLIO ─────────────────────────────────────────────────────
+  python3 main.py comprar NVDA 10 850.00 --moneda ARS --tipo cedear
+  python3 main.py vender GGAL 100              # vendiste 100 acciones de GGAL
+  python3 main.py posiciones                   # muestra tu portafolio actual
+
+── PAPER TRADING Y HERRAMIENTAS ──────────────────────────────────────────────
+  python3 main.py paper-trading                # performance de señales históricas
+  python3 main.py portafolio --capital 5000    # [DEPRECADO] portafolio USD directo
 """
 import argparse
 import json
@@ -42,7 +47,7 @@ def _build_parser() -> argparse.ArgumentParser:
     act.add_argument(
         "tickers", nargs="*",
         metavar="TICKER",
-        help="Tickers a actualizar (default: universo completo de 50)",
+        help="Tickers a actualizar (default: universo completo de 76)",
     )
 
     # ── watchlist ─────────────────────────────────────────────────────────────
@@ -56,10 +61,16 @@ def _build_parser() -> argparse.ArgumentParser:
         help="Tickers a analizar (default: watchlist del perfil)",
     )
 
+    # ── merval ────────────────────────────────────────────────────────────────
+    sub.add_parser(
+        "merval",
+        help="Analiza todas las acciones del panel MERVAL (precios IOL, CCL implícito)",
+    )
+
     # ── portafolio ────────────────────────────────────────────────────────────
     pf = sub.add_parser(
         "portafolio",
-        help="Construir portafolio óptimo en USD (usa storage por defecto)",
+        help="[DEPRECADO] Portafolio óptimo en USD. Usá 'invertir' para recomendaciones ARS.",
     )
     pf.add_argument(
         "--capital", type=float, required=True,
@@ -162,7 +173,6 @@ def main():
         else:
             tickers = [t for s in profile["universe"].values() for t in s]
         total = len(tickers)
-        import time
         eta = total * 55 + (total - 1) * 12
         print(f"\n🔄 Actualizando {total} tickers — ETA ~{eta // 60} min\n")
         run_watchlist(tickers, send_email=False)
@@ -175,8 +185,31 @@ def main():
         print(f"📋 Watchlist: {tickers}\n")
         run_watchlist(tickers, send_email=True)
 
+    # ── merval ────────────────────────────────────────────────────────────────
+    elif args.command == "merval":
+        from data.merval import get_all_merval_data, MERVAL_REGISTRY
+        from agents.merval_analyzer import analyze_merval_stock
+        print(f"\n{'='*62}")
+        print(f"  ANÁLISIS MERVAL — Panel Líder BCBA")
+        print(f"{'='*62}\n")
+        stocks = get_all_merval_data()
+        results = []
+        for data in stocks:
+            print(f"  Analizando {data['ticker']}...", end=" ", flush=True)
+            r = analyze_merval_stock(data["ticker"], data, profile)
+            results.append(r)
+            print(f"{r.get('action','?').upper()} {r.get('score','?')}/10")
+        print(f"\n  {'Ticker':<6} {'Nombre':<28} {'Acción':<6} {'Score':>5}  {'Precio ARS':>12}  {'CCL impl':>10}")
+        print(f"  {'-'*70}")
+        for r in sorted(results, key=lambda x: x.get("score") or 0, reverse=True):
+            ccl = f"${r['ccl_implicit']:,.0f}" if r.get("ccl_implicit") else "  sin ADR"
+            print(f"  {r['ticker']:<6} {r['name']:<28} {r.get('action','?').upper():<6} {str(r.get('score','?')):>4}/10  ${r.get('market_price_ars',0):>11,.0f}  {ccl:>10}")
+
     # ── portafolio ────────────────────────────────────────────────────────────
     elif args.command == "portafolio":
+        print("\n⚠️  AVISO: El comando 'portafolio' analiza acciones USA para compra directa en NYSE/Nasdaq.")
+        print("   Como inversor en IOL, usá 'invertir' para recomendaciones en ARS (CEDEARs + bonos + MERVAL).")
+        print("   Ejemplo: python3 main.py invertir --capital 500000 --riesgo moderado\n")
         from portfolio import run_portfolio
         use_cache = not args.live
         run_portfolio(args.capital, use_cache=use_cache)

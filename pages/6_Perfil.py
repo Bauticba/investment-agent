@@ -103,9 +103,9 @@ with c6:
         help="Señales fuera de este rango son marcadas como desfavorables.",
     )
 
-# ── Watchlist ─────────────────────────────────────────────────────────────────
+# ── Watchlist (acciones USA / CEDEARs) ────────────────────────────────────────
 st.divider()
-st.subheader("Watchlist")
+st.subheader("Watchlist — Acciones USA (CEDEARs)")
 
 universe_flat = [t for sector in profile.get("universe", {}).values() for t in sector]
 current_wl    = profile.get("watchlist", [])
@@ -114,7 +114,24 @@ watchlist = st.multiselect(
     "Tickers de la watchlist",
     options=sorted(universe_flat),
     default=current_wl,
-    help="Estos tickers se usan con `python3 main.py watchlist` sin argumentos.",
+    help="Estos tickers se analizan con `python3 main.py watchlist`. Son los subyacentes de los CEDEARs.",
+)
+
+# ── MERVAL watchlist ───────────────────────────────────────────────────────────
+st.divider()
+st.subheader("Watchlist — Acciones MERVAL (Argentina)")
+
+from data.merval import MERVAL_REGISTRY
+
+merval_all     = sorted(MERVAL_REGISTRY.keys())
+current_merval = profile.get("merval_watchlist", merval_all)
+
+merval_watchlist = st.multiselect(
+    "Acciones MERVAL a analizar",
+    options=merval_all,
+    default=[t for t in current_merval if t in merval_all],
+    format_func=lambda t: f"{t} — {MERVAL_REGISTRY[t]['name']}",
+    help="Estas acciones se analizan con `python3 main.py merval` y en la recomendación ARS.",
 )
 
 # ── Guardar ───────────────────────────────────────────────────────────────────
@@ -139,7 +156,8 @@ if guardar:
     profile["technical_rules"]["require_volume_confirmation"]     = require_volume
     profile["technical_rules"]["min_rsi"]                         = rsi_min
     profile["technical_rules"]["max_rsi"]                         = rsi_max
-    profile["watchlist"]                                          = watchlist
+    profile["watchlist"]         = watchlist
+    profile["merval_watchlist"]  = merval_watchlist
 
     save_profile(profile)
     st.success("✅ Perfil guardado. Los próximos análisis usarán estas reglas.")
@@ -159,10 +177,14 @@ if resetear:
             "only_above_200_day_ma": True, "min_rsi": 30,
             "max_rsi": 75, "require_volume_confirmation": True,
         },
-        "watchlist": ["AAPL", "MSFT", "NVDA", "GOOGL", "META", "AMZN"],
+        "watchlist":         ["AAPL", "MSFT", "NVDA", "GOOGL", "META", "AMZN"],
+        "merval_watchlist":  ["GGAL", "YPFD", "BMA", "PAMP", "TECO2", "BBAR", "LOMA", "TXAR", "ALUA", "MIRG"],
     }
     for section, values in DEFAULTS.items():
-        profile[section].update(values)
+        if isinstance(values, dict):
+            profile.setdefault(section, {}).update(values)
+        else:
+            profile[section] = values
     save_profile(profile)
     st.success("↩️ Perfil restaurado a los valores originales.")
     st.rerun()
