@@ -9,7 +9,7 @@ from data.argentina import get_macro_data
 # Tickers BYMA/BCBA tal como los usa IOL.
 # usd_adr: ticker NYSE/Nasdaq. adr_ratio: acciones locales por cada 1 ADR.
 # CCL implícito = (precio_ARS × adr_ratio) / precio_ADR_USD
-# Ratios verificados mayo 2026: GGAL×10, YPF×1, BMA×5, PAM×25, TEO×5, BBAR×3, LOMA×5
+# Ratios verificados mayo 2026: GGAL×10, YPF×1, BMA×10, PAM×25, TEO×5, BBAR×3, LOMA×5
 MERVAL_REGISTRY = {
     "GGAL":  {"name": "Grupo Financiero Galicia", "sector": "finance",        "usd_adr": "GGAL", "adr_ratio": 10},
     "YPFD":  {"name": "YPF S.A.",                 "sector": "energy",         "usd_adr": "YPF",  "adr_ratio": 1},
@@ -24,10 +24,11 @@ MERVAL_REGISTRY = {
 }
 
 
-def get_merval_data(ticker: str, price_ars_override: float = None) -> dict:
+def get_merval_data(ticker: str, price_ars_override: float = None, macro: dict = None) -> dict:
     """
     Devuelve datos de una acción MERVAL: precio ARS vía IOL, variación del día,
     CCL implícito (si tiene ADR), y contexto macro.
+    Acepta macro pre-cargado para evitar llamadas redundantes en bulk.
     """
     ticker = ticker.upper()
     meta   = MERVAL_REGISTRY.get(ticker)
@@ -38,7 +39,8 @@ def get_merval_data(ticker: str, price_ars_override: float = None) -> dict:
             "message": f"{ticker} no está en MERVAL_REGISTRY. Agregarlo en data/merval.py",
         }
 
-    macro = get_macro_data()
+    if macro is None:
+        macro = get_macro_data()
     ccl   = macro.get("usd_oficial") or 1400
 
     if price_ars_override:
@@ -98,9 +100,10 @@ def get_merval_data(ticker: str, price_ars_override: float = None) -> dict:
 
 def get_all_merval_data() -> list[dict]:
     """Devuelve datos de todas las acciones del MERVAL registry con precio disponible."""
+    macro   = get_macro_data()  # una sola llamada HTTP para todos
     results = []
     for ticker in MERVAL_REGISTRY:
-        data = get_merval_data(ticker)
+        data = get_merval_data(ticker, macro=macro)
         if data.get("status") == "ok":
             results.append(data)
     return results

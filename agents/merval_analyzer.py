@@ -63,7 +63,7 @@ Sos un analista especializado en acciones argentinas del panel MERVAL. Analizás
 - Precio actual: ${market_price:,.2f} ARS
 {f'- Precio equivalente en USD (CCL): ~${price_usd_implicit:.2f} USD' if price_usd_implicit else ''}
 - Variación del día: {f'{variacion:+.2f}%' if variacion is not None else 'N/A'}
-- Máximo / Mínimo del día: ${maximo:,.2f} / ${minimo:,.2f} ARS
+- Máximo / Mínimo del día: {f'${maximo:,.2f} / ${minimo:,.2f} ARS' if maximo is not None else 'N/A'}
 {f'- ADR en USA ({usd_adr}): ${usd_adr_price:.2f} USD' if usd_adr_price else ''}
 {f'- CCL implícito en la acción: ${ccl_implicit:,.0f} ARS/USD' if ccl_implicit else ''}
 - CCL oficial (mercado unificado): ${ccl_oficial:,.0f} ARS/USD

@@ -26,6 +26,7 @@ c2.metric("Inflación mensual",    f"{infl:.1f}%" if infl else "N/A")
 c3.metric("CEDEARs en registro",  str(len(CEDEAR_REGISTRY)))
 
 
+@st.cache_data(ttl=300)
 def _load_rows() -> list[dict]:
     rows = []
     for ticker, meta in CEDEAR_REGISTRY.items():
