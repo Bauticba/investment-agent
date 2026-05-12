@@ -99,7 +99,7 @@ Respondé ÚNICAMENTE con JSON válido, sin texto adicional:
   "vs_alternatives": "¿conviene esta acción vs. bono CER o MEP para un perfil {investor_profile['risk_profile']['level']}? 1-2 oraciones.",
   "rationale": "3-4 oraciones justificando la recomendación para esta acción específica.",
   "key_alert": "alerta importante si hay algo urgente, o null",
-  "how_to_buy": "IOL > Operar > Acciones > buscar {ticker} > Comprar"
+  "how_to_buy": "instrucción IOL apropiada según la acción: si es buy → 'IOL > Operar > Acciones > buscar {ticker} > Comprar'; si es hold → 'Monitorear en IOL: Mercados > MERVAL > {ticker}. No ejecutar orden aún.'; si es sell → 'IOL > Operar > Acciones > buscar {ticker} > Vender'; si es avoid → 'No operar {ticker}. Mantener en watchlist únicamente.'"
 }}
 """
 

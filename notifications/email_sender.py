@@ -293,7 +293,19 @@ def send_ars_recommendation_email(rec: dict, capital: float, riesgo: str, macro:
 
     allocation   = rec.get("allocation", [])
     infl_m       = macro.get("inflation_monthly")
+    infl_date    = macro.get("inflation_date")
     usd          = macro.get("usd_oficial")
+
+    # Etiqueta del dato de inflación (mes oficial INDEC)
+    _meses_email = ["ene","feb","mar","abr","may","jun","jul","ago","sep","oct","nov","dic"]
+    if infl_date:
+        try:
+            _p = infl_date.split("-")
+            infl_label_email = f"IPC {_meses_email[int(_p[1])-1]} {_p[0]} (INDEC)"
+        except Exception:
+            infl_label_email = "Inflación mensual (INDEC)"
+    else:
+        infl_label_email = "Inflación mensual (INDEC)"
     riesgo_label = {"bajo": "🟢 BAJO", "moderado": "🟡 MODERADO", "alto": "🔴 ALTO"}.get(riesgo, riesgo.upper())
 
     type_color = {
@@ -411,14 +423,25 @@ def send_ars_recommendation_email(rec: dict, capital: float, riesgo: str, macro:
         </div>
         """
 
-    # MERVAL picks
+    # MERVAL picks — separar en cartera vs analizadas
     merval_html = ""
     if merval_picks:
-        items = ""
-        for p in merval_picks:
+        alloc_merval_text = " ".join(
+            (pos.get("instrument_id", "") + " " + pos.get("name", "")).upper()
+            for pos in allocation if pos.get("type") == "accion_merval"
+        )
+        en_cartera_m   = [p for p in merval_picks if p["ticker"].upper() in alloc_merval_text]
+        alternativas_m = [p for p in merval_picks if p["ticker"].upper() not in alloc_merval_text]
+
+        def _merval_item_html(p):
             price_str = f"${p['market_price_ars']:,.0f} ARS" if p.get("market_price_ars") else "N/A"
-            ccl_str   = f" | CCL implícito: ${p['ccl_implicit']:,.0f}" if p.get("ccl_implicit") else ""
-            items += f"""
+            ccl_str   = f" | CCL impl.: ${p['ccl_implicit']:,.0f}" if p.get("ccl_implicit") else ""
+            action    = p.get("action", "hold")
+            default_how = (
+                f"IOL > Operar > Acciones > buscar {p['ticker']} > Comprar" if action == "buy"
+                else f"Monitorear en IOL: Mercados > MERVAL > {p['ticker']}. No ejecutar orden aún."
+            )
+            return f"""
             <div style="border:1px solid #e0e0e0;border-radius:6px;padding:14px;margin-bottom:10px">
               <b>🇦🇷 {p['ticker']} — {p.get('name', p['ticker'])}</b>
               <span style="float:right;background:#4a148c;color:white;padding:2px 8px;border-radius:10px;font-size:13px">
@@ -426,22 +449,59 @@ def send_ars_recommendation_email(rec: dict, capital: float, riesgo: str, macro:
               </span><br>
               <span style="color:#555;font-size:13px">
                 Precio: {price_str}{ccl_str} &nbsp;·&nbsp;
-                Acción: <b>{p.get('action','?').upper()}</b>
+                Acción: <b>{action.upper()}</b>
               </span><br>
               <span style="font-size:13px;color:#333;margin-top:4px;display:block">
                 {p.get('rationale','')}
               </span>
               <span style="font-size:12px;color:#888;margin-top:4px;display:block">
-                📍 {p.get('how_to_buy', f"IOL > Operar > Acciones > buscar {p['ticker']} > Comprar")}
+                📍 {p.get('how_to_buy') or default_how}
               </span>
             </div>
             """
+
+        sections_m = ""
+        if en_cartera_m:
+            items_m = "".join(_merval_item_html(p) for p in en_cartera_m)
+            sections_m += f"""
+            <h4 style="color:#2e7d32;margin:0 0 10px">Incluidas en la cartera ✅</h4>
+            {items_m}
+            """
+        if alternativas_m:
+            items_m = "".join(_merval_item_html(p) for p in alternativas_m)
+            sections_m += f"""
+            <h4 style="color:#555;margin:{'16px' if en_cartera_m else '0'} 0 6px">Analizadas — no incluidas en cartera</h4>
+            <p style="margin:0 0 10px;font-size:12px;color:#888">Score ≥ 6 pero no seleccionadas en este contexto. Seguirlas como alternativas.</p>
+            {items_m}
+            """
+
         merval_html = f"""
         <div style="padding:20px;background:white;border:1px solid #e0e0e0;margin-top:2px">
-          <h3 style="color:#4a148c;margin:0 0 12px">🇦🇷 Acciones MERVAL recomendadas</h3>
-          {items}
+          <h3 style="color:#4a148c;margin:0 0 14px">🇦🇷 Acciones MERVAL analizadas</h3>
+          {sections_m}
         </div>
         """
+
+    # Pre-computar sección USD breakdown para evitar lógica compleja dentro del f-string
+    usd_bd = rec.get("usd_exposure_breakdown", {})
+    if usd_bd:
+        _breakdown_row = f"""
+        <tr><td colspan="2" style="padding-top:12px">
+          <table style="width:100%;font-size:13px;color:#555">
+            <tr>
+              <td>💵 Dólar líquido (MEP)</td>
+              <td style="text-align:right;font-weight:bold">{usd_bd.get('dolar_liquido_pct',0):.0f}%</td>
+              <td style="width:14px"></td>
+              <td>🏢 Renta corp. USD</td>
+              <td style="text-align:right;font-weight:bold">{usd_bd.get('renta_corporativa_usd_pct',0):.0f}%</td>
+              <td style="width:14px"></td>
+              <td>🌎 Equity dolarizado</td>
+              <td style="text-align:right;font-weight:bold">{usd_bd.get('equity_dolarizado_pct',0):.0f}%</td>
+            </tr>
+          </table>
+        </td></tr>"""
+    else:
+        _breakdown_row = ""
 
     html = f"""
     <html><body style="font-family:Arial,sans-serif;max-width:700px;margin:auto;color:#222">
@@ -457,7 +517,7 @@ def send_ars_recommendation_email(rec: dict, capital: float, riesgo: str, macro:
 
     <div style="padding:16px 20px;background:#f0f4f8;border-left:4px solid #0066cc">
       <b>Contexto macro:</b> &nbsp;
-      Inflación mensual: <b>{f'{infl_m:.1f}%' if infl_m else 'N/A'}</b> &nbsp;·&nbsp;
+      {infl_label_email}: <b>{f'{infl_m:.1f}%' if infl_m else 'N/A'}</b> &nbsp;·&nbsp;
       Dólar oficial: <b>${f'{usd:,.0f}' if usd else 'N/A'} ARS/USD</b>
     </div>
 
@@ -487,11 +547,12 @@ def send_ars_recommendation_email(rec: dict, capital: float, riesgo: str, macro:
             <span style="color:#555;font-size:13px"> del portafolio</span>
           </td>
           <td style="vertical-align:top;width:50%">
-            <b>💵 Exposición en USD</b><br>
+            <b>💵 Exposición dolarizada total</b><br>
             <span style="font-size:22px;font-weight:bold;color:#1b5e20">{rec.get('usd_exposure_pct','?')}%</span>
             <span style="color:#555;font-size:13px"> del portafolio</span>
           </td>
         </tr>
+        {_breakdown_row}
       </table>
     </div>
 

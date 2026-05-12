@@ -74,13 +74,25 @@ if st.button("Generar recomendación", type="primary", use_container_width=True)
     with st.spinner("📊 Obteniendo contexto macro..."):
         macro = get_macro_data()
 
-    infl_m = macro.get("inflation_monthly")
-    infl_a = macro.get("inflation_annual")
-    usd    = macro.get("usd_oficial")
-    uva    = macro.get("uva")
+    infl_m    = macro.get("inflation_monthly")
+    infl_a    = macro.get("inflation_annual")
+    infl_date = macro.get("inflation_date")
+    usd       = macro.get("usd_oficial")
+    uva       = macro.get("uva")
+
+    # Etiqueta con el mes del último dato oficial de inflación
+    _meses = ["ene","feb","mar","abr","may","jun","jul","ago","sep","oct","nov","dic"]
+    if infl_date:
+        try:
+            _p = infl_date.split("-")
+            infl_label = f"IPC {_meses[int(_p[1])-1]} {_p[0]} (INDEC)"
+        except Exception:
+            infl_label = "Inflación mensual (INDEC)"
+    else:
+        infl_label = "Inflación mensual (INDEC)"
 
     m1, m2, m3, m4 = st.columns(4)
-    m1.metric("Inflación mensual", f"{infl_m:.1f}%" if infl_m else "N/A")
+    m1.metric(infl_label,      f"{infl_m:.1f}%" if infl_m else "N/A")
     m2.metric("Inflación anual",   f"{infl_a:.1f}%" if infl_a else "N/A")
     m3.metric("Dólar oficial",     f"${usd:,.0f}" if usd else "N/A")
     m4.metric("UVA",               f"${uva:,.2f}" if uva else "N/A")
@@ -161,8 +173,15 @@ if st.button("Generar recomendación", type="primary", use_container_width=True)
 
     r1, r2, r3 = st.columns(3)
     r1.metric("Cobertura inflacionaria", f"{rec.get('inflation_coverage_pct', '?')}%")
-    r2.metric("Exposición USD",          f"{rec.get('usd_exposure_pct', '?')}%")
+    r2.metric("Exposición USD total",    f"{rec.get('usd_exposure_pct', '?')}%")
     r3.metric("Horizonte",               rec.get("time_horizon", "?"))
+
+    usd_bd = rec.get("usd_exposure_breakdown")
+    if usd_bd:
+        bd1, bd2, bd3 = st.columns(3)
+        bd1.metric("💵 Dólar líquido (MEP)",         f"{usd_bd.get('dolar_liquido_pct', 0):.0f}%")
+        bd2.metric("🏢 Renta corporativa USD (ONs)", f"{usd_bd.get('renta_corporativa_usd_pct', 0):.0f}%")
+        bd3.metric("🌎 Equity dolarizado (CEDEARs)", f"{usd_bd.get('equity_dolarizado_pct', 0):.0f}%")
 
     st.write("**Estrategia:**",        rec.get("strategy_summary", ""))
     st.write("**Riesgo principal:**",  rec.get("main_risk", ""))
@@ -213,15 +232,25 @@ if st.button("Generar recomendación", type="primary", use_container_width=True)
     # ── MERVAL picks detalle ──────────────────────────────────────────────────
     has_merval = any(p.get("type") == "accion_merval" for p in allocation)
     if has_merval and merval_picks:
-        st.divider()
-        st.subheader("Acciones MERVAL recomendadas")
-        for p in merval_picks:
+        alloc_merval_text = " ".join(
+            (pos.get("instrument_id", "") + " " + pos.get("name", "")).upper()
+            for pos in allocation if pos.get("type") == "accion_merval"
+        )
+        en_cartera_m   = [p for p in merval_picks if p["ticker"].upper() in alloc_merval_text]
+        alternativas_m = [p for p in merval_picks if p["ticker"].upper() not in alloc_merval_text]
+
+        def _merval_expander(p):
+            action = p.get("action", "hold")
+            default_how = (
+                f"IOL > Operar > Acciones > buscar {p['ticker']} > Comprar" if action == "buy"
+                else f"Monitorear en IOL: Mercados > MERVAL > {p['ticker']}. No ejecutar orden aún."
+            )
             with st.expander(
                 f"🇦🇷 {p['ticker']} — {p.get('name', p['ticker'])} | Score: {p.get('score','?')}/10"
             ):
                 mc1, mc2, mc3 = st.columns(3)
-                mc1.metric("Score",     f"{p.get('score', '?')}/10")
-                mc2.metric("Acción",    p.get("action", "?").upper())
+                mc1.metric("Score",      f"{p.get('score', '?')}/10")
+                mc2.metric("Acción",     action.upper())
                 if p.get("market_price_ars"):
                     mc3.metric("Precio ARS", f"${p['market_price_ars']:,.0f}")
                 if p.get("ccl_implicit"):
@@ -230,8 +259,19 @@ if st.button("Generar recomendación", type="primary", use_container_width=True)
                     st.write(f"**Análisis:** {p['rationale']}")
                 if p.get("vs_alternatives"):
                     st.write(f"**Vs. alternativas:** {p['vs_alternatives']}")
-                how = p.get("how_to_buy") or f"IOL > Operar > Acciones > buscar {p['ticker']} > Comprar"
-                st.write(f"**Cómo comprar:** {how}")
+                st.write(f"**IOL:** {p.get('how_to_buy') or default_how}")
+
+        st.divider()
+        if en_cartera_m:
+            st.subheader("Acciones MERVAL incluidas en la cartera")
+            for p in en_cartera_m:
+                _merval_expander(p)
+
+        if alternativas_m:
+            st.subheader("Acciones MERVAL analizadas — no incluidas en cartera")
+            st.caption("Score ≥ 6 pero el advisor no las seleccionó en este contexto. Seguirlas como alternativas.")
+            for p in alternativas_m:
+                _merval_expander(p)
 
     # ── Guardar y email ───────────────────────────────────────────────────────
     output_file = f"storage/inversion_ars_{date.today().isoformat()}.json"

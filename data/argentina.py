@@ -99,36 +99,41 @@ def get_macro_data() -> dict:
     Trae indicadores macro desde argentinadatos.com (API pública, sin key).
     Datos disponibles: inflación mensual/anual, UVA, tipos de cambio.
     """
-    inflation_monthly  = _last_value(f"{AD_BASE}/finanzas/indices/inflacion")
+    inflation_item     = _last_item(f"{AD_BASE}/finanzas/indices/inflacion")
+    inflation_monthly  = inflation_item.get("valor") if inflation_item else None
+    inflation_date     = inflation_item.get("fecha") if inflation_item else None  # "YYYY-MM-DD"
     inflation_annual   = _last_value(f"{AD_BASE}/finanzas/indices/inflacionInteranual")
     uva                = _last_value(f"{AD_BASE}/finanzas/indices/uva")
     usd_oficial        = _last_value(f"{AD_BASE}/cotizaciones/dolares/oficial", key="venta")
 
     return {
         "inflation_monthly":   inflation_monthly,   # IPC mensual %
-        "inflation_annual":    inflation_annual,    # IPC interanual %
-        "uva":                 uva,                 # valor UVA en ARS
-        "usd_oficial":         usd_oficial,         # tipo de cambio oficial venta
+        "inflation_date":      inflation_date,       # fecha del último dato IPC ("YYYY-MM-DD")
+        "inflation_annual":    inflation_annual,     # IPC interanual %
+        "uva":                 uva,                  # valor UVA en ARS
+        "usd_oficial":         usd_oficial,          # tipo de cambio oficial venta
     }
 
 
 # --- helpers ---
 
-def _last_value(url: str, key: str = "valor") -> float | None:
-    """Llama a la API y devuelve el último valor de la lista."""
+def _last_item(url: str) -> dict | None:
+    """Llama a la API y devuelve el último ítem completo (con fecha y valor)."""
     try:
         resp = requests.get(url, timeout=10)
         data = resp.json()
-
-        # La API devuelve lista de objetos [{fecha, valor}, ...]
         if isinstance(data, list) and data:
-            item = data[-1]
-            return item.get(key) or item.get("valor")
-
-        # O un solo objeto
+            return data[-1]
         if isinstance(data, dict):
-            return data.get(key) or data.get("valor")
-
+            return data
     except Exception:
         pass
+    return None
+
+
+def _last_value(url: str, key: str = "valor") -> float | None:
+    """Llama a la API y devuelve el último valor de la lista."""
+    item = _last_item(url)
+    if item:
+        return item.get(key) or item.get("valor")
     return None

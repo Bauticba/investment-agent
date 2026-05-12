@@ -146,8 +146,20 @@ def recommend_allocation(
     riesgo_desc       = RIESGO_DESC.get(riesgo, RIESGO_DESC["moderado"])
     inflation_monthly = macro.get("inflation_monthly") or 3.5
     inflation_annual  = macro.get("inflation_annual") or 42.0
+    inflation_date    = macro.get("inflation_date")
     usd_oficial       = macro.get("usd_oficial") or 1400
     uva               = macro.get("uva")
+
+    # Etiqueta para el dato de inflación (mes del último dato oficial)
+    if inflation_date:
+        try:
+            parts = inflation_date.split("-")
+            _months = ["ene","feb","mar","abr","may","jun","jul","ago","sep","oct","nov","dic"]
+            infl_label = f"{_months[int(parts[1])-1]} {parts[0]}"
+        except Exception:
+            infl_label = inflation_date
+    else:
+        infl_label = "último dato"
 
     horizonte_desc, horizonte_meses = _horizonte_context(fecha_objetivo)
 
@@ -178,7 +190,7 @@ real (por encima de la inflación) cumpliendo el perfil de riesgo del inversor.
 {_horizonte_rules(horizonte_meses)}
 
 ## Contexto macroeconómico actual
-- Inflación mensual IPC: {inflation_monthly:.1f}% (último dato INDEC)
+- Inflación mensual IPC ({infl_label}): {inflation_monthly:.1f}% — último dato oficial publicado por INDEC
 - Inflación anual: {inflation_annual:.1f}%
 - Dólar oficial: ${usd_oficial:,.0f} ARS/USD
 - UVA actual: {f'${uva:,.2f}' if uva else 'no disponible'}
@@ -233,6 +245,9 @@ real (por encima de la inflación) cumpliendo el perfil de riesgo del inversor.
 - ONs USD: preferir emisores con mejor rating y vencimiento más próximo para MODERADO.
 - FCI Renta Variable solo para riesgo ALTO, horizonte mínimo 12 meses.
 - Cauciones: excelentes para liquidez de muy corto plazo (1–7 días), rendimiento superior al FCI MM.
+- Instrumento con vencimiento en el extremo del horizonte: en el `rationale` aclarar "calza con el extremo largo del horizonte — riesgo de precio y liquidez si necesitás vender antes del vencimiento".
+- CEDEARs en perfil MODERADO con horizonte <12 meses: agregar en `rationale` "tramo de crecimiento con volatilidad — puede caer 15–25% en el corto plazo; solo apto si aceptás no vender antes del objetivo".
+- En el campo `usd_exposure_breakdown`: desglosar la exposición USD en tres categorías separadas según el tipo de riesgo que representa cada instrumento.
 
 ### Validación de ejecutabilidad (OBLIGATORIO antes de incluir un instrumento)
 - CEDEARs: el `amount_ars` asignado DEBE ser ≥ precio de paridad por unidad (indicado arriba como "Precio paridad ARS"). Si el monto es menor al precio de 1 CEDEAR, NO incluyas ese instrumento — aumentá otro o redistribuí el porcentaje.
@@ -258,7 +273,12 @@ Respondé ÚNICAMENTE con JSON válido, sin texto adicional:
     }}
   ],
   "inflation_coverage_pct": <% del portafolio con cobertura inflacionaria real (CER/UVA/LECER)>,
-  "usd_exposure_pct": <% del portafolio con exposición directa o indirecta en USD>,
+  "usd_exposure_pct": <% total del portafolio con exposición en USD (suma de las tres categorías)>,
+  "usd_exposure_breakdown": {{
+    "dolar_liquido_pct": <% en MEP / dólar puro>,
+    "renta_corporativa_usd_pct": <% en ONs USD / bonos hard dollar>,
+    "equity_dolarizado_pct": <% en CEDEARs / acciones MERVAL>
+  }},
   "strategy_summary": "3–4 oraciones en español explicando la lógica general de la estrategia y por qué esta combinación de instrumentos es óptima para el contexto actual",
   "main_risk": "principal riesgo de esta estrategia en el contexto argentino actual",
   "time_horizon": "horizonte de inversión recomendado (ej: 3–6 meses, 6–12 meses)",
