@@ -6,8 +6,8 @@ Sistema multi-agente de análisis bursátil construido en Python, usando la **Cl
 
 ## ¿Qué hace?
 
-- **Analiza acciones americanas** (50 tickers) con 4 agentes especializados corriendo en paralelo: fundamental, técnico, indicadores y sentimiento — sintetizados por un agente CEO que genera la tesis final
-- **Analiza el mercado argentino** — bonos CER (TX26, TX28, TX30), CEDEARs y 32 instrumentos en ARS con contexto macro en tiempo real e incorpora noticias del día (Google News + Ámbito)
+- **Analiza acciones americanas** (76 tickers) con 4 agentes especializados corriendo en paralelo: fundamental, técnico, indicadores y sentimiento — sintetizados por un agente CEO que genera la tesis final. Son el motor interno para decidir qué CEDEARs comprar
+- **Analiza el mercado argentino** — 10 acciones del panel MERVAL con valuación en dólares implícita y comparación vs. alternativas; 29 CEDEARs con paridad teórica en ARS; 32 instrumentos (bonos CER, FCI, MEP, ONs) con contexto macro e incorpora noticias del día (Google News + Ámbito)
 - **Monitorea tu portafolio** — acciones, bonos y CEDEARs con precios reales vía API de Invertir Online
 - **Paper trading** — rastrea si las señales del CEO aciertan comparando predicciones contra precios reales
 - **Alertas de precio** — notifica por email cuando un ticker toca el stop loss o take profit
@@ -53,12 +53,12 @@ streamlit run app.py  # http://localhost:8501
 | Página | Descripción |
 |--------|-------------|
 | 🏠 Home | Macro argentina en tiempo real + tabla de todos los análisis guardados |
-| 📋 Watchlist | Analizar tickers a elección con barra de progreso |
-| 💼 Portafolio USD | Screening de 50 tickers + distribución óptima de capital |
+| 📋 Watchlist | Analizar tickers USA (subyacentes de CEDEARs) con barra de progreso |
+| 🌎 CEDEARs | Dashboard de 29 CEDEARs: semáforo de score, paridad ARS, calculadora de exposición USD |
 | 🗂️ Mi Portafolio | Análisis de posiciones reales (acciones, bonos, CEDEARs) |
-| 🇦🇷 Invertir ARS | Recomendación en pesos con noticias del día incorporadas |
+| 💵 Invertir ARS | Recomendación en pesos con noticias del día, picks MERVAL y picks CEDEARs |
 | 📈 Paper Trading | Win rate, P&L% y seguimiento de señales históricas |
-| ⚙️ Perfil | Editar stop loss, take profit, RSI, P/E y watchlist desde la UI |
+| ⚙️ Perfil | Editar stop loss, take profit, RSI, P/E, watchlist USA y watchlist MERVAL |
 
 ---
 
@@ -67,16 +67,20 @@ streamlit run app.py  # http://localhost:8501
 ```bash
 source venv/bin/activate
 
-# Actualizar storage
-python3 main.py actualizar                          # 50 tickers del universo
-python3 main.py actualizar AAPL MSFT NVDA           # tickers específicos
-
-# Análisis
-python3 main.py watchlist                           # watchlist con email
-python3 main.py portafolio --capital 5000           # portafolio óptimo USD
-python3 main.py mi-portafolio                       # analizar my_portfolio.json
+# Recomendación principal (comando más usado)
 python3 main.py invertir --capital 500000 --riesgo moderado
-python3 main.py invertir --capital 500000 --riesgo moderado --fecha 2027-01
+python3 main.py invertir --capital 500000 --riesgo alto --fecha 2027-01
+
+# Análisis MERVAL
+python3 main.py merval                              # analiza las 10 acciones del panel líder
+
+# Actualizar storage (subyacentes USA → picks de CEDEARs)
+python3 main.py actualizar                          # 76 tickers del universo
+python3 main.py actualizar AAPL MSFT NVDA           # tickers específicos
+python3 main.py watchlist                           # watchlist con email
+
+# Portafolio propio
+python3 main.py mi-portafolio                       # analizar my_portfolio.json
 
 # Portafolio
 python3 main.py comprar AAPL 10 185.50
@@ -181,8 +185,8 @@ Logs en `logs/actualizar.log` y `logs/alerts.log`.
 | `indicators.py` | MACD, Bollinger Bands, volumen | buy / hold / avoid |
 | `sentiment.py` | Noticias Finnhub, posición competitiva | buy / hold / avoid |
 | `ceo/orchestrator.py` | Síntesis final de los 4 agentes | tesis + stop/target |
-| `allocator.py` | Distribución óptima de capital | posiciones + pesos |
-| `ars_advisor.py` | Inversión en ARS con macro + noticias | asignación en pesos |
+| `ars_advisor.py` | Inversión en ARS con macro + noticias + picks | asignación en pesos |
+| `merval_analyzer.py` | Acciones MERVAL: valuación USD, hedge inflación, riesgo regulatorio | buy / hold / sell |
 | `bond_analyzer.py` | Bonos CER argentinos (TX26, TX28...) | hold / sell / add |
 | `cedear_analyzer.py` | CEDEARs: paridad, CCL implícito | hold / sell / add |
 | `position_analyzer.py` | Posiciones existentes en acciones | hold / sell / add |
@@ -196,7 +200,7 @@ El sistema usa `instructions/investor_profile.json` (editable desde la UI en Per
 - **Riesgo:** moderado — stop loss 8%, take profit 20%, máx 15% por posición
 - **Reglas fundamentales:** P/E ≤ 40, crecimiento ≥ 5%, deuda/equity ≤ 2.0
 - **Reglas técnicas:** solo sobre MA200, RSI entre 30–75, confirmar volumen
-- **Universo:** 50 tickers en 8 sectores (tech, healthcare, finance, energy, consumer, real estate, communications, ETFs)
+- **Universo:** 76 tickers en 8 sectores (tech, healthcare, finance, energy, consumer, real estate, communications, ETFs)
 
 ---
 
@@ -207,9 +211,9 @@ investment-agent/
 ├── main.py                    # CLI unificado
 ├── app.py                     # Streamlit home
 ├── pages/                     # 6 páginas Streamlit
-├── agents/                    # 10 agentes especializados
+├── agents/                    # 11 agentes especializados
 ├── ceo/orchestrator.py        # Síntesis CEO
-├── data/                      # 9 módulos de datos
+├── data/                      # 10 módulos de datos
 ├── core/                      # Cache y gestión de portafolio
 ├── notifications/             # Email HTML
 ├── scripts/                   # Scripts de cron
