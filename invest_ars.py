@@ -81,7 +81,7 @@ def run_ars(capital: float, riesgo: str = "moderado", fecha_objetivo: str | None
 
     # --- 6. Enviar email ---
     print("📧 Enviando email...")
-    send_ars_recommendation_email(rec, capital, riesgo, macro, cedear_picks)
+    send_ars_recommendation_email(rec, capital, riesgo, macro, cedear_picks, merval_picks)
 
     # --- 5. Guardar ---
     output_file = f"storage/inversion_ars_{date.today().isoformat()}.json"

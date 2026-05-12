@@ -247,5 +247,5 @@ if st.button("Generar recomendación", type="primary", use_container_width=True)
     st.caption(f"💾 Guardado en {output_file}")
 
     if send_email:
-        send_ars_recommendation_email(rec, capital, riesgo, macro, cedear_picks)
+        send_ars_recommendation_email(rec, capital, riesgo, macro, cedear_picks, merval_picks)
         st.caption("📧 Email enviado.")

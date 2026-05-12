@@ -283,7 +283,7 @@ def send_portfolio_email(portfolio: dict, capital: float):
         return False
 
 
-def send_ars_recommendation_email(rec: dict, capital: float, riesgo: str, macro: dict, cedear_picks: list = None):
+def send_ars_recommendation_email(rec: dict, capital: float, riesgo: str, macro: dict, cedear_picks: list = None, merval_picks: list = None):
     """Email con la recomendación de inversión en ARS generada por invest_ars.py."""
     email_user = os.getenv("EMAIL_USER")
     email_pass = os.getenv("EMAIL_PASSWORD")
@@ -358,14 +358,21 @@ def send_ars_recommendation_email(rec: dict, capital: float, riesgo: str, macro:
         </tr>
         """
 
+    # Separar CEDEARs picks: los que están en la cartera vs los que son alternativas
     cedear_html = ""
     if cedear_picks:
-        items = ""
-        for i, p in enumerate(cedear_picks, 1):
-            par_str = f"${p['parity_price_ars']:,.2f} ARS" if p.get("parity_price_ars") else "N/A"
-            items += f"""
+        alloc_text = " ".join(
+            (pos.get("name", "") + " " + pos.get("instrument_id", "")).upper()
+            for pos in allocation if pos.get("type") in ("cedear", "cedears")
+        )
+        en_cartera   = [p for p in cedear_picks if p["ticker"].upper() in alloc_text]
+        alternativas = [p for p in cedear_picks if p["ticker"].upper() not in alloc_text]
+
+        def _cedear_item_html(p, badge=""):
+            par_str = f"${p['parity_price_ars']:,.0f} ARS" if p.get("parity_price_ars") else "N/A"
+            return f"""
             <div style="border:1px solid #e0e0e0;border-radius:6px;padding:14px;margin-bottom:10px">
-              <b>{i}. {p['ticker']} — {p['name']}</b>
+              <b>{p['ticker']} — {p['name']}{badge}</b>
               <span style="float:right;background:#1a1a2e;color:white;padding:2px 8px;border-radius:10px;font-size:13px">
                 Score {p.get('score','?')}/10
               </span><br>
@@ -377,13 +384,61 @@ def send_ars_recommendation_email(rec: dict, capital: float, riesgo: str, macro:
                 {p.get('thesis','')}
               </span>
               <span style="font-size:12px;color:#888;margin-top:4px;display:block">
-                📍 {p.get('how_to_buy','')}
+                📍 {p.get('how_to_buy', f"IOL > Operar > CEDEARs > buscar {p['ticker']} > Comprar")}
               </span>
             </div>
             """
+
+        sections = ""
+        if en_cartera:
+            items_html = "".join(_cedear_item_html(p, " ✅") for p in en_cartera)
+            sections += f"""
+            <h4 style="color:#2e7d32;margin:0 0 10px">CEDEARs incluidos en la cartera</h4>
+            {items_html}
+            """
+        if alternativas:
+            items_html = "".join(_cedear_item_html(p) for p in alternativas)
+            sections += f"""
+            <h4 style="color:#555;margin:{'16px' if en_cartera else '0'} 0 6px">CEDEARs analizados — no incluidos en esta cartera</h4>
+            <p style="margin:0 0 10px;font-size:12px;color:#888">Buen score pero descartados por el advisor en este contexto.</p>
+            {items_html}
+            """
+
         cedear_html = f"""
         <div style="padding:20px;background:white;border:1px solid #e0e0e0;margin-top:2px">
-          <h3 style="color:#880e4f;margin:0 0 12px">🌎 CEDEARs recomendados</h3>
+          <h3 style="color:#880e4f;margin:0 0 14px">🌎 CEDEARs analizados</h3>
+          {sections}
+        </div>
+        """
+
+    # MERVAL picks
+    merval_html = ""
+    if merval_picks:
+        items = ""
+        for p in merval_picks:
+            price_str = f"${p['market_price_ars']:,.0f} ARS" if p.get("market_price_ars") else "N/A"
+            ccl_str   = f" | CCL implícito: ${p['ccl_implicit']:,.0f}" if p.get("ccl_implicit") else ""
+            items += f"""
+            <div style="border:1px solid #e0e0e0;border-radius:6px;padding:14px;margin-bottom:10px">
+              <b>🇦🇷 {p['ticker']} — {p.get('name', p['ticker'])}</b>
+              <span style="float:right;background:#4a148c;color:white;padding:2px 8px;border-radius:10px;font-size:13px">
+                Score {p.get('score','?')}/10
+              </span><br>
+              <span style="color:#555;font-size:13px">
+                Precio: {price_str}{ccl_str} &nbsp;·&nbsp;
+                Acción: <b>{p.get('action','?').upper()}</b>
+              </span><br>
+              <span style="font-size:13px;color:#333;margin-top:4px;display:block">
+                {p.get('rationale','')}
+              </span>
+              <span style="font-size:12px;color:#888;margin-top:4px;display:block">
+                📍 {p.get('how_to_buy', f"IOL > Operar > Acciones > buscar {p['ticker']} > Comprar")}
+              </span>
+            </div>
+            """
+        merval_html = f"""
+        <div style="padding:20px;background:white;border:1px solid #e0e0e0;margin-top:2px">
+          <h3 style="color:#4a148c;margin:0 0 12px">🇦🇷 Acciones MERVAL recomendadas</h3>
           {items}
         </div>
         """
@@ -450,6 +505,8 @@ def send_ars_recommendation_email(rec: dict, capital: float, riesgo: str, macro:
     </div>
 
     {cedear_html}
+
+    {merval_html}
 
     <div style="padding:20px;background:#fff3e0;border:1px solid #ffb74d;margin-top:2px;border-radius:0 0 8px 8px">
       <h3 style="color:#e65100;margin:0 0 8px">⚠️ Riesgo principal</h3>
