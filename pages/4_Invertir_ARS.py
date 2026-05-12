@@ -198,7 +198,7 @@ if st.button("Generar recomendación", type="primary", use_container_width=True)
         en_cartera   = [p for p in cedear_picks if p["ticker"].upper() in alloc_text]
         alternativas = [p for p in cedear_picks if p["ticker"].upper() not in alloc_text]
 
-        def _cedear_expander(p, badge=""):
+        def _cedear_expander(p, badge="", in_cartera=True):
             label = f"🌎 {p['ticker']} — {p['name']} | Score: {p['score']}/10{badge}"
             with st.expander(label):
                 c1, c2, c3 = st.columns(3)
@@ -209,8 +209,11 @@ if st.button("Generar recomendación", type="primary", use_container_width=True)
                     st.write(f"**Paridad ARS:** ${p['parity_price_ars']:,.0f} (ratio 1:{p['ratio']})")
                 st.write(f"**Veredicto:** {p.get('verdict', '')}")
                 st.write(f"**Tesis:** {p.get('thesis', '')}")
-                how = p.get("how_to_buy") or f"IOL > Operar > CEDEARs > buscar {p['ticker']} > Comprar"
-                st.write(f"**Cómo comprar:** {how}")
+                if in_cartera:
+                    how = p.get("how_to_buy") or f"IOL > Operar > CEDEARs > buscar {p['ticker']} > Comprar"
+                    st.write(f"**Cómo comprar:** {how}")
+                else:
+                    st.caption(f"📌 Monitorear en IOL: Mercados > CEDEARs > {p['ticker']}. No ejecutar orden en esta cartera.")
 
         st.divider()
         st.subheader("CEDEARs incluidos en la cartera")
@@ -224,7 +227,7 @@ if st.button("Generar recomendación", type="primary", use_container_width=True)
             st.subheader("CEDEARs analizados — no incluidos en esta cartera")
             st.caption("Buen score pero descartados por el advisor en este contexto. Consideralos como alternativas.")
             for p in alternativas:
-                _cedear_expander(p)
+                _cedear_expander(p, in_cartera=False)
 
     elif has_cedears and not cedear_picks:
         st.info("No hay análisis cacheados de CEDEARs. Ejecutá la página **Watchlist** primero.")

@@ -380,8 +380,13 @@ def send_ars_recommendation_email(rec: dict, capital: float, riesgo: str, macro:
         en_cartera   = [p for p in cedear_picks if p["ticker"].upper() in alloc_text]
         alternativas = [p for p in cedear_picks if p["ticker"].upper() not in alloc_text]
 
-        def _cedear_item_html(p, badge=""):
+        def _cedear_item_html(p, badge="", in_cartera=True):
             par_str = f"${p['parity_price_ars']:,.0f} ARS" if p.get("parity_price_ars") else "N/A"
+            if in_cartera:
+                _default_how = f"IOL > Operar > CEDEARs > buscar {p['ticker']} > Comprar"
+                iol_line = f"📍 {p.get('how_to_buy', _default_how)}"
+            else:
+                iol_line = f"📌 Monitorear en IOL: Mercados > CEDEARs > {p['ticker']}. No ejecutar orden en esta cartera."
             return f"""
             <div style="border:1px solid #e0e0e0;border-radius:6px;padding:14px;margin-bottom:10px">
               <b>{p['ticker']} — {p['name']}{badge}</b>
@@ -396,20 +401,20 @@ def send_ars_recommendation_email(rec: dict, capital: float, riesgo: str, macro:
                 {p.get('thesis','')}
               </span>
               <span style="font-size:12px;color:#888;margin-top:4px;display:block">
-                📍 {p.get('how_to_buy', f"IOL > Operar > CEDEARs > buscar {p['ticker']} > Comprar")}
+                {iol_line}
               </span>
             </div>
             """
 
         sections = ""
         if en_cartera:
-            items_html = "".join(_cedear_item_html(p, " ✅") for p in en_cartera)
+            items_html = "".join(_cedear_item_html(p, " ✅", in_cartera=True) for p in en_cartera)
             sections += f"""
             <h4 style="color:#2e7d32;margin:0 0 10px">CEDEARs incluidos en la cartera</h4>
             {items_html}
             """
         if alternativas:
-            items_html = "".join(_cedear_item_html(p) for p in alternativas)
+            items_html = "".join(_cedear_item_html(p, in_cartera=False) for p in alternativas)
             sections += f"""
             <h4 style="color:#555;margin:{'16px' if en_cartera else '0'} 0 6px">CEDEARs analizados — no incluidos en esta cartera</h4>
             <p style="margin:0 0 10px;font-size:12px;color:#888">Buen score pero descartados por el advisor en este contexto.</p>

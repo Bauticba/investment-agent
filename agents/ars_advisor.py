@@ -249,6 +249,12 @@ real (por encima de la inflación) cumpliendo el perfil de riesgo del inversor.
 - CEDEARs en perfil MODERADO con horizonte <12 meses: agregar en `rationale` "tramo de crecimiento con volatilidad — puede caer 15–25% en el corto plazo; solo apto si aceptás no vender antes del objetivo".
 - En el campo `usd_exposure_breakdown`: desglosar la exposición USD en tres categorías separadas según el tipo de riesgo que representa cada instrumento.
 
+### Precisión financiera obligatoria en los rationale (evitar errores comunes)
+- Bonos CER (TX26, TX28, etc.): NUNCA afirmes una TIR real fija como si fuera garantizada. La TIR CER depende del precio de mercado al momento de compra y varía diariamente. Usar siempre: "rendimiento real estimado según precio actual — verificar TIR CER en IOL antes de ejecutar".
+- PF UVA: NUNCA afirmes "UVA + X%" como tasa garantizada. La tasa ofrecida varía por entidad y momento. Usar siempre: "cobertura inflacionaria ajustada por UVA a la tasa que ofrezca la entidad al momento de constituir — verificar antes de ejecutar".
+- FCI Money Market: NO cuenta como cobertura inflacionaria real. Rinde a tasa nominal (generalmente por debajo de inflación). Su función es liquidez pura. NO incluirlo en `inflation_coverage_pct`.
+- Riesgo cambiario: evitar afirmaciones cerradas como "riesgo cambiario acotado" o "el salto cambiario es improbable". Preferir: "el riesgo cambiario parece reducido en el contexto actual, pero no puede descartarse en un horizonte de varios meses en Argentina".
+
 ### Validación de ejecutabilidad (OBLIGATORIO antes de incluir un instrumento)
 - CEDEARs: el `amount_ars` asignado DEBE ser ≥ precio de paridad por unidad (indicado arriba como "Precio paridad ARS"). Si el monto es menor al precio de 1 CEDEAR, NO incluyas ese instrumento — aumentá otro o redistribuí el porcentaje.
 - Acciones MERVAL: el `amount_ars` DEBE ser ≥ precio de mercado por acción (indicado arriba). Misma regla.
