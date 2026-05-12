@@ -171,20 +171,42 @@ if st.button("Generar recomendación", type="primary", use_container_width=True)
     # ── CEDEARs picks detalle ─────────────────────────────────────────────────
     has_cedears = any(p.get("type") in ("cedear", "cedears") for p in allocation)
     if has_cedears and cedear_picks:
-        st.divider()
-        st.subheader("CEDEARs recomendados")
-        for p in cedear_picks:
-            with st.expander(f"🌎 {p['ticker']} — {p['name']} | Score: {p['score']}/10"):
+        # Separar picks incluidos en cartera de los que son solo alternativos
+        alloc_text = " ".join(
+            (pos.get("name", "") + " " + pos.get("instrument_id", "")).upper()
+            for pos in allocation if pos.get("type") in ("cedear", "cedears")
+        )
+        en_cartera   = [p for p in cedear_picks if p["ticker"].upper() in alloc_text]
+        alternativas = [p for p in cedear_picks if p["ticker"].upper() not in alloc_text]
+
+        def _cedear_expander(p, badge=""):
+            label = f"🌎 {p['ticker']} — {p['name']} | Score: {p['score']}/10{badge}"
+            with st.expander(label):
                 c1, c2, c3 = st.columns(3)
-                c1.metric("Score CEO",   f"{p['score']}/10")
-                c2.metric("Convicción",  (p.get("conviction") or "N/A").upper())
-                c3.metric("Precio USD",  f"${p.get('us_price_usd', 'N/A')}")
+                c1.metric("Score CEO",  f"{p['score']}/10")
+                c2.metric("Convicción", (p.get("conviction") or "N/A").upper())
+                c3.metric("Precio USD", f"${p.get('us_price_usd', 'N/A')}")
                 if p.get("parity_price_ars"):
                     st.write(f"**Paridad ARS:** ${p['parity_price_ars']:,.0f} (ratio 1:{p['ratio']})")
                 st.write(f"**Veredicto:** {p.get('verdict', '')}")
                 st.write(f"**Tesis:** {p.get('thesis', '')}")
                 how = p.get("how_to_buy") or f"IOL > Operar > CEDEARs > buscar {p['ticker']} > Comprar"
                 st.write(f"**Cómo comprar:** {how}")
+
+        st.divider()
+        st.subheader("CEDEARs incluidos en la cartera")
+        if en_cartera:
+            for p in en_cartera:
+                _cedear_expander(p, " ✅")
+        else:
+            st.caption("El advisor no asignó CEDEARs específicos del análisis (puede haber usado un pick genérico).")
+
+        if alternativas:
+            st.subheader("CEDEARs analizados — no incluidos en esta cartera")
+            st.caption("Buen score pero descartados por el advisor en este contexto. Consideralos como alternativas.")
+            for p in alternativas:
+                _cedear_expander(p)
+
     elif has_cedears and not cedear_picks:
         st.info("No hay análisis cacheados de CEDEARs. Ejecutá la página **Watchlist** primero.")
 

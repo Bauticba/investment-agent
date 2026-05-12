@@ -234,6 +234,11 @@ real (por encima de la inflación) cumpliendo el perfil de riesgo del inversor.
 - FCI Renta Variable solo para riesgo ALTO, horizonte mínimo 12 meses.
 - Cauciones: excelentes para liquidez de muy corto plazo (1–7 días), rendimiento superior al FCI MM.
 
+### Validación de ejecutabilidad (OBLIGATORIO antes de incluir un instrumento)
+- CEDEARs: el `amount_ars` asignado DEBE ser ≥ precio de paridad por unidad (indicado arriba como "Precio paridad ARS"). Si el monto es menor al precio de 1 CEDEAR, NO incluyas ese instrumento — aumentá otro o redistribuí el porcentaje.
+- Acciones MERVAL: el `amount_ars` DEBE ser ≥ precio de mercado por acción (indicado arriba). Misma regla.
+- Capital pequeño: si el capital total es ≤ $500.000 ARS, limitá la cartera a máximo 5 instrumentos para que cada posición tenga un monto mínimo ejecutable real.
+
 ## Tu tarea
 Diseñá la asignación óptima para {profile["investor"]["name"]} con ${capital:,.0f} ARS
 y perfil de riesgo {riesgo.upper()}. Justificá brevemente cada posición en el contexto macro actual.
