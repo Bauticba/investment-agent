@@ -101,7 +101,7 @@ def get_macro_data() -> dict:
     """
     inflation_monthly  = _last_value(f"{AD_BASE}/finanzas/indices/inflacion")
     inflation_annual   = _last_value(f"{AD_BASE}/finanzas/indices/inflacionInteranual")
-    uva                = _last_value(f"{AD_BASE}/cotizaciones/dolares", key="uva")
+    uva                = _last_value(f"{AD_BASE}/finanzas/indices/uva")
     usd_oficial        = _last_value(f"{AD_BASE}/cotizaciones/dolares/oficial", key="venta")
 
     return {
