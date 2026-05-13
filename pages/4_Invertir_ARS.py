@@ -187,6 +187,30 @@ if st.button("Generar recomendación", type="primary", use_container_width=True)
     st.write("**Riesgo principal:**",  rec.get("main_risk", ""))
     st.write("**Próxima revisión:**",  rec.get("review_in", "?"))
 
+    # ── Tabla de riesgo por instrumento ──────────────────────────────────────
+    risk_rows = [
+        {
+            "Instrumento": pos.get("name", "?"),
+            "Riesgo principal": pos.get("main_risk", "—"),
+            "Liquidez": pos.get("liquidity", "—"),
+            "Rol": pos.get("role", "—"),
+        }
+        for pos in allocation
+        if pos.get("main_risk") or pos.get("role")
+    ]
+    if risk_rows:
+        st.divider()
+        st.subheader("📋 Riesgo por instrumento")
+        st.dataframe(risk_rows, use_container_width=True, hide_index=True)
+        st.caption("⚠️ Los resultados no incluyen comisiones, spread de compra/venta ni diferencia entre precio teórico y ejecutado.")
+
+    # ── Triggers de rebalanceo ─────────────────────────────────────────────────
+    triggers = rec.get("rebalance_triggers", [])
+    if triggers:
+        st.subheader("🔁 Cuándo rebalancear")
+        for t in triggers:
+            st.markdown(f"- {t}")
+
     # ── CEDEARs picks detalle ─────────────────────────────────────────────────
     has_cedears = any(p.get("type") in ("cedear", "cedears") for p in allocation)
     if has_cedears and cedear_picks:

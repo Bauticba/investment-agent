@@ -218,6 +218,7 @@ real (por encima de la inflación) cumpliendo el perfil de riesgo del inversor.
 3. Los `amount_ars` deben ser enteros y sumar exactamente ${capital:,.0f}.
 4. Siempre incluir FCI Money Market o Caución como reserva de liquidez (5–10% mínimo).
 5. PF tradicional SOLO si inflación < TNA/12. Actualmente inflación mensual = {inflation_monthly:.1f}% → descartarlo si la TNA no la supera.
+6. Si inflación mensual > 3% y perfil = MODERADO: cobertura inflacionaria mínima (CER/UVA/LECER) = 35%. Actualmente inflación = {inflation_monthly:.1f}% {"→ REGLA ACTIVA: mínimo 35% en CER/UVA/LECER" if inflation_monthly and inflation_monthly > 3 else "→ regla no activa aún"}.
 
 ### Por perfil de riesgo
 **BAJO** (preservación de capital):
@@ -225,10 +226,9 @@ real (por encima de la inflación) cumpliendo el perfil de riesgo del inversor.
 - Sin hard dollar bonds, sin ONs USD, sin CEDEARs, sin acciones
 
 **MODERADO** (balance):
-- 25–35% CER/UVA (LECER, TX26, PF UVA) — cobertura inflacionaria
+- 35–45% CER/UVA (LECER, TX26, PF UVA) — cobertura inflacionaria (ver regla 6)
 - 20–30% dolarización (MEP + bonos hard dollar GD30/AL30 o ONs USD) — protección cambiaria
-- 10–20% CEDEARs (acciones USA en ARS) — retorno en dólares vía equity
-- 10–15% FCI Renta Fija o LECAP — rendimiento mayor al MM
+- MÁXIMO 15% en CEDEARs para perfil MODERADO — retorno en dólares vía equity con volatilidad
 - 5–10% FCI MM / Caución — liquidez
 
 **ALTO** (maximizar retorno real):
@@ -247,6 +247,7 @@ real (por encima de la inflación) cumpliendo el perfil de riesgo del inversor.
 - Cauciones: excelentes para liquidez de muy corto plazo (1–7 días), rendimiento superior al FCI MM.
 - Instrumento con vencimiento en el extremo del horizonte: en el `rationale` aclarar "calza con el extremo largo del horizonte — riesgo de precio y liquidez si necesitás vender antes del vencimiento".
 - CEDEARs en perfil MODERADO con horizonte <12 meses: agregar en `rationale` "tramo de crecimiento con volatilidad — puede caer 15–25% en el corto plazo; solo apto si aceptás no vender antes del objetivo".
+- MEP vía AL30/GD30: durante el período de parking (24hs) existe riesgo de variación de precio del bono utilizado y riesgo normativo. En el `rationale` aclarar: "una vez finalizada la operación, los USD resultantes no tienen riesgo soberano ni corporativo; el riesgo de parking es durante las 24hs previas".
 - En el campo `usd_exposure_breakdown`: desglosar la exposición USD en tres categorías separadas según el tipo de riesgo que representa cada instrumento.
 
 ### Precisión financiera obligatoria en los rationale (evitar errores comunes)
@@ -275,10 +276,13 @@ Respondé ÚNICAMENTE con JSON válido, sin texto adicional:
       "allocation_pct": <número, porcentaje del capital>,
       "amount_ars": <monto en ARS, entero>,
       "rationale": "1–2 oraciones justificando esta posición en el contexto macro actual",
-      "how_to_buy": "instrucciones exactas de cómo comprar en IOL (Invertir Online)"
+      "how_to_buy": "instrucciones exactas de cómo comprar en IOL (Invertir Online)",
+      "main_risk": "riesgo principal de este instrumento en 3–5 palabras (ej: 'Riesgo soberano / tasa real')",
+      "liquidity": "Alta | Media | Baja",
+      "role": "rol en la cartera en 2–3 palabras (ej: 'Cobertura inflación', 'Dólar líquido', 'Renta USD', 'Crecimiento', 'Liquidez')"
     }}
   ],
-  "inflation_coverage_pct": <% del portafolio con cobertura inflacionaria real (CER/UVA/LECER)>,
+  "inflation_coverage_pct": <% del portafolio con cobertura inflacionaria real (CER/UVA/LECER). NO incluir FCI MM.>,
   "usd_exposure_pct": <% total del portafolio con exposición en USD (suma de las tres categorías)>,
   "usd_exposure_breakdown": {{
     "dolar_liquido_pct": <% en MEP / dólar puro>,
@@ -288,7 +292,10 @@ Respondé ÚNICAMENTE con JSON válido, sin texto adicional:
   "strategy_summary": "3–4 oraciones en español explicando la lógica general de la estrategia y por qué esta combinación de instrumentos es óptima para el contexto actual",
   "main_risk": "principal riesgo de esta estrategia en el contexto argentino actual",
   "time_horizon": "horizonte de inversión recomendado (ej: 3–6 meses, 6–12 meses)",
-  "review_in": "cuándo revisar la asignación (ej: próximo dato de inflación INDEC, en 30 días, antes del vencimiento de X)"
+  "review_in": "cuándo revisar la asignación (ej: próximo dato de inflación INDEC, en 30 días, antes del vencimiento de X)",
+  "rebalance_triggers": [
+    "condición concreta y medible que justifica revisar la cartera antes de la fecha programada (ej: 'AMZN sube o baja más de 15% desde el precio de entrada', 'IPC mensual supera 3,5% por dos meses consecutivos', 'MEP se mueve más de 10% contra el precio de compra')"
+  ]
 }}
 """
 
@@ -297,7 +304,7 @@ Respondé ÚNICAMENTE con JSON válido, sin texto adicional:
         try:
             response = client.messages.create(
                 model="claude-sonnet-4-6",
-                max_tokens=3000,
+                max_tokens=4000,
                 messages=[{"role": "user", "content": prompt}]
             )
             break

@@ -487,6 +487,51 @@ def send_ars_recommendation_email(rec: dict, capital: float, riesgo: str, macro:
         </div>
         """
 
+    # Pre-computar tabla de riesgo por instrumento
+    risk_rows = [p for p in allocation if p.get("main_risk") or p.get("role")]
+    if risk_rows:
+        _risk_rows_html = "".join(
+            f"""<tr style="{'background:#f9f9f9' if i%2 else ''}">
+              <td style="padding:8px 10px;border:1px solid #eee;font-weight:bold;font-size:13px">{p.get('name','?')}</td>
+              <td style="padding:8px 10px;border:1px solid #eee;font-size:13px;color:#c62828">{p.get('main_risk','—')}</td>
+              <td style="padding:8px 10px;border:1px solid #eee;font-size:13px;text-align:center">{p.get('liquidity','—')}</td>
+              <td style="padding:8px 10px;border:1px solid #eee;font-size:13px;color:#1565c0">{p.get('role','—')}</td>
+            </tr>"""
+            for i, p in enumerate(risk_rows)
+        )
+        _risk_table_html = f"""
+        <div style="padding:20px;background:white;border:1px solid #e0e0e0;margin-top:2px">
+          <h3 style="color:#1a1a2e;margin:0 0 10px">📋 Riesgo por instrumento</h3>
+          <table style="width:100%;border-collapse:collapse">
+            <tr style="background:#1a1a2e;color:white;font-size:12px">
+              <th style="padding:8px 10px;text-align:left">Instrumento</th>
+              <th style="padding:8px 10px;text-align:left">Riesgo principal</th>
+              <th style="padding:8px 10px;text-align:center">Liquidez</th>
+              <th style="padding:8px 10px;text-align:left">Rol</th>
+            </tr>
+            {_risk_rows_html}
+          </table>
+          <p style="margin:10px 0 0;font-size:11px;color:#999">
+            ⚠️ Los resultados no incluyen comisiones, spread de compra/venta ni diferencia entre precio teórico y ejecutado.
+          </p>
+        </div>
+        """
+    else:
+        _risk_table_html = ""
+
+    # Pre-computar triggers de rebalanceo
+    triggers = rec.get("rebalance_triggers", [])
+    if triggers:
+        _trigger_items = "".join(f"<li style='margin-bottom:6px'>{t}</li>" for t in triggers)
+        _triggers_html = f"""
+        <div style="padding:20px;background:#f3f8ff;border:1px solid #90caf9;margin-top:2px">
+          <h3 style="color:#1565c0;margin:0 0 10px">🔁 Cuándo rebalancear</h3>
+          <ul style="margin:0;padding-left:20px;color:#333;font-size:13px;line-height:1.7">{_trigger_items}</ul>
+        </div>
+        """
+    else:
+        _triggers_html = ""
+
     # Pre-computar sección USD breakdown para evitar lógica compleja dentro del f-string
     usd_bd = rec.get("usd_exposure_breakdown", {})
     if usd_bd:
@@ -569,6 +614,10 @@ def send_ars_recommendation_email(rec: dict, capital: float, riesgo: str, macro:
         <b>Próxima revisión:</b> {rec.get('review_in','?')}
       </p>
     </div>
+
+    {_risk_table_html}
+
+    {_triggers_html}
 
     {cedear_html}
 
