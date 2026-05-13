@@ -178,10 +178,11 @@ if st.button("Generar recomendación", type="primary", use_container_width=True)
 
     usd_bd = rec.get("usd_exposure_breakdown")
     if usd_bd:
-        bd1, bd2, bd3 = st.columns(3)
-        bd1.metric("💵 Dólar líquido (MEP)",              f"{usd_bd.get('dolar_liquido_pct', 0):.0f}%")
-        bd2.metric("📄 Renta fija USD (bonos + ONs)",     f"{usd_bd.get('renta_fija_usd_pct', usd_bd.get('renta_corporativa_usd_pct', 0)):.0f}%")
-        bd3.metric("🌎 Equity dolarizado (CEDEARs)",      f"{usd_bd.get('equity_dolarizado_pct', 0):.0f}%")
+        bd1, bd2, bd3, bd4 = st.columns(4)
+        bd1.metric("💵 MEP / dólar líquido",           f"{usd_bd.get('dolar_liquido_pct', 0):.0f}%")
+        bd2.metric("🇦🇷 Soberano hard dollar",          f"{usd_bd.get('renta_soberana_usd_pct', usd_bd.get('renta_fija_usd_pct', 0)):.0f}%")
+        bd3.metric("🏢 ONs corporativas USD",           f"{usd_bd.get('renta_corporativa_usd_pct', 0):.0f}%")
+        bd4.metric("🌎 Equity dolarizado (CEDEARs)",    f"{usd_bd.get('equity_dolarizado_pct', 0):.0f}%")
 
     st.write("**Estrategia:**",        rec.get("strategy_summary", ""))
     st.write("**Riesgo principal:**",  rec.get("main_risk", ""))

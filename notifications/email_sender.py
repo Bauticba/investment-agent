@@ -539,13 +539,16 @@ def send_ars_recommendation_email(rec: dict, capital: float, riesgo: str, macro:
         <tr><td colspan="2" style="padding-top:12px">
           <table style="width:100%;font-size:13px;color:#555">
             <tr>
-              <td>💵 Dólar líquido (MEP)</td>
+              <td>💵 MEP / dólar líquido</td>
               <td style="text-align:right;font-weight:bold">{usd_bd.get('dolar_liquido_pct',0):.0f}%</td>
-              <td style="width:14px"></td>
-              <td>📄 Renta fija USD</td>
-              <td style="text-align:right;font-weight:bold">{usd_bd.get('renta_fija_usd_pct', usd_bd.get('renta_corporativa_usd_pct',0)):.0f}%</td>
-              <td style="width:14px"></td>
-              <td>🌎 Equity dolarizado</td>
+              <td style="width:10px"></td>
+              <td>🇦🇷 Soberano hard dollar</td>
+              <td style="text-align:right;font-weight:bold">{usd_bd.get('renta_soberana_usd_pct', usd_bd.get('renta_fija_usd_pct',0)):.0f}%</td>
+              <td style="width:10px"></td>
+              <td>🏢 ONs corporativas</td>
+              <td style="text-align:right;font-weight:bold">{usd_bd.get('renta_corporativa_usd_pct',0):.0f}%</td>
+              <td style="width:10px"></td>
+              <td>🌎 Equity (CEDEARs)</td>
               <td style="text-align:right;font-weight:bold">{usd_bd.get('equity_dolarizado_pct',0):.0f}%</td>
             </tr>
           </table>

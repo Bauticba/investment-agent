@@ -219,6 +219,10 @@ real (por encima de la inflación) cumpliendo el perfil de riesgo del inversor.
 4. Siempre incluir FCI Money Market o Caución como reserva de liquidez (5–10% mínimo).
 5. PF tradicional SOLO si inflación < TNA/12. Actualmente inflación mensual = {inflation_monthly:.1f}% → descartarlo si la TNA no la supera.
 6. Si inflación mensual > 3% y perfil = MODERADO: cobertura inflacionaria mínima (CER/UVA/LECER) = 35%. Actualmente inflación = {inflation_monthly:.1f}% {"→ REGLA ACTIVA: mínimo 35% en CER/UVA/LECER" if inflation_monthly and inflation_monthly > 3 else "→ regla no activa aún"}.
+7. Perfil MODERADO: bonos soberanos hard dollar (GD28, GD30, AL30, AL35, etc.) MÁXIMO 15%. El riesgo soberano combinado (CER + hard dollar) puede exceder el 50% solo con cobertura explícita; preferir ONs corporativas (PAMP3, TGS26, YMCHO) para la exposición en USD por encima de ese tope.
+8. Si no hay MEP en la cartera (`dolar_liquido_pct = 0`): la reserva de liquidez FCI MM / Caución debe ser MÍNIMO 15% para compensar la menor liquidez del portafolio.
+9. El campo `usd_exposure_pct` DEBE ser igual a la suma aritmética exacta de `dolar_liquido_pct + renta_soberana_usd_pct + renta_corporativa_usd_pct + equity_dolarizado_pct`. Verificá la aritmética antes de responder.
+10. Los `rebalance_triggers` deben hacer referencia EXCLUSIVAMENTE a instrumentos que están en `allocation`. Si MEP no está en la cartera, NO mencionar MEP en los triggers.
 
 ### Por perfil de riesgo
 **BAJO** (preservación de capital):
@@ -248,6 +252,7 @@ real (por encima de la inflación) cumpliendo el perfil de riesgo del inversor.
 - Instrumento con vencimiento en el extremo del horizonte: en el `rationale` aclarar "calza con el extremo largo del horizonte — riesgo de precio y liquidez si necesitás vender antes del vencimiento".
 - CEDEARs en perfil MODERADO con horizonte <12 meses: agregar en `rationale` "tramo de crecimiento con volatilidad — puede caer 15–25% en el corto plazo; solo apto si aceptás no vender antes del objetivo".
 - MEP vía AL30/GD30: durante el período de parking (24hs) existe riesgo de variación de precio del bono utilizado y riesgo normativo. En el `rationale` aclarar: "una vez finalizada la operación, los USD resultantes no tienen riesgo soberano ni corporativo; el riesgo de parking es durante las 24hs previas".
+- Si se usa GD28/AL30 como alternativa al MEP: el `rationale` DEBE aclarar que no es equivalente al MEP — GD28 tiene riesgo soberano argentino, riesgo de precio de mercado y menor liquidez que el dólar MEP puro. Usar solo si se acepta ese riesgo adicional explícitamente.
 - En el campo `usd_exposure_breakdown`: desglosar la exposición USD en tres categorías separadas según el tipo de riesgo que representa cada instrumento.
 
 ### Precisión financiera obligatoria en los rationale (evitar errores comunes)
@@ -285,8 +290,9 @@ Respondé ÚNICAMENTE con JSON válido, sin texto adicional:
   "inflation_coverage_pct": <% del portafolio con cobertura inflacionaria real (CER/UVA/LECER). NO incluir FCI MM.>,
   "usd_exposure_pct": <% total del portafolio con exposición en USD (suma de las tres categorías)>,
   "usd_exposure_breakdown": {{
-    "dolar_liquido_pct": <% en MEP / dólar cash puro. Solo MEP o dólar efectivo — NO incluir bonos hard dollar>,
-    "renta_fija_usd_pct": <% en renta fija denominada en USD: bonos hard dollar soberanos (GD28, AL30, etc.) + ONs corporativas en USD (PAMP3, etc.)>,
+    "dolar_liquido_pct": <% en MEP / dólar cash puro. SOLO si hay dólar MEP en la cartera — de lo contrario 0>,
+    "renta_soberana_usd_pct": <% en bonos soberanos hard dollar (GD28, GD30, GD35, AL30, AL35, etc.)>,
+    "renta_corporativa_usd_pct": <% en ONs corporativas USD (PAMP3, TGS26, YMCHO, PAE26, etc.)>,
     "equity_dolarizado_pct": <% en CEDEARs / acciones MERVAL>
   }},
   "strategy_summary": "3–4 oraciones en español explicando la lógica general de la estrategia y por qué esta combinación de instrumentos es óptima para el contexto actual",
@@ -319,6 +325,18 @@ Respondé ÚNICAMENTE con JSON válido, sin texto adicional:
     raw   = text[start:end + 1] if start != -1 else text.strip()
 
     try:
-        return json.loads(raw)
+        result = json.loads(raw)
     except json.JSONDecodeError:
         return {"error": "parse_error", "raw": raw}
+
+    # Post-processing: recalcular usd_exposure_pct desde el breakdown (Claude puede equivocarse)
+    bd = result.get("usd_exposure_breakdown")
+    if bd:
+        result["usd_exposure_pct"] = (
+            bd.get("dolar_liquido_pct", 0)
+            + bd.get("renta_soberana_usd_pct", bd.get("renta_fija_usd_pct", 0))
+            + bd.get("renta_corporativa_usd_pct", 0)
+            + bd.get("equity_dolarizado_pct", 0)
+        )
+
+    return result
