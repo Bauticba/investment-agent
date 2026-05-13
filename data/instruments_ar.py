@@ -193,7 +193,11 @@ def get_instruments_universe(macro: dict = None) -> list[dict]:
     })
 
     # ─── DÓLAR MEP ───────────────────────────────────────────────────────────
-    mep_price = _fetch_mep_price() or usd_oficial
+    _mep = _fetch_mep_data()
+    mep_price = _mep["price"] or usd_oficial
+    mep_fecha = _mep["fecha"]
+    _mep_price_str = f"~${mep_price:,.0f} ARS/USD"
+    _mep_source = f" (dolarapi.com, {mep_fecha})" if mep_fecha else " (dolarapi.com)"
     instruments.append({
         "id":                 "dolar_mep",
         "ticker":             "AL30 / GD30",
@@ -201,7 +205,7 @@ def get_instruments_universe(macro: dict = None) -> list[dict]:
         "type":               "dolar_mep",
         "currency":           "USD",
         "adjusts_by":         "tipo de cambio implícito MEP",
-        "return_estimate":    f"Cobertura cambiaria completa. Precio MEP actual ~${mep_price:,.0f} ARS/USD",
+        "return_estimate":    f"Cobertura cambiaria completa. Precio MEP actual {_mep_price_str}{_mep_source}",
         "maturity":           "sin vencimiento — activo permanente",
         "days_to_maturity":   None,
         "liquidity":          "alta (T+1 con parking de 24hs hábiles)",
@@ -212,6 +216,7 @@ def get_instruments_universe(macro: dict = None) -> list[dict]:
         "recommended_for":    ["moderado", "alto"],
         "how_to_buy":         "IOL > Operar > Dólar MEP > comprar AL30 con pesos, esperar 24hs hábiles (parking CNV), vender AL30D por dólares",
         "notes":              "No tributa bienes personales si se mantiene como USD. Requiere 1 día hábil de parking obligatorio.",
+        "mep_fetch_timestamp": mep_fecha,
     })
 
     # ─── BONOS SOBERANOS HARD DOLLAR ────────────────────────────────────────
@@ -442,13 +447,25 @@ def _fetch_tna_caucion() -> float | None:
     return None
 
 
-def _fetch_mep_price() -> float | None:
-    """Trae el precio del dólar MEP desde dolarapi.com."""
+def _fetch_mep_data() -> dict:
+    """Trae precio y timestamp del dólar MEP desde dolarapi.com."""
     try:
         resp = requests.get("https://dolarapi.com/v1/dolares/bolsa", timeout=8)
         if resp.ok:
             data = resp.json()
-            return data.get("venta") or data.get("compra")
+            price = data.get("venta") or data.get("compra")
+            fecha_utc = data.get("fechaActualizacion", "")
+            # Convertir a hora Argentina (UTC-3)
+            fecha_art = ""
+            if fecha_utc:
+                try:
+                    from datetime import datetime, timezone, timedelta
+                    dt = datetime.fromisoformat(fecha_utc.replace("Z", "+00:00"))
+                    art = dt.astimezone(timezone(timedelta(hours=-3)))
+                    fecha_art = art.strftime("%d/%m %H:%M ART")
+                except Exception:
+                    fecha_art = fecha_utc[:16]
+            return {"price": price, "fecha": fecha_art}
     except Exception:
         pass
-    return None
+    return {"price": None, "fecha": ""}

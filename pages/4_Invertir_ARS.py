@@ -112,8 +112,12 @@ if st.button("Generar recomendación", type="primary", use_container_width=True)
         instruments = get_instruments_universe(macro)
 
     relevant = [i for i in instruments if riesgo in i.get("recommended_for", [])]
+    mep_inst = next((i for i in instruments if i.get("id") == "dolar_mep"), None)
+    mep_ts   = mep_inst.get("mep_fetch_timestamp", "") if mep_inst else ""
+    mep_caption = f" | 💵 MEP: fuente dolarapi.com — {mep_ts}" if mep_ts else " | 💵 MEP: fuente dolarapi.com"
     st.caption(
         f"{len(instruments)} instrumentos totales | {len(relevant)} compatibles con perfil {riesgo.upper()}"
+        + mep_caption
     )
 
     # ── CEDEARs picks ─────────────────────────────────────────────────────────
