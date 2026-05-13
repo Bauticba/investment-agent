@@ -292,11 +292,19 @@ Respondé ÚNICAMENTE con JSON válido, sin texto adicional:
 }}
 """
 
-    response = client.messages.create(
-        model="claude-sonnet-4-6",
-        max_tokens=3000,
-        messages=[{"role": "user", "content": prompt}]
-    )
+    import time
+    for attempt in range(3):
+        try:
+            response = client.messages.create(
+                model="claude-sonnet-4-6",
+                max_tokens=3000,
+                messages=[{"role": "user", "content": prompt}]
+            )
+            break
+        except Exception as e:
+            if attempt == 2 or "500" not in str(e):
+                raise
+            time.sleep(5 * (attempt + 1))
 
     text  = response.content[0].text
     start = text.find("{")
