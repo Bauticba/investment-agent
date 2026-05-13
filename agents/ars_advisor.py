@@ -285,8 +285,8 @@ Respondé ÚNICAMENTE con JSON válido, sin texto adicional:
   "inflation_coverage_pct": <% del portafolio con cobertura inflacionaria real (CER/UVA/LECER). NO incluir FCI MM.>,
   "usd_exposure_pct": <% total del portafolio con exposición en USD (suma de las tres categorías)>,
   "usd_exposure_breakdown": {{
-    "dolar_liquido_pct": <% en MEP / dólar puro>,
-    "renta_corporativa_usd_pct": <% en ONs USD / bonos hard dollar>,
+    "dolar_liquido_pct": <% en MEP / dólar cash puro. Solo MEP o dólar efectivo — NO incluir bonos hard dollar>,
+    "renta_fija_usd_pct": <% en renta fija denominada en USD: bonos hard dollar soberanos (GD28, AL30, etc.) + ONs corporativas en USD (PAMP3, etc.)>,
     "equity_dolarizado_pct": <% en CEDEARs / acciones MERVAL>
   }},
   "strategy_summary": "3–4 oraciones en español explicando la lógica general de la estrategia y por qué esta combinación de instrumentos es óptima para el contexto actual",

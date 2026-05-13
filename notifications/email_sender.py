@@ -542,8 +542,8 @@ def send_ars_recommendation_email(rec: dict, capital: float, riesgo: str, macro:
               <td>💵 Dólar líquido (MEP)</td>
               <td style="text-align:right;font-weight:bold">{usd_bd.get('dolar_liquido_pct',0):.0f}%</td>
               <td style="width:14px"></td>
-              <td>🏢 Renta corp. USD</td>
-              <td style="text-align:right;font-weight:bold">{usd_bd.get('renta_corporativa_usd_pct',0):.0f}%</td>
+              <td>📄 Renta fija USD</td>
+              <td style="text-align:right;font-weight:bold">{usd_bd.get('renta_fija_usd_pct', usd_bd.get('renta_corporativa_usd_pct',0)):.0f}%</td>
               <td style="width:14px"></td>
               <td>🌎 Equity dolarizado</td>
               <td style="text-align:right;font-weight:bold">{usd_bd.get('equity_dolarizado_pct',0):.0f}%</td>
