@@ -2,7 +2,7 @@ import requests
 from datetime import datetime, date
 from data.argentina import get_macro_data, BOND_REGISTRY
 
-TNA_PF_FALLBACK = 32.0
+TNA_PF_FALLBACK = 20.0
 
 # Obligaciones Negociables corporativas en USD con buena liquidez en BYMA
 ON_REGISTRY = {
@@ -404,47 +404,89 @@ def get_instruments_universe(macro: dict = None) -> list[dict]:
 
 # ─── helpers ──────────────────────────────────────────────────────────────────
 
-def _fetch_tna_pf() -> float | None:
+_PF_URL = "https://api.argentinadatos.com/v1/finanzas/tasas/plazoFijo"
+
+
+def _fetch_pf_bancos() -> list[dict]:
+    """Devuelve lista de bancos con tnaClientes en % anual, ordenada desc."""
     try:
-        resp = requests.get(
-            "https://api.argentinadatos.com/v1/finanzas/tasas/plazosFijos",
-            timeout=8,
-        )
+        resp = requests.get(_PF_URL, timeout=8)
         if resp.ok:
             data = resp.json()
-            if isinstance(data, list) and data:
-                # Tomar el promedio de tnaClientes del último snapshot
-                bancos = data[-1].get("plazosFijos", [])
-                tasas  = [b["tnaClientes"] for b in bancos if b.get("tnaClientes")]
-                if tasas:
-                    # Convertir de formato decimal (1.1 = 110% TNA mensual?) a anual
-                    # La API devuelve en % mensual → multiplicar por 12
-                    avg = sum(tasas) / len(tasas)
-                    return round(avg * 12, 1) if avg < 10 else round(avg, 1)
+            if isinstance(data, list):
+                result = []
+                for b in data:
+                    tna_raw = b.get("tnaClientes") or 0
+                    # La API devuelve valores como 0.175 (= 17.5% TNA anual)
+                    tna_pct = round(tna_raw * 100, 2) if tna_raw < 5 else round(tna_raw, 2)
+                    if tna_pct > 0:
+                        result.append({
+                            "entidad": b.get("entidad", ""),
+                            "tna_pct": tna_pct,
+                        })
+                return sorted(result, key=lambda x: x["tna_pct"], reverse=True)
     except Exception:
         pass
+    return []
+
+
+def _fetch_tna_pf() -> float | None:
+    bancos = _fetch_pf_bancos()
+    if bancos:
+        tasas = [b["tna_pct"] for b in bancos]
+        return round(sum(tasas) / len(tasas), 1)
     return None
 
 
 def _fetch_tna_caucion() -> float | None:
-    """Intenta traer la tasa de caución del BCRA/argentinadatos."""
-    try:
-        resp = requests.get(
-            "https://api.argentinadatos.com/v1/finanzas/tasas/plazosFijos",
-            timeout=8,
-        )
-        if resp.ok:
-            data = resp.json()
-            if isinstance(data, list) and data:
-                bancos = data[-1].get("plazosFijos", [])
-                tasas  = [b["tnaClientes"] for b in bancos if b.get("tnaClientes")]
-                if tasas:
-                    avg = sum(tasas) / len(tasas)
-                    tna = round(avg * 12, 1) if avg < 10 else round(avg, 1)
-                    return round(tna * 0.85, 1)  # cauciones ~15% bajo PF
-    except Exception:
-        pass
+    tna = _fetch_tna_pf()
+    if tna:
+        return round(tna * 0.85, 1)
     return None
+
+
+def get_rates_validation(macro: dict) -> dict:
+    """
+    Devuelve validación de tasas en tiempo real para mostrar en la UI.
+    - PF tradicional: tasas por banco vs inflación mensual
+    - Bonos CER: precio IOL en tiempo real
+    """
+    from data.iol import get_prices_bulk, is_available
+
+    inflation_monthly = macro.get("inflation_monthly") or 0
+    inflation_annual  = round(inflation_monthly * 12, 1)
+
+    # PF por banco
+    bancos = _fetch_pf_bancos()
+    pf_rows = []
+    for b in bancos[:10]:
+        tna = b["tna_pct"]
+        mensual = round(tna / 12, 2)
+        supera  = mensual > inflation_monthly
+        pf_rows.append({
+            "entidad":   b["entidad"],
+            "tna_pct":   tna,
+            "mensual":   mensual,
+            "supera_inf": supera,
+        })
+
+    # Bonos CER desde IOL
+    cer_precios = {}
+    if is_available():
+        precios = get_prices_bulk(["TX26", "TX28", "TX30", "DICP"])
+        for ticker, p in precios.items():
+            cer_precios[ticker] = {
+                "precio": p["ultimo_precio"],
+                "variacion_pct": p.get("variacion_pct"),
+                "fecha": p.get("fecha", ""),
+            }
+
+    return {
+        "inflation_monthly": inflation_monthly,
+        "inflation_annual":  inflation_annual,
+        "pf_bancos":         pf_rows,
+        "cer_precios_iol":   cer_precios,
+    }
 
 
 def _fetch_mep_data() -> dict:

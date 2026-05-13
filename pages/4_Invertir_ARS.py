@@ -107,9 +107,11 @@ if st.button("Generar recomendación", type="primary", use_container_width=True)
             if a.get("summary"):
                 st.caption(a["summary"])
 
-    # ── Instrumentos ─────────────────────────────────────────────────────────
-    with st.spinner("📋 Construyendo universo de instrumentos..."):
-        instruments = get_instruments_universe(macro)
+    # ── Instrumentos + validación de tasas ───────────────────────────────────
+    with st.spinner("📋 Construyendo universo de instrumentos y validando tasas..."):
+        from data.instruments_ar import get_rates_validation
+        instruments    = get_instruments_universe(macro)
+        rates_val      = get_rates_validation(macro)
 
     relevant = [i for i in instruments if riesgo in i.get("recommended_for", [])]
     mep_inst = next((i for i in instruments if i.get("id") == "dolar_mep"), None)
@@ -258,6 +260,54 @@ if st.button("Generar recomendación", type="primary", use_container_width=True)
 
     # ── TAB 2: Análisis detallado ─────────────────────────────────────────────
     with tab_detalle:
+        # Validación de tasas en tiempo real
+        _infl_m = rates_val.get("inflation_monthly", 0)
+        _infl_a = rates_val.get("inflation_annual", 0)
+
+        # PF tradicional
+        pf_bancos = rates_val.get("pf_bancos", [])
+        if pf_bancos:
+            st.subheader("🏦 Tasas de Plazo Fijo en tiempo real")
+            st.caption(f"Inflación mensual de referencia: {_infl_m:.1f}%/mes — {_infl_a:.1f}% anual (INDEC)")
+            pf_df = []
+            for b in pf_bancos:
+                supera = b["supera_inf"]
+                pf_df.append({
+                    "Banco":            b["entidad"],
+                    "TNA anual":        f"{b['tna_pct']:.2f}%",
+                    "TNA mensual":      f"{b['mensual']:.2f}%",
+                    "vs inflación":     "✅ supera" if supera else "❌ pierde",
+                })
+            st.dataframe(pf_df, use_container_width=True, hide_index=True)
+            _mejor = pf_bancos[0]
+            _veredicto = "✅ supera inflación" if _mejor["supera_inf"] else "❌ pierde contra inflación"
+            st.caption(
+                f"Mejor tasa disponible: {_mejor['entidad']} — {_mejor['tna_pct']:.2f}% TNA "
+                f"({_mejor['mensual']:.2f}%/mes) → {_veredicto}"
+            )
+
+        # Bonos CER desde IOL
+        cer_precios = rates_val.get("cer_precios_iol", {})
+        if cer_precios:
+            st.subheader("📈 Bonos CER — precios en tiempo real (IOL)")
+            st.caption("Verificá la TIR CER vigente en IOL > Mercados > Renta Fija antes de ejecutar.")
+            cer_df = []
+            for ticker, p in cer_precios.items():
+                var = p.get("variacion_pct")
+                var_str = f"{var:+.2f}%" if var is not None else "—"
+                cer_df.append({
+                    "Bono":       ticker,
+                    "Precio IOL": f"${p['precio']:,.2f} ARS",
+                    "Variación":  var_str,
+                    "Fecha":      p.get("fecha", "—"),
+                })
+            st.dataframe(cer_df, use_container_width=True, hide_index=True)
+        elif any(p.get("type") == "bono_cer" for p in allocation):
+            st.caption("⚠️ No se pudo obtener precios IOL para bonos CER. Verificá en IOL > Renta Fija.")
+
+        if pf_bancos or cer_precios:
+            st.divider()
+
         # Tabla de riesgo
         risk_rows = [
             {
