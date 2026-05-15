@@ -26,6 +26,11 @@ with col2:
     )
 with col3:
     send_email = st.checkbox("Enviar email con la recomendación", value=True)
+    fast_mode  = st.checkbox(
+        "⚡ Modo rápido",
+        value=False,
+        help="Omite análisis MERVAL en vivo y limita reintentos. ~20 s vs ~80 s.",
+    )
 
 col_fecha, col_info = st.columns([2, 3])
 with col_fecha:
@@ -52,9 +57,10 @@ with col_info:
         info += f" La recomendación priorizará instrumentos que venzan **antes de {fecha_objetivo}**."
     st.info(info)
 
-if riesgo in ("moderado", "alto"):
+if riesgo in ("moderado", "alto") and not fast_mode:
     st.caption(
-        "⚠️ Con perfil moderado/alto se analizan acciones MERVAL en tiempo real (~60 s adicionales)."
+        "⚠️ Con perfil moderado/alto se analizan acciones MERVAL en tiempo real (~60 s adicionales). "
+        "Activá ⚡ Modo rápido para omitirlo."
     )
 
 # ── Ejecución ─────────────────────────────────────────────────────────────────
@@ -111,7 +117,7 @@ if st.button("Generar recomendación", type="primary", use_container_width=True)
 
     # ── Noticias ──────────────────────────────────────────────────────────────
     with st.spinner("📰 Obteniendo noticias recientes..."):
-        news = get_argentina_news(max_articles=12)
+        news = get_argentina_news(max_articles=5 if fast_mode else 12)
 
     with st.expander(f"📰 Noticias del día ({len(news)} titulares)", expanded=False):
         for a in news:
@@ -145,19 +151,23 @@ if st.button("Generar recomendación", type="primary", use_container_width=True)
 
     # ── MERVAL picks ──────────────────────────────────────────────────────────
     merval_picks = None
-    if riesgo in ("moderado", "alto"):
+    if riesgo in ("moderado", "alto") and not fast_mode:
         with st.spinner("🇦🇷 Analizando acciones MERVAL (puede tardar ~60 s)..."):
             merval_picks = get_top_merval(profile, min_score=6.0, max_count=3)
         st.caption(f"{len(merval_picks)} acciones MERVAL con score ≥ 6")
+    elif riesgo in ("moderado", "alto") and fast_mode:
+        st.caption("⚡ Modo rápido: análisis MERVAL omitido.")
 
     # ── Recomendación ─────────────────────────────────────────────────────────
-    with st.spinner("🤖 Generando recomendación personalizada..."):
+    spinner_msg = "🤖 Generando recomendación (modo rápido)..." if fast_mode else "🤖 Generando recomendación personalizada..."
+    with st.spinner(spinner_msg):
         rec = recommend_allocation(
             capital, riesgo, instruments, macro, profile,
             fecha_objetivo=fecha_objetivo,
             news=news,
             cedear_picks=cedear_picks,
             merval_picks=merval_picks,
+            fast_mode=fast_mode,
         )
 
     if "error" in rec:
@@ -237,7 +247,8 @@ if st.button("Generar recomendación", type="primary", use_container_width=True)
 
     # ── TAB 1: Resumen ejecutivo ──────────────────────────────────────────────
     with tab_resumen:
-        st.subheader(f"Portafolio recomendado — ${capital:,.0f} ARS — Riesgo {riesgo.upper()}")
+        modo_badge = " — ⚡ Modo rápido (sin MERVAL en vivo)" if fast_mode else ""
+        st.subheader(f"Portafolio recomendado — ${capital:,.0f} ARS — Riesgo {riesgo.upper()}{modo_badge}")
 
         rows = []
         for pos in allocation:

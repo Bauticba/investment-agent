@@ -17,11 +17,12 @@ from agents.merval_analyzer import get_top_merval
 from notifications.email_sender import send_ars_recommendation_email
 
 
-def run_ars(capital: float, riesgo: str = "moderado", fecha_objetivo: str | None = None):
+def run_ars(capital: float, riesgo: str = "moderado", fecha_objetivo: str | None = None, fast: bool = False):
     horizonte_str = f"  |  Fecha objetivo: {fecha_objetivo}" if fecha_objetivo else ""
+    modo_str      = "  |  Modo: RÁPIDO ⚡" if fast else ""
     print(f"\n{'='*62}")
     print(f"  RECOMENDACIÓN DE INVERSIÓN EN PESOS ARGENTINOS")
-    print(f"  Capital: ${capital:,.0f} ARS  |  Riesgo: {riesgo.upper()}{horizonte_str}")
+    print(f"  Capital: ${capital:,.0f} ARS  |  Riesgo: {riesgo.upper()}{horizonte_str}{modo_str}")
     print(f"{'='*62}\n")
 
     # --- 1. Contexto macro ---
@@ -31,7 +32,7 @@ def run_ars(capital: float, riesgo: str = "moderado", fecha_objetivo: str | None
 
     # --- 1b. Noticias recientes ---
     print("📰 Obteniendo noticias recientes...")
-    news = get_argentina_news(max_articles=12)
+    news = get_argentina_news(max_articles=5 if fast else 12)
     print(f"   {len(news)} titulares obtenidos de medios argentinos")
 
     # --- 2. Universo de instrumentos ---
@@ -49,10 +50,12 @@ def run_ars(capital: float, riesgo: str = "moderado", fecha_objetivo: str | None
     print(f"   {len(cedear_picks)} CEDEARs con análisis disponible")
 
     merval_picks = None
-    if riesgo in ("moderado", "alto"):
+    if riesgo in ("moderado", "alto") and not fast:
         print("🇦🇷 Analizando acciones MERVAL...")
         merval_picks = get_top_merval(profile, min_score=6.0, max_count=3)
         print(f"   {len(merval_picks)} acciones MERVAL con score ≥ 6")
+    elif riesgo in ("moderado", "alto") and fast:
+        print("🇦🇷 MERVAL: omitido en modo rápido")
 
     # --- 4. Recomendación ---
     print(f"\n🤖 Generando recomendación personalizada...")
@@ -60,6 +63,7 @@ def run_ars(capital: float, riesgo: str = "moderado", fecha_objetivo: str | None
         capital, riesgo, instruments, macro, profile,
         fecha_objetivo=fecha_objetivo, news=news,
         cedear_picks=cedear_picks, merval_picks=merval_picks,
+        fast_mode=fast,
     )
 
     if "error" in rec:
@@ -99,7 +103,7 @@ def run_ars(capital: float, riesgo: str = "moderado", fecha_objetivo: str | None
 
 def main():
     args = _parse_args()
-    run_ars(args.capital, args.riesgo, fecha_objetivo=args.fecha)
+    run_ars(args.capital, args.riesgo, fecha_objetivo=args.fecha, fast=args.fast)
 
 
 # --- helpers de presentación ---
@@ -243,6 +247,10 @@ Ejemplos:
         "--fecha", type=str, default=None,
         metavar="YYYY-MM",
         help="Fecha objetivo en que necesitás el dinero (ej: --fecha 2027-01)"
+    )
+    parser.add_argument(
+        "--fast", action="store_true",
+        help="Modo rápido: omite análisis MERVAL en vivo y limita reintentos (~20s vs ~80s)"
     )
     return parser.parse_args()
 

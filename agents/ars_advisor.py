@@ -139,6 +139,7 @@ def recommend_allocation(
     news: list | None = None,
     cedear_picks: list | None = None,
     merval_picks: list | None = None,
+    fast_mode: bool = False,
 ) -> dict:
     """
     Genera una recomendación de inversión en ARS para el capital y riesgo dados.
@@ -309,8 +310,9 @@ Respondé ÚNICAMENTE con JSON válido, sin texto adicional:
     import time
     result = None
     validation_errors = []
+    max_attempts = 1 if fast_mode else 3
 
-    for attempt in range(3):
+    for attempt in range(max_attempts):
         # En retry: inyectar los errores de validación al final del prompt
         correction = format_errors_for_prompt(validation_errors) if validation_errors else ""
 
@@ -344,7 +346,7 @@ Respondé ÚNICAMENTE con JSON válido, sin texto adicional:
         if not validation_errors:
             break
 
-        if attempt < 2:
+        if attempt < max_attempts - 1:
             print(f"[ars_advisor] Intento {attempt + 1}: {len(validation_errors)} error(es) de validación — reintentando")
             for e in validation_errors:
                 print(f"  · {e}")

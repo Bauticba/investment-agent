@@ -117,6 +117,10 @@ def _build_parser() -> argparse.ArgumentParser:
         metavar="YYYY-MM",
         help="Fecha en que necesitás el dinero (ej: --fecha 2027-01)",
     )
+    inv.add_argument(
+        "--fast", action="store_true",
+        help="Modo rápido: omite análisis MERVAL en vivo y limita reintentos (~20s vs ~80s)",
+    )
 
     # ── comprar ───────────────────────────────────────────────────────────────
     buy = sub.add_parser(
@@ -223,7 +227,7 @@ def main():
     # ── invertir ──────────────────────────────────────────────────────────────
     elif args.command == "invertir":
         from invest_ars import run_ars
-        run_ars(args.capital, args.riesgo, fecha_objetivo=args.fecha)
+        run_ars(args.capital, args.riesgo, fecha_objetivo=args.fecha, fast=args.fast)
 
     # ── comprar ───────────────────────────────────────────────────────────────
     elif args.command == "comprar":
