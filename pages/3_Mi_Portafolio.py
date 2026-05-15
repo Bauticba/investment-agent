@@ -44,8 +44,8 @@ with st.expander("➕ Registrar compra / venta", expanded=False):
                 st.rerun()
 
     with tab_vender:
-        with open("my_portfolio.json") as f:
-            _pf = json.load(f)
+        from core.portfolio_manager import get_portfolio
+        _pf = get_portfolio()
         _tickers = [p["ticker"] for p in _pf.get("positions", [])]
 
         if not _tickers:
@@ -80,8 +80,8 @@ with st.expander("➕ Registrar compra / venta", expanded=False):
 st.divider()
 
 # ── Vista del portafolio actual ───────────────────────────────────────────────
-with open("my_portfolio.json") as f:
-    portfolio_input = json.load(f)
+from core.portfolio_manager import get_portfolio as _get_portfolio
+portfolio_input = _get_portfolio()
 
 positions = portfolio_input.get("positions", [])
 cash      = portfolio_input.get("cash", {"USD": 0, "ARS": 0})

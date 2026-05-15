@@ -9,6 +9,7 @@ st.caption("Paridad teórica, score CEO y calculadora de exposición USD.")
 
 from data.cedears import CEDEAR_REGISTRY
 from data.argentina import get_macro_data
+from data.fx import ccl_price
 
 
 @st.cache_data(ttl=1800)
@@ -17,11 +18,11 @@ def _macro():
 
 
 macro = _macro()
-ccl   = macro.get("usd_oficial") or 1400
+ccl   = ccl_price(fallback=macro.get("usd_oficial") or 1400)
 infl  = macro.get("inflation_monthly")
 
 c1, c2, c3 = st.columns(3)
-c1.metric("CCL (dólar oficial)",  f"${ccl:,.0f} ARS/USD")
+c1.metric("CCL (contado con liqui)", f"${ccl:,.0f} ARS/USD")
 c2.metric("Inflación mensual",    f"{infl:.1f}%" if infl else "N/A")
 c3.metric("CEDEARs en registro",  str(len(CEDEAR_REGISTRY)))
 
