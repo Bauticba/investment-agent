@@ -1,6 +1,8 @@
 """
-Alertas de precio — compara precios actuales vs stop loss y take profit del CEO.
-Corre cada hora en horario de mercado americano vía cron.
+Alertas de precio — dos fuentes:
+  1. Watchlist USA: storage/*_analysis.json con stop/target del CEO en USD (yfinance)
+  2. Portafolio IOL: my_portfolio.json con stop/target calculados desde perfil en ARS (IOL)
+Corre cada hora en horario de mercado (americano y BYMA) vía cron.
 """
 import json
 import os
@@ -107,12 +109,66 @@ def fetch_prices(tickers: list[str]) -> dict[str, float]:
     return prices
 
 
+# ── Señales desde portafolio IOL ─────────────────────────────────────────────
+
+def load_portfolio_thresholds() -> list[dict]:
+    """
+    Lee my_portfolio.json y construye señales usando stop/target del perfil del inversor.
+    Obtiene precios actuales desde IOL. Solo incluye posiciones con precio disponible.
+    """
+    from core.portfolio_manager import get_portfolio
+    from data.iol import get_price as iol_price, is_available as iol_available
+
+    if not iol_available():
+        return []
+
+    try:
+        with open("instructions/investor_profile.json") as f:
+            profile = json.load(f)
+        stop_pct   = profile["risk_profile"]["stop_loss_pct"] / 100
+        target_pct = profile["risk_profile"]["take_profit_pct"] / 100
+    except Exception:
+        stop_pct, target_pct = 0.08, 0.20
+
+    portfolio  = get_portfolio()
+    positions  = portfolio.get("positions", [])
+    signals    = []
+
+    for pos in positions:
+        ticker    = pos.get("ticker", "")
+        avg_price = float(pos.get("avg_buy_price") or 0)
+        if not ticker or avg_price <= 0:
+            continue
+
+        price_data = iol_price(ticker)
+        if not price_data:
+            continue
+        current = float(price_data["ultimo_precio"])
+
+        signals.append({
+            "ticker":        ticker,
+            "verdict":       "portfolio",
+            "score":         None,
+            "entry":         avg_price,
+            "stop":          round(avg_price * (1 - stop_pct), 4),
+            "target":        round(avg_price * (1 + target_pct), 4),
+            "analysis_date": pos.get("notes", "sincronizado IOL"),
+            "currency":      pos.get("currency", "ARS"),
+            "asset_type":    pos.get("asset_type", ""),
+            "source":        "portfolio_iol",
+            "_current":      current,
+        })
+
+    return signals
+
+
 # ── Evaluación de alertas ─────────────────────────────────────────────────────
 
 def evaluate_alerts(signals: list[dict], prices: dict[str, float]) -> list[dict]:
     triggered = []
     for s in signals:
-        current = prices.get(s["ticker"])
+        # Señales del portafolio IOL ya traen el precio en _current
+        current = s.pop("_current", None) or prices.get(s["ticker"])
         if current is None:
             continue
 
@@ -141,27 +197,33 @@ def run_alerts():
     now = datetime.now()
     print(f"\n[{now.strftime('%Y-%m-%d %H:%M')}] Chequeando alertas de precio...")
 
-    signals = load_watchlist_thresholds()
-    if not signals:
-        print("  Sin señales en storage/ — nada que chequear.")
+    # Fuente 1: watchlist USA (storage/ → CEO stop/target en USD)
+    watchlist_signals = load_watchlist_thresholds()
+    usa_tickers = [s["ticker"] for s in watchlist_signals]
+    usa_prices  = fetch_prices(usa_tickers) if usa_tickers else {}
+    print(f"  Watchlist USA: {len(watchlist_signals)} señales, {len(usa_prices)} precios")
+
+    # Fuente 2: portafolio IOL (my_portfolio.json → stop/target por perfil en ARS)
+    portfolio_signals = load_portfolio_thresholds()
+    print(f"  Portafolio IOL: {len(portfolio_signals)} posiciones con precio IOL")
+
+    all_signals = watchlist_signals + portfolio_signals
+    if not all_signals:
+        print("  Sin señales — nada que chequear.")
         return
 
-    tickers = [s["ticker"] for s in signals]
-    print(f"  {len(tickers)} tickers con umbrales definidos")
-
-    prices = fetch_prices(tickers)
-    print(f"  {len(prices)}/{len(tickers)} precios obtenidos")
-
-    triggered = evaluate_alerts(signals, prices)
+    triggered = evaluate_alerts(all_signals, usa_prices)
     state     = _load_state()
 
     nuevas = []
     for alert in triggered:
         ticker     = alert["ticker"]
         alert_type = alert["alert_type"]
-        if not _already_sent_today(state, ticker, alert_type):
+        # Distinguir watchlist vs portafolio para evitar colisiones de estado
+        state_key  = f"{ticker}_{alert.get('source', 'watchlist')}"
+        if not _already_sent_today(state, state_key, alert_type):
             nuevas.append(alert)
-            _mark_sent(state, ticker, alert_type, alert["current"])
+            _mark_sent(state, state_key, alert_type, alert["current"])
 
     _save_state(state)
 
@@ -173,7 +235,8 @@ def run_alerts():
     _send_alert_email(nuevas)
     for a in nuevas:
         label = {"stop_hit": "STOP ❌", "near_stop": "CERCA DEL STOP ⚠️", "target_hit": "TARGET ✅"}.get(a["alert_type"], a["alert_type"])
-        print(f"     {a['ticker']}: {label} — actual ${a['current']:.2f} (P&L {a['pnl_pct']:+.1f}%)")
+        src   = " [IOL]" if a.get("source") == "portfolio_iol" else ""
+        print(f"     {a['ticker']}{src}: {label} — actual {a['current']:.2f} {a.get('currency','USD')} (P&L {a['pnl_pct']:+.1f}%)")
 
 
 if __name__ == "__main__":
