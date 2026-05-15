@@ -6,13 +6,9 @@ from core.ttl_cache import ttl_cache
 
 TNA_PF_FALLBACK = 20.0
 
-# Obligaciones Negociables corporativas en USD con buena liquidez en BYMA
-ON_REGISTRY = {
-    "YMCHO": {"name": "YPF ON 2026 (USD)",          "issuer": "YPF S.A.",            "currency": "USD", "maturity": "2026-07-09", "coupon": 0.085, "rating": "B+"},
-    "PAE26":  {"name": "Pan American Energy ON 2026","issuer": "Pan American Energy", "currency": "USD", "maturity": "2026-07-15", "coupon": 0.075, "rating": "BB-"},
-    "IRCP":   {"name": "IRSA Propiedades ON (USD)",  "issuer": "IRSA",                "currency": "USD", "maturity": "2028-03-20", "coupon": 0.085, "rating": "B"},
-    "PAMP3":  {"name": "Pampa Energía ON 2027 (USD)","issuer": "Pampa Energía",       "currency": "USD", "maturity": "2027-01-15", "coupon": 0.072, "rating": "B+"},
-}
+# Obligaciones Negociables corporativas en USD.
+# Tickers verificados en IOL — agregar solo con ticker exacto de IOL confirmado.
+ON_REGISTRY: dict = {}
 
 # Bonos soberanos hard dollar Argentina
 HARD_DOLLAR_BOND_REGISTRY = {
