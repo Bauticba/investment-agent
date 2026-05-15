@@ -2,6 +2,7 @@ import json
 import os
 import yfinance as yf
 from data.argentina import get_macro_data
+from data.fx import ccl_price
 
 # Ratio = cantidad de CEDEARs necesarios para equivaler a 1 acción del subyacente USA.
 # Precio paridad ARS = precio_USD / ratio × CCL
@@ -64,7 +65,7 @@ def get_cedear_data(ticker: str, price_ars_override: float = None) -> dict:
         }
 
     macro    = get_macro_data()
-    ccl      = macro.get("usd_oficial") or 1400  # CCL ≈ oficial (mercado unificado desde abr 2025)
+    ccl      = ccl_price(fallback=macro.get("usd_oficial") or 1400)
     ratio    = meta["ratio"]
 
     # Precio subyacente en USD
@@ -114,7 +115,7 @@ def get_top_cedears(max_count: int = 3, min_score: float = 6.0) -> list[dict]:
     ordenados por score CEO. Usado por invest_ars.py para dar picks específicos.
     """
     macro = get_macro_data()
-    ccl   = macro.get("usd_oficial") or 1400
+    ccl   = ccl_price(fallback=macro.get("usd_oficial") or 1400)
     picks = []
 
     for ticker, meta in CEDEAR_REGISTRY.items():

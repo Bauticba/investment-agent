@@ -1,6 +1,7 @@
 import requests
 from datetime import datetime, date
 from data.argentina import get_macro_data, BOND_REGISTRY
+from data.fx import get_mep
 
 TNA_PF_FALLBACK = 20.0
 
@@ -193,7 +194,7 @@ def get_instruments_universe(macro: dict = None) -> list[dict]:
     })
 
     # ─── DÓLAR MEP ───────────────────────────────────────────────────────────
-    _mep = _fetch_mep_data()
+    _mep = get_mep()
     mep_price = _mep["price"] or usd_oficial
     mep_fecha = _mep["fecha"]
     _mep_price_str = f"~${mep_price:,.0f} ARS/USD"
@@ -489,25 +490,3 @@ def get_rates_validation(macro: dict) -> dict:
     }
 
 
-def _fetch_mep_data() -> dict:
-    """Trae precio y timestamp del dólar MEP desde dolarapi.com."""
-    try:
-        resp = requests.get("https://dolarapi.com/v1/dolares/bolsa", timeout=8)
-        if resp.ok:
-            data = resp.json()
-            price = data.get("venta") or data.get("compra")
-            fecha_utc = data.get("fechaActualizacion", "")
-            # Convertir a hora Argentina (UTC-3)
-            fecha_art = ""
-            if fecha_utc:
-                try:
-                    from datetime import datetime, timezone, timedelta
-                    dt = datetime.fromisoformat(fecha_utc.replace("Z", "+00:00"))
-                    art = dt.astimezone(timezone(timedelta(hours=-3)))
-                    fecha_art = art.strftime("%d/%m %H:%M ART")
-                except Exception:
-                    fecha_art = fecha_utc[:16]
-            return {"price": price, "fecha": fecha_art}
-    except Exception:
-        pass
-    return {"price": None, "fecha": ""}

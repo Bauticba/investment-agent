@@ -5,6 +5,7 @@ Para acciones con ADR en USA, calcula el CCL implícito.
 """
 import yfinance as yf
 from data.argentina import get_macro_data
+from data.fx import ccl_price
 
 # Tickers BYMA/BCBA tal como los usa IOL.
 # usd_adr: ticker NYSE/Nasdaq. adr_ratio: acciones locales por cada 1 ADR.
@@ -41,7 +42,7 @@ def get_merval_data(ticker: str, price_ars_override: float = None, macro: dict =
 
     if macro is None:
         macro = get_macro_data()
-    ccl   = macro.get("usd_oficial") or 1400
+    ccl = ccl_price(fallback=macro.get("usd_oficial") or 1400)
 
     if price_ars_override:
         market_price  = price_ars_override
