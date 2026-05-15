@@ -7,8 +7,19 @@ from core.ttl_cache import ttl_cache
 TNA_PF_FALLBACK = 20.0
 
 # Obligaciones Negociables corporativas en USD.
-# Tickers verificados en IOL — agregar solo con ticker exacto de IOL confirmado.
-ON_REGISTRY: dict = {}
+# Tickers verificados en IOL/BYMA (sufijo O = liquidación USD hard).
+ON_REGISTRY: dict = {
+    "YMCIO": {"name": "YPF ON 2029 (USD)",               "issuer": "YPF S.A.",            "currency": "USD", "maturity": "2029-06-30", "coupon": 0.090,  "rating": "B+"},
+    "YM34O": {"name": "YPF ON 2034 (USD)",               "issuer": "YPF S.A.",            "currency": "USD", "maturity": "2034-01-17", "coupon": 0.0825, "rating": "B+"},
+    "TSC3O": {"name": "TGS ON 2031 (USD)",               "issuer": "TGS",                 "currency": "USD", "maturity": "2031-07-24", "coupon": 0.085,  "rating": "B+"},
+    "MGC3O": {"name": "Pampa Energía ON 2029 (USD)",     "issuer": "Pampa Energía",       "currency": "USD", "maturity": "2029-04-15", "coupon": 0.09125,"rating": "B+"},
+    "MGCOO": {"name": "Pampa Energía ON 2034 (USD)",     "issuer": "Pampa Energía",       "currency": "USD", "maturity": "2034-12-16", "coupon": 0.07875,"rating": "B+"},
+    "IRCPD": {"name": "IRSA ON 2035 (USD)",              "issuer": "IRSA",                "currency": "USD", "maturity": "2035-03-31", "coupon": 0.080,  "rating": "B"},
+    "PNDCO": {"name": "Pan American Energy ON 2027 (USD)","issuer":"Pan American Energy", "currency": "USD", "maturity": "2027-04-30", "coupon": 0.09125,"rating": "BB-"},
+    "TLCMO": {"name": "Telecom Argentina ON 2031 (USD)", "issuer": "Telecom Argentina",   "currency": "USD", "maturity": "2031-07-18", "coupon": 0.095,  "rating": "B"},
+    "TTC9O": {"name": "Tecpetrol ON 2029 (USD)",         "issuer": "Tecpetrol S.A.",      "currency": "USD", "maturity": "2029-10-24", "coupon": 0.068,  "rating": "B+"},
+    "VISTD": {"name": "Vista Energy ON 2030 (USD)",      "issuer": "Vista Energy",        "currency": "USD", "maturity": "2030-03-07", "coupon": 0.075,  "rating": "B+"},
+}
 
 # Bonos soberanos hard dollar Argentina
 HARD_DOLLAR_BOND_REGISTRY = {
