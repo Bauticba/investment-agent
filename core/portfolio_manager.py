@@ -3,7 +3,7 @@ CRUD para my_portfolio.json.
 Usado por main.py (comprar/vender) y la UI de Streamlit.
 """
 import json
-from datetime import date
+from datetime import date, datetime
 
 PORTFOLIO_FILE = "my_portfolio.json"
 
@@ -115,3 +115,73 @@ def update_cash(usd: float | None = None, ars: float | None = None):
     if ars is not None:
         cash["ARS"] = ars
     save_portfolio(portfolio)
+
+
+def sync_from_iol() -> dict | None:
+    """
+    Trae posiciones reales desde IOL API y las convierte al formato interno.
+    Detecta tipo de activo (cedear/bono_argentino/bono_hard_dollar/on_usd/accion_merval)
+    a partir de los registros internos. Retorna el portafolio listo para usar,
+    o None si IOL no está disponible o no responde.
+    """
+    from data.iol import get_portfolio_iol, get_account_balance, is_available
+    from data.cedears import CEDEAR_REGISTRY
+    from data.argentina import BOND_REGISTRY
+    from data.instruments_ar import HARD_DOLLAR_BOND_REGISTRY, ON_REGISTRY, MERVAL_STOCKS
+
+    if not is_available():
+        return None
+
+    activos = get_portfolio_iol()
+    if activos is None:
+        return None
+
+    positions = []
+    for activo in activos:
+        titulo   = activo.get("titulo") or {}
+        ticker   = (titulo.get("simbolo") or "").upper().strip()
+        if not ticker:
+            continue
+
+        cantidad        = float(activo.get("cantidad") or 0)
+        precio_promedio = float(activo.get("ppc") or activo.get("precioPromedio") or 0)
+        moneda_raw     = (titulo.get("moneda") or "").lower()
+
+        # Moneda tal como la reporta IOL (siempre en ARS para instrumentos domésticos,
+        # incluyendo ONs y bonos hard dollar que cotizan en ARS en BYMA).
+        currency = "USD" if ("dolar" in moneda_raw or "usd" in moneda_raw) else "ARS"
+
+        if ticker in CEDEAR_REGISTRY:
+            asset_type = "cedear"
+        elif ticker in BOND_REGISTRY:
+            asset_type = "bono_argentino"
+        elif ticker in HARD_DOLLAR_BOND_REGISTRY:
+            asset_type = "bono_hard_dollar"
+        elif ticker in ON_REGISTRY:
+            asset_type = "on_usd"
+        elif ticker in MERVAL_STOCKS:
+            asset_type = "accion_merval"
+        else:
+            asset_type = None
+
+        pos = {
+            "ticker":        ticker,
+            "shares":        cantidad,
+            "avg_buy_price": precio_promedio,
+            "currency":      currency,
+            "notes":         "sincronizado desde IOL",
+        }
+        if asset_type:
+            pos["asset_type"] = asset_type
+
+        positions.append(pos)
+
+    cash = get_account_balance()
+
+    return {
+        "broker":          "Invertir Online (IOL)",
+        "positions":       positions,
+        "cash":            cash,
+        "synced_from_iol": True,
+        "sync_timestamp":  datetime.now().isoformat(timespec="seconds"),
+    }

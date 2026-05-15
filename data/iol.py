@@ -75,6 +75,102 @@ def get_prices_bulk(simbolos: list[str]) -> dict[str, dict]:
     return results
 
 
+def get_portfolio_iol() -> list[dict]:
+    """
+    Trae las posiciones del portafolio real desde IOL.
+    Retorna lista de activos. Cada activo tiene:
+      titulo.simbolo, titulo.tipo, titulo.moneda,
+      cantidad, ppc (precio promedio de compra), ultimoPrecio, valorizado.
+    Usa el endpoint flat /api/v2/portafolio como primario (trae bCBA + nYSE).
+    Si devuelve vacío, reintenta por mercado individual.
+    """
+    token = _get_token()
+    if not token:
+        return []
+
+    def _extract_activos(data) -> list:
+        if isinstance(data, dict) and "activos" in data:
+            return data["activos"] or []
+        if isinstance(data, list):
+            result = []
+            for item in data:
+                if isinstance(item, dict) and "activos" in item:
+                    result.extend(item["activos"] or [])
+                elif isinstance(item, dict) and "titulo" in item:
+                    result.append(item)
+            return result
+        return []
+
+    headers = {"Authorization": f"Bearer {token}"}
+
+    # Primero intentamos el endpoint flat (trae todos los mercados)
+    try:
+        r = requests.get(f"{BASE_URL}/api/v2/portafolio", headers=headers, timeout=10)
+        if r.ok:
+            activos = _extract_activos(r.json())
+            if activos:
+                return activos
+    except Exception:
+        pass
+
+    # Fallback: consultar mercados por separado y deduplicar
+    seen = set()
+    activos = []
+    for mercado in ("bCBA", "nYSE"):
+        try:
+            r = requests.get(
+                f"{BASE_URL}/api/v2/portafolio/{mercado}", headers=headers, timeout=10
+            )
+            if not r.ok:
+                continue
+            for a in _extract_activos(r.json()):
+                sym = (a.get("titulo") or {}).get("simbolo", "")
+                if sym and sym not in seen:
+                    seen.add(sym)
+                    activos.append(a)
+        except Exception:
+            continue
+
+    return activos
+
+
+def get_account_balance() -> dict:
+    """
+    Intenta traer el saldo disponible de la cuenta (ARS y USD).
+    Retorna {"ARS": float, "USD": float, "available": bool}.
+    IOL puede devolver 500 en este endpoint — en ese caso retorna ceros con available=False.
+    """
+    token = _get_token()
+    if not token:
+        return {"ARS": 0.0, "USD": 0.0, "available": False}
+
+    for path in ("/api/v2/cuenta/saldo", "/api/v2/cuenta/saldos"):
+        try:
+            r = requests.get(
+                f"{BASE_URL}{path}",
+                headers={"Authorization": f"Bearer {token}"},
+                timeout=10,
+            )
+            if not r.ok or not r.text.strip().startswith("{"):
+                continue
+
+            data = r.json()
+            result = {"ARS": 0.0, "USD": 0.0, "available": True}
+            cuentas = data if isinstance(data, list) else data.get("cuentas", [])
+            for cuenta in cuentas:
+                tipo = (cuenta.get("tipo") or "").lower()
+                disponible = float(cuenta.get("disponible") or cuenta.get("saldo") or 0)
+                if "dolar" in tipo or "usd" in tipo:
+                    result["USD"] += disponible
+                elif "peso" in tipo or "ars" in tipo:
+                    result["ARS"] += disponible
+            return result
+        except Exception:
+            continue
+
+    return {"ARS": 0.0, "USD": 0.0, "available": False}
+
+
 def is_available() -> bool:
     """Retorna True si las credenciales IOL están configuradas y funcionan."""
     return _get_token() is not None

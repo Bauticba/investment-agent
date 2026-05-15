@@ -7,8 +7,37 @@ from datetime import date
 st.set_page_config(page_title="Mi Portafolio", page_icon="🗂️", layout="wide")
 st.title("🗂️ Mi portafolio")
 
+# ── Sincronización IOL ────────────────────────────────────────────────────────
+from data.iol import is_available as _iol_available
+from core.portfolio_manager import sync_from_iol, save_portfolio as _save_portfolio
+
+if _iol_available():
+    _col_sync, _col_status = st.columns([2, 3])
+    with _col_sync:
+        if st.button("🔄 Sincronizar desde IOL", type="primary", use_container_width=True):
+            with st.spinner("Conectando con IOL y trayendo posiciones..."):
+                _synced = sync_from_iol()
+            if _synced and _synced.get("positions") is not None:
+                _save_portfolio(_synced)
+                n = len(_synced["positions"])
+                st.success(f"✅ {n} posición{'es' if n != 1 else ''} sincronizada{'s' if n != 1 else ''} desde IOL")
+                st.rerun()
+            else:
+                st.error("No se pudo obtener el portafolio desde IOL. Verificá las credenciales.")
+    with _col_status:
+        from core.portfolio_manager import get_portfolio as _gp_check
+        _pf_check = _gp_check()
+        if _pf_check.get("synced_from_iol"):
+            st.caption(f"🟢 Última sincronización: {_pf_check.get('sync_timestamp', '—')}")
+        else:
+            st.caption("🟡 Portafolio cargado manualmente (no sincronizado desde IOL)")
+else:
+    st.info("💡 Configurá `IOL_USERNAME` e `IOL_PASSWORD` en `.env` para sincronizar automáticamente desde IOL.")
+
+st.divider()
+
 # ── Gestión de posiciones ─────────────────────────────────────────────────────
-with st.expander("➕ Registrar compra / venta", expanded=False):
+with st.expander("➕ Registrar compra / venta manualmente", expanded=False):
     tab_comprar, tab_vender, tab_eliminar = st.tabs(["Comprar", "Vender", "Eliminar posición"])
 
     with tab_comprar:
