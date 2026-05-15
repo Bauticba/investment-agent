@@ -163,32 +163,32 @@ with col_opts2:
 use_cache = not live_mode
 
 if not live_mode:
-    # Verificar cuántos tickers tienen cache
-    from analyze_portfolio import _is_arg_bond, _is_cedear
-    from data.argentina import BOND_REGISTRY
-    from data.cedears import CEDEAR_REGISTRY
-    stock_positions = [p for p in positions if not _is_arg_bond(p) and not _is_cedear(p)]
+    from analyze_portfolio import _is_arg_bond, _is_cedear, _is_on
+    stock_positions = [p for p in positions if not _is_arg_bond(p) and not _is_cedear(p) and not _is_on(p)]
     cached = sum(1 for p in stock_positions if os.path.exists(f"storage/{p['ticker']}_analysis.json"))
     total_stocks = len(stock_positions)
     if total_stocks > 0:
-        st.caption(f"Storage disponible para {cached}/{total_stocks} acciones. Bonos y CEDEARs traen precio desde IOL en tiempo real.")
+        st.caption(f"Storage disponible para {cached}/{total_stocks} acciones. Bonos, ONs y CEDEARs traen precio desde IOL en tiempo real.")
 
 if st.button("Analizar portafolio", type="primary", use_container_width=True):
     from agents.position_analyzer import analyze_position
     from agents.bond_analyzer import analyze_bond_position
     from agents.cedear_analyzer import analyze_cedear_position
+    from agents.on_analyzer import analyze_on_position
     from data.argentina import get_bond_data, BOND_REGISTRY
     from data.cedears import get_cedear_data, CEDEAR_REGISTRY
+    from data.instruments_ar import get_on_data
     from notifications.email_sender import send_portfolio_analysis_email
     from core.cache import get_analysis_cached
-    from analyze_portfolio import _run_portfolio_ceo, _is_arg_bond, _is_cedear
+    from analyze_portfolio import _run_portfolio_ceo, _is_arg_bond, _is_cedear, _is_on
 
     with open("instructions/investor_profile.json") as f:
         profile = json.load(f)
 
     bond_positions   = [p for p in positions if _is_arg_bond(p)]
     cedear_positions = [p for p in positions if _is_cedear(p)]
-    stock_positions  = [p for p in positions if not _is_arg_bond(p) and not _is_cedear(p)]
+    on_positions     = [p for p in positions if _is_on(p) and not _is_arg_bond(p)]
+    stock_positions  = [p for p in positions if not _is_arg_bond(p) and not _is_cedear(p) and not _is_on(p)]
 
     DELAY = 12
     analyses = {}
@@ -207,12 +207,19 @@ if st.button("Analizar portafolio", type="primary", use_container_width=True):
         elif result.get("status") == "skipped":
             st.warning(f"⚠️ {ticker}: sin análisis en storage. Corré `main.py actualizar {ticker}` primero.")
 
-    # Bonos
+    # Bonos argentinos
     bond_data_map = {}
     for p in bond_positions:
         ticker = p["ticker"]
         with st.spinner(f"🇦🇷 Precio de {ticker} (IOL)..."):
             bond_data_map[ticker] = get_bond_data(ticker, price_override=p.get("current_price_override"))
+
+    # ONs corporativas
+    on_data_map = {}
+    for p in on_positions:
+        ticker = p["ticker"].upper()
+        with st.spinner(f"🏦 Precio de {ticker} (IOL)..."):
+            on_data_map[ticker] = get_on_data(ticker, price_ars_override=p.get("current_price_override"))
 
     # CEDEARs
     cedear_data_map = {}
@@ -235,6 +242,12 @@ if st.button("Analizar portafolio", type="primary", use_container_width=True):
         ticker = position["ticker"]
         with st.spinner(f"Analizando bono {ticker}..."):
             report = analyze_bond_position(position, bond_data_map.get(ticker, {}), profile)
+        position_reports.append(report)
+
+    for position in on_positions:
+        ticker = position["ticker"].upper()
+        with st.spinner(f"Analizando ON {ticker}..."):
+            report = analyze_on_position(position, on_data_map.get(ticker, {}), profile)
         position_reports.append(report)
 
     for position in cedear_positions:

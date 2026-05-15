@@ -10,8 +10,10 @@ load_dotenv()
 from agents.position_analyzer import analyze_position
 from agents.bond_analyzer import analyze_bond_position
 from agents.cedear_analyzer import analyze_cedear_position
+from agents.on_analyzer import analyze_on_position
 from data.argentina import get_bond_data, BOND_REGISTRY
 from data.cedears import get_cedear_data, CEDEAR_REGISTRY
+from data.instruments_ar import get_on_data, ON_REGISTRY, HARD_DOLLAR_BOND_REGISTRY
 from notifications.email_sender import send_portfolio_analysis_email
 from core.cache import get_analysis_cached
 
@@ -39,7 +41,8 @@ def run_portfolio_analysis(portfolio_file: str = "my_portfolio.json", use_cache:
     # --- Clasificar posiciones ---
     bond_positions   = [p for p in positions if _is_arg_bond(p)]
     cedear_positions = [p for p in positions if _is_cedear(p)]
-    stock_positions  = [p for p in positions if not _is_arg_bond(p) and not _is_cedear(p)]
+    on_positions     = [p for p in positions if _is_on(p) and not _is_arg_bond(p)]
+    stock_positions  = [p for p in positions if not _is_arg_bond(p) and not _is_cedear(p) and not _is_on(p)]
 
     # --- 1a. Análisis de acciones (pipeline existente) ---
     analyses = {}
@@ -65,7 +68,19 @@ def run_portfolio_analysis(portfolio_file: str = "my_portfolio.json", use_cache:
         price = bond_data_map[ticker].get("market_price")
         print(f"   Precio: ${price:,.2f} ARS (fuente: {src})" if price else f"   ⚠️  Precio no disponible")
 
-    # --- 1c. Datos de CEDEARs ---
+    # --- 1c. Datos de ONs (obligaciones negociables) ---
+    on_data_map = {}
+    for p in on_positions:
+        ticker   = p["ticker"].upper()
+        override = p.get("current_price_override")
+        print(f"🏦 Obteniendo datos de {ticker} (ON corporativa USD)...")
+        on_data_map[ticker] = get_on_data(ticker, price_ars_override=override)
+        od = on_data_map[ticker]
+        price = od.get("market_price_ars")
+        src   = od.get("price_source", "?")
+        print(f"   ARS: ${price:,.2f} (fuente: {src})" if price else f"   ⚠️  Precio no disponible")
+
+    # --- 1d. Datos de CEDEARs ---
     cedear_data_map = {}
     for p in cedear_positions:
         ticker   = p["ticker"].upper()
@@ -113,6 +128,20 @@ def run_portfolio_analysis(portfolio_file: str = "my_portfolio.json", use_cache:
         pnl_str = f"{report.get('pnl_pct', 0):+.1f}%" if report.get("pnl_pct") is not None else "N/A"
         print(f"  {emoji} {ticker}: {report.get('action','?').upper()} | "
               f"P&L: {pnl_str} | Urgencia: {report.get('urgency','?').upper()}")
+        if report.get("key_alert"):
+            print(f"     ⚠️  {report['key_alert']}")
+
+    for position in on_positions:
+        ticker = position["ticker"].upper()
+        od = on_data_map.get(ticker, {})
+        print(f"  🏦 Analizando ON {ticker}...")
+        report = analyze_on_position(position, od, profile)
+        position_reports.append(report)
+        emoji = {"hold": "⏸", "sell": "🔴", "add": "🟢", "reduce": "🟡",
+                 "sin_precio": "❓"}.get(report.get("action"), "❓")
+        pnl_str = f"{report.get('pnl_pct', 0):+.1f}%" if report.get("pnl_pct") is not None else "N/A"
+        print(f"  {emoji} {ticker}: {report.get('action','?').upper()} | "
+              f"P&L: {pnl_str} | TIR: {report.get('estimated_tir_usd','N/D')}")
         if report.get("key_alert"):
             print(f"     ⚠️  {report['key_alert']}")
 
@@ -305,6 +334,13 @@ def _is_cedear(position: dict) -> bool:
     if position.get("asset_type") == "cedear":
         return True
     return position["ticker"].upper() in CEDEAR_REGISTRY
+
+
+def _is_on(position: dict) -> bool:
+    if position.get("asset_type") in ("on_usd", "bono_hard_dollar"):
+        return True
+    ticker = position["ticker"].upper()
+    return ticker in ON_REGISTRY or ticker in HARD_DOLLAR_BOND_REGISTRY
 
 
 def _parse_args():

@@ -35,6 +35,47 @@ HARD_DOLLAR_BOND_REGISTRY = {
     "GD46": {"name": "Global 2046", "maturity": "2046-07-09", "coupon": 0.04625, "amortization": "cuotas"},
 }
 
+def get_on_data(ticker: str, price_ars_override: float = None) -> dict:
+    """
+    Datos de mercado para una ON corporativa USD.
+    Precio vía IOL (ARS). Combina con metadata del ON_REGISTRY.
+    """
+    from data.iol import get_price as iol_price
+    from data.fx import ccl_price
+    from data.argentina import get_macro_data
+
+    ticker = ticker.upper()
+    meta   = ON_REGISTRY.get(ticker, {})
+
+    macro = get_macro_data()
+    ccl   = ccl_price(fallback=macro.get("usd_oficial") or 1400)
+
+    market_price_ars = None
+    price_source     = None
+
+    if price_ars_override:
+        market_price_ars = price_ars_override
+        price_source     = "override"
+    else:
+        price_data = iol_price(ticker)
+        if price_data:
+            market_price_ars = price_data["ultimo_precio"]
+            price_source     = "iol"
+
+    return {
+        "ticker":          ticker,
+        "name":            meta.get("name", ticker),
+        "issuer":          meta.get("issuer", ticker),
+        "maturity":        meta.get("maturity"),
+        "coupon":          meta.get("coupon", 0),
+        "rating":          meta.get("rating", "N/D"),
+        "market_price_ars": market_price_ars,
+        "price_source":    price_source,
+        "ccl":             ccl,
+        "status":          "ok" if market_price_ars else "no_price",
+    }
+
+
 # Acciones del panel líder MERVAL disponibles como CEDEARs o directamente en BYMA
 MERVAL_STOCKS = {
     "GGAL": {"name": "Grupo Financiero Galicia",  "sector": "Finanzas",   "description": "Mayor banco privado argentino por depósitos. Exposición a crédito y actividad económica local."},
