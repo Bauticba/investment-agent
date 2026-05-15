@@ -124,8 +124,25 @@ if not positions:
 
 st.dataframe(positions, use_container_width=True, hide_index=True)
 
+# ── Saldo en efectivo ─────────────────────────────────────────────────────────
+with st.expander("💵 Actualizar saldo en efectivo", expanded=cash.get("USD", 0) == 0 and cash.get("ARS", 0) == 0):
+    st.caption("IOL no expone el saldo vía API — ingresalo manualmente y se conserva entre sincronizaciones.")
+    _cs1, _cs2, _cs3 = st.columns([2, 2, 1])
+    with _cs1:
+        _new_usd = st.number_input("Cash USD", min_value=0.0, value=float(cash.get("USD", 0)), step=100.0, format="%.2f", key="cash_usd_input")
+    with _cs2:
+        _new_ars = st.number_input("Cash ARS", min_value=0.0, value=float(cash.get("ARS", 0)), step=1000.0, format="%.0f", key="cash_ars_input")
+    with _cs3:
+        st.write("")
+        st.write("")
+        if st.button("Guardar saldo", key="btn_cash"):
+            from core.portfolio_manager import update_cash
+            update_cash(usd=_new_usd, ars=_new_ars)
+            st.success("✅ Saldo actualizado.")
+            st.rerun()
+
 c1, c2 = st.columns(2)
-c1.metric("Cash USD", f"${cash.get('USD', 0):,.0f}")
+c1.metric("Cash USD", f"${cash.get('USD', 0):,.2f}")
 c2.metric("Cash ARS", f"${cash.get('ARS', 0):,.0f}")
 
 st.divider()

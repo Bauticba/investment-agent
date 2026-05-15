@@ -176,12 +176,13 @@ def sync_from_iol() -> dict | None:
 
         positions.append(pos)
 
-    cash = get_account_balance()
+    # IOL /cuenta/saldo devuelve 500 — preservar cash existente del archivo local
+    existing_cash = get_portfolio().get("cash", {"USD": 0, "ARS": 0})
 
     return {
         "broker":          "Invertir Online (IOL)",
         "positions":       positions,
-        "cash":            cash,
+        "cash":            existing_cash,
         "synced_from_iol": True,
         "sync_timestamp":  datetime.now().isoformat(timespec="seconds"),
     }
