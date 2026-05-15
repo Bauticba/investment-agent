@@ -127,16 +127,21 @@ def load_portfolio_thresholds() -> list[dict]:
             profile = json.load(f)
         stop_pct   = profile["risk_profile"]["stop_loss_pct"] / 100
         target_pct = profile["risk_profile"]["take_profit_pct"] / 100
+        costs      = profile.get("transaction_costs", {})
+        commission = costs.get("commission_pct", 0.75) / 100
+        tax_map    = {k: v / 100 for k, v in costs.get("taxes", {}).items()}
     except Exception:
-        stop_pct, target_pct = 0.08, 0.20
+        stop_pct, target_pct, commission = 0.08, 0.20, 0.0075
+        tax_map = {}
 
     portfolio  = get_portfolio()
     positions  = portfolio.get("positions", [])
     signals    = []
 
     for pos in positions:
-        ticker    = pos.get("ticker", "")
-        avg_price = float(pos.get("avg_buy_price") or 0)
+        ticker     = pos.get("ticker", "")
+        avg_price  = float(pos.get("avg_buy_price") or 0)
+        asset_type = pos.get("asset_type", "")
         if not ticker or avg_price <= 0:
             continue
 
@@ -145,17 +150,26 @@ def load_portfolio_thresholds() -> list[dict]:
             continue
         current = float(price_data["ultimo_precio"])
 
+        tax_rate = tax_map.get(asset_type, 0.0)
+
+        # Stop: precio al que la pérdida NETA (incluyendo comisión de venta) = stop_pct
+        gross_stop   = stop_pct - commission
+        # Target: precio al que la ganancia NETA (después de comisión + impuesto) = target_pct
+        gross_target = (target_pct + commission) / (1 - tax_rate) if tax_rate < 1 else target_pct + commission
+
         signals.append({
             "ticker":        ticker,
             "verdict":       "portfolio",
             "score":         None,
             "entry":         avg_price,
-            "stop":          round(avg_price * (1 - stop_pct), 4),
-            "target":        round(avg_price * (1 + target_pct), 4),
+            "stop":          round(avg_price * (1 - gross_stop), 4),
+            "target":        round(avg_price * (1 + gross_target), 4),
             "analysis_date": pos.get("notes", "sincronizado IOL"),
             "currency":      pos.get("currency", "ARS"),
-            "asset_type":    pos.get("asset_type", ""),
+            "asset_type":    asset_type,
             "source":        "portfolio_iol",
+            "tax_rate":      tax_rate,
+            "commission":    commission,
             "_current":      current,
         })
 

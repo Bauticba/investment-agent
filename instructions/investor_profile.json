@@ -149,6 +149,16 @@
       "EWZ"
     ]
   },
+  "transaction_costs": {
+    "commission_pct": 0.75,
+    "taxes": {
+      "cedear": 15.0,
+      "bono_argentino": 0.0,
+      "bono_hard_dollar": 0.0,
+      "on_usd": 0.0,
+      "accion_merval": 0.0
+    }
+  },
   "notification": {
     "email": "tu@email.com",
     "require_approval_before_action": true,
