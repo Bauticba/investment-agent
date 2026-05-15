@@ -197,6 +197,7 @@ def get_instruments_universe(macro: dict = None) -> list[dict]:
     _mep = get_mep()
     mep_price = _mep["price"] or usd_oficial
     mep_fecha = _mep["fecha"]
+    mep_stale = _mep.get("stale", False)
     _mep_price_str = f"~${mep_price:,.0f} ARS/USD"
     _mep_source = f" (dolarapi.com, {mep_fecha})" if mep_fecha else " (dolarapi.com)"
     instruments.append({
@@ -218,6 +219,7 @@ def get_instruments_universe(macro: dict = None) -> list[dict]:
         "how_to_buy":         "IOL > Operar > Dólar MEP > comprar AL30 con pesos, esperar 24hs hábiles (parking CNV), vender AL30D por dólares",
         "notes":              "No tributa bienes personales si se mantiene como USD. Requiere 1 día hábil de parking obligatorio.",
         "mep_fetch_timestamp": mep_fecha,
+        "mep_stale":           mep_stale,
     })
 
     # ─── BONOS SOBERANOS HARD DOLLAR ────────────────────────────────────────

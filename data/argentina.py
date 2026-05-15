@@ -1,6 +1,6 @@
 import requests
 import yfinance as yf
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 # API pública de Argentina (https://argentinadatos.com)
 AD_BASE = "https://api.argentinadatos.com/v1"
@@ -98,24 +98,73 @@ def get_macro_data() -> dict:
     """
     Trae indicadores macro desde argentinadatos.com (API pública, sin key).
     Datos disponibles: inflación mensual/anual, UVA, tipos de cambio.
+    Incluye '_sources' con metadata de calidad por dato (source, fetched_at, stale).
     """
-    inflation_item     = _last_item(f"{AD_BASE}/finanzas/indices/inflacion")
-    inflation_monthly  = inflation_item.get("valor") if inflation_item else None
-    inflation_date     = inflation_item.get("fecha") if inflation_item else None  # "YYYY-MM-DD"
-    inflation_annual   = _last_value(f"{AD_BASE}/finanzas/indices/inflacionInteranual")
-    uva                = _last_value(f"{AD_BASE}/finanzas/indices/uva")
-    usd_oficial        = _last_value(f"{AD_BASE}/cotizaciones/dolares/oficial", key="venta")
+    now_str = _now_art()
+
+    inflation_item    = _last_item(f"{AD_BASE}/finanzas/indices/inflacion")
+    inflation_monthly = inflation_item.get("valor") if inflation_item else None
+    inflation_date    = inflation_item.get("fecha") if inflation_item else None
+
+    inflation_annual_item = _last_item(f"{AD_BASE}/finanzas/indices/inflacionInteranual")
+    inflation_annual      = inflation_annual_item.get("valor") if inflation_annual_item else None
+
+    uva_item  = _last_item(f"{AD_BASE}/finanzas/indices/uva")
+    uva       = uva_item.get("valor") if uva_item else None
+    uva_date  = uva_item.get("fecha") if uva_item else None
+
+    ofic_item   = _last_item(f"{AD_BASE}/cotizaciones/dolares/oficial")
+    usd_oficial = (ofic_item.get("venta") or ofic_item.get("valor")) if ofic_item else None
+    ofic_date   = ofic_item.get("fecha") if ofic_item else None
+
+    # Stale: True si el fetch falló (valor None). El dato de inflación puede tener
+    # 30-45 días de antigüedad (ciclo INDEC) pero eso es normal, no es stale.
+    # UVA y oficial se publican diariamente — stale si la fecha del dato tiene >2 días.
+    def _days_old(date_str):
+        if not date_str:
+            return 999
+        try:
+            d = datetime.strptime(date_str[:10], "%Y-%m-%d")
+            return (datetime.now() - d).days
+        except Exception:
+            return 999
 
     return {
-        "inflation_monthly":   inflation_monthly,   # IPC mensual %
-        "inflation_date":      inflation_date,       # fecha del último dato IPC ("YYYY-MM-DD")
-        "inflation_annual":    inflation_annual,     # IPC interanual %
-        "uva":                 uva,                  # valor UVA en ARS
-        "usd_oficial":         usd_oficial,          # tipo de cambio oficial venta
+        "inflation_monthly": inflation_monthly,
+        "inflation_date":    inflation_date,
+        "inflation_annual":  inflation_annual,
+        "uva":               uva,
+        "usd_oficial":       usd_oficial,
+        "_sources": {
+            "inflation": {
+                "source":          "argentinadatos→INDEC",
+                "fetched_at":      now_str,
+                "data_date":       inflation_date,
+                "stale":           inflation_monthly is None,
+            },
+            "uva": {
+                "source":          "argentinadatos→BCRA",
+                "fetched_at":      now_str,
+                "data_date":       uva_date,
+                "stale":           uva is None or _days_old(uva_date) > 2,
+            },
+            "usd_oficial": {
+                "source":          "argentinadatos",
+                "fetched_at":      now_str,
+                "data_date":       ofic_date,
+                "stale":           usd_oficial is None or _days_old(ofic_date) > 2,
+            },
+        },
     }
 
 
 # --- helpers ---
+
+def _now_art() -> str:
+    """Timestamp actual en hora Argentina (ART = UTC-3)."""
+    art = timezone(timedelta(hours=-3))
+    return datetime.now(art).strftime("%Y-%m-%dT%H:%M:%S-03:00")
+
 
 def _last_item(url: str) -> dict | None:
     """Llama a la API y devuelve el último ítem completo (con fecha y valor)."""

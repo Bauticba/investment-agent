@@ -33,18 +33,30 @@ def _fetch(endpoint: str) -> dict:
             price = (d.get("venta") or d.get("compra")) or None
             fecha_utc = d.get("fechaActualizacion", "")
             fecha_art = ""
+            data_dt   = None
             if fecha_utc:
                 try:
-                    dt = datetime.fromisoformat(fecha_utc.replace("Z", "+00:00"))
-                    fecha_art = dt.astimezone(_ART).strftime("%d/%m %H:%M ART")
+                    data_dt   = datetime.fromisoformat(fecha_utc.replace("Z", "+00:00"))
+                    fecha_art = data_dt.astimezone(_ART).strftime("%d/%m %H:%M ART")
                 except Exception:
                     fecha_art = fecha_utc[:16]
-            result = {"price": price, "compra": d.get("compra"), "venta": d.get("venta"), "fecha": fecha_art, "_ts": time.time()}
+            # Stale solo si no pudimos obtener precio (falla real de API).
+            # Datos de "ayer" son normales fuera del horario de mercado.
+            stale = price is None
+            result = {
+                "price":  price,
+                "compra": d.get("compra"),
+                "venta":  d.get("venta"),
+                "fecha":  fecha_art,
+                "source": "dolarapi.com",
+                "stale":  stale,
+                "_ts":    time.time(),
+            }
             _cache[endpoint] = result
             return result
     except Exception:
         pass
-    return {"price": None, "compra": None, "venta": None, "fecha": "", "_ts": 0}
+    return {"price": None, "compra": None, "venta": None, "fecha": "", "source": "dolarapi.com", "stale": True, "_ts": 0}
 
 
 def get_ccl() -> dict:

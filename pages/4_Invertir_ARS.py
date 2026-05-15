@@ -92,10 +92,22 @@ if st.button("Generar recomendación", type="primary", use_container_width=True)
         infl_label = "Inflación mensual (INDEC)"
 
     m1, m2, m3, m4 = st.columns(4)
-    m1.metric(infl_label,      f"{infl_m:.1f}%" if infl_m else "N/A")
-    m2.metric("Inflación anual",   f"{infl_a:.1f}%" if infl_a else "N/A")
-    m3.metric("Dólar oficial",     f"${usd:,.0f}" if usd else "N/A")
-    m4.metric("UVA",               f"${uva:,.2f}" if uva else "N/A")
+    m1.metric(infl_label,        f"{infl_m:.1f}%" if infl_m else "N/A")
+    m2.metric("Inflación anual", f"{infl_a:.1f}%" if infl_a else "N/A")
+    m3.metric("Dólar oficial",   f"${usd:,.0f}" if usd else "N/A")
+    m4.metric("UVA",             f"${uva:,.2f}" if uva else "N/A")
+
+    # Advertencias de calidad de datos
+    _sources = macro.get("_sources", {})
+    _stale = [k for k, v in _sources.items() if v.get("stale")]
+    _names  = {"inflation": "inflación", "uva": "UVA", "usd_oficial": "dólar oficial"}
+    if _stale:
+        _labels = ", ".join(_names.get(k, k) for k in _stale)
+        st.warning(f"⚠️ No se pudo actualizar: **{_labels}**. La recomendación usará el último dato disponible o un valor de referencia.")
+    else:
+        _fetch_times = [v.get("fetched_at", "")[:16] for v in _sources.values() if v.get("fetched_at")]
+        if _fetch_times:
+            st.caption(f"✅ Datos macro actualizados · Fuente: argentinadatos.com")
 
     # ── Noticias ──────────────────────────────────────────────────────────────
     with st.spinner("📰 Obteniendo noticias recientes..."):
@@ -114,9 +126,13 @@ if st.button("Generar recomendación", type="primary", use_container_width=True)
         rates_val      = get_rates_validation(macro)
 
     relevant = [i for i in instruments if riesgo in i.get("recommended_for", [])]
-    mep_inst = next((i for i in instruments if i.get("id") == "dolar_mep"), None)
-    mep_ts   = mep_inst.get("mep_fetch_timestamp", "") if mep_inst else ""
-    mep_caption = f" | 💵 MEP: fuente dolarapi.com — {mep_ts}" if mep_ts else " | 💵 MEP: fuente dolarapi.com"
+    mep_inst  = next((i for i in instruments if i.get("id") == "dolar_mep"), None)
+    mep_ts    = mep_inst.get("mep_fetch_timestamp", "") if mep_inst else ""
+    mep_stale = mep_inst.get("mep_stale", False) if mep_inst else False
+    _mep_icon = "⚠️" if mep_stale else "💵"
+    mep_caption = f" | {_mep_icon} MEP: dolarapi.com — {mep_ts}" if mep_ts else f" | {_mep_icon} MEP: dolarapi.com"
+    if mep_stale:
+        st.warning("⚠️ Precio MEP desactualizado (>60 min) — verificar en IOL antes de operar.")
     st.caption(
         f"{len(instruments)} instrumentos totales | {len(relevant)} compatibles con perfil {riesgo.upper()}"
         + mep_caption
