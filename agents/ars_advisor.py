@@ -2,7 +2,7 @@ import json
 from datetime import date
 from anthropic import Anthropic
 from dotenv import load_dotenv
-from agents.portfolio_validator import recalculate_fields, validate_allocation, format_errors_for_prompt
+from agents.portfolio_validator import recalculate_fields, validate_allocation, format_errors_for_prompt, compute_risk_score
 
 load_dotenv()
 client = Anthropic()
@@ -352,5 +352,10 @@ Respondé ÚNICAMENTE con JSON válido, sin texto adicional:
     if validation_errors:
         print(f"[ars_advisor] Advertencia: {len(validation_errors)} error(es) de validación tras 3 intentos")
         result["validation_warnings"] = validation_errors
+
+    result["portfolio_risk_score"] = compute_risk_score(
+        result.get("allocation", []),
+        macro.get("_sources"),
+    )
 
     return result

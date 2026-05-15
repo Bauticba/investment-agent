@@ -256,10 +256,16 @@ if st.button("Generar recomendación", type="primary", use_container_width=True)
         st.write(f"**Total: {total_pct:.0f}% — ${total_amt:,.0f} ARS**")
 
         st.divider()
-        r1, r2, r3 = st.columns(3)
+        _prs = rec.get("portfolio_risk_score", {})
+        _risk_label = _prs.get("label", "?")
+        _risk_score = _prs.get("score", "?")
+        _risk_color = {"Bajo": "🟢", "Moderado": "🟡", "Alto": "🔴"}.get(_risk_label, "⚪")
+
+        r1, r2, r3, r4 = st.columns(4)
         r1.metric("Cobertura inflacionaria", f"{rec.get('inflation_coverage_pct', '?')}%")
         r2.metric("Exposición USD total",    f"{rec.get('usd_exposure_pct', '?')}%")
         r3.metric("Horizonte",               rec.get("time_horizon", "?"))
+        r4.metric(f"Riesgo cartera {_risk_color}", f"{_risk_score}/100 — {_risk_label}")
 
         usd_bd = rec.get("usd_exposure_breakdown")
         if usd_bd:

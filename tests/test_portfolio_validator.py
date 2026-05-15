@@ -5,7 +5,7 @@ Cubren las 10 reglas financieras core que el validador debe detectar.
 Correr: python3 -m pytest tests/test_portfolio_validator.py -v
 """
 import pytest
-from agents.portfolio_validator import validate_allocation, compute_exposures, recalculate_fields
+from agents.portfolio_validator import validate_allocation, compute_exposures, recalculate_fields, compute_risk_score
 
 CAPITAL = 300_000
 MACRO_INF_3_4 = {"inflation_monthly": 3.4}
@@ -221,3 +221,49 @@ def test_recalculate_fields_fixes_inflation_coverage():
     }
     fixed = recalculate_fields(rec)
     assert fixed["inflation_coverage_pct"] == 40.0
+
+
+# ─── compute_risk_score ───────────────────────────────────────────────────────
+
+def test_risk_score_pure_liquidity():
+    alloc = [{"type": "fci_mm", "allocation_pct": 100}]
+    r = compute_risk_score(alloc)
+    assert r["score"] == 5.0
+    assert r["label"] == "Bajo"
+
+
+def test_risk_score_pure_equity():
+    alloc = [{"type": "fci_acciones", "allocation_pct": 100}]
+    r = compute_risk_score(alloc)
+    assert r["score"] == 80.0
+    assert r["label"] == "Alto"
+
+
+def test_risk_score_mixed_moderado():
+    alloc = [
+        {"type": "bono_cer",    "allocation_pct": 40},  # 45 × 0.4 = 18
+        {"type": "dolar_mep",   "allocation_pct": 30},  # 20 × 0.3 =  6
+        {"type": "fci_mm",      "allocation_pct": 20},  #  5 × 0.2 =  1
+        {"type": "cedear",      "allocation_pct": 10},  # 65 × 0.1 =  6.5
+    ]
+    r = compute_risk_score(alloc)
+    assert r["score"] == pytest.approx(31.5, abs=0.1)
+    assert r["label"] == "Moderado"
+
+
+def test_risk_score_stale_penalty():
+    alloc = [{"type": "fci_mm", "allocation_pct": 100}]
+    stale_sources = {
+        "inflation":  {"stale": True},
+        "uva":        {"stale": True},
+        "usd_oficial":{"stale": False},
+    }
+    r = compute_risk_score(alloc, macro_sources=stale_sources)
+    assert r["stale_penalty"] == 6
+    assert r["score"] == pytest.approx(11.0, abs=0.1)
+
+
+def test_risk_score_empty():
+    r = compute_risk_score([])
+    assert r["score"] == 0
+    assert r["label"] == "Bajo"

@@ -5,6 +5,27 @@ Responsabilidad: auditar matemática y reglas financieras antes de
 que la recomendación llegue al usuario. Claude redacta; este módulo valida.
 """
 
+# Score de riesgo intrínseco por tipo de instrumento (0–100, contexto argentino).
+# Refleja: volatilidad de precio, riesgo soberano, iliquidez y riesgo emisor.
+_INSTRUMENT_RISK_SCORE: dict[str, int] = {
+    "fci_mm":           5,   # liquidez pura, sin riesgo precio
+    "caucion":          5,   # préstamo garantizado 1-7 días
+    "plazo_fijo":      15,   # riesgo bancario + pierde vs inflación
+    "dolar_mep":       20,   # riesgo regulatorio durante parking 24hs
+    "plazo_fijo_uva":  20,   # riesgo bancario + iliquidez mínima 90 días
+    "lecap":           30,   # soberano nominal corto plazo
+    "lecer":           30,   # soberano CER corto plazo
+    "fci_renta_fija":  35,   # mezcla CER + LECAP, algo de duración
+    "fci_dolar_linked":40,   # dólar linked — riesgo devaluación inverso
+    "bono_cer":        45,   # soberano CER — riesgo restructuración
+    "on_usd":          50,   # corporativo USD — riesgo emisor
+    "bono_hard_dollar":55,   # soberano hard dollar — riesgo precio y soberano
+    "cedear":          65,   # equity dolarizado — alta volatilidad
+    "cedears":         65,
+    "accion_merval":   75,   # equity local — más volátil que CEDEAR
+    "fci_acciones":    80,   # FCI equity — riesgo máximo
+}
+
 # Categorías de tipos de instrumento
 _EQUITY       = {"cedear", "cedears", "accion_merval", "fci_acciones"}
 _SOVEREIGN_HD = {"bono_hard_dollar"}
@@ -12,6 +33,45 @@ _CER_UVA      = {"bono_cer", "lecer", "plazo_fijo_uva"}
 _LIQUIDITY    = {"fci_mm", "caucion"}
 _MEP          = {"dolar_mep"}
 _ON_USD       = {"on_usd"}
+
+
+def compute_risk_score(allocation: list[dict], macro_sources: dict | None = None) -> dict:
+    """
+    Score cuantitativo de riesgo de la cartera (0–100).
+    Promedio ponderado de _INSTRUMENT_RISK_SCORE por tipo de instrumento,
+    con penalización opcional por datos macroeconómicos desactualizados.
+    """
+    if not allocation:
+        return {"score": 0, "label": "Bajo", "breakdown": {}}
+
+    weighted = sum(
+        _INSTRUMENT_RISK_SCORE.get(p.get("type", ""), 50) * p.get("allocation_pct", 0)
+        for p in allocation
+    ) / 100
+
+    stale_penalty = 0
+    if macro_sources:
+        stale_count = sum(1 for v in macro_sources.values() if isinstance(v, dict) and v.get("stale"))
+        stale_penalty = stale_count * 3
+
+    score = round(min(100, weighted + stale_penalty), 1)
+
+    if score <= 25:
+        label = "Bajo"
+    elif score <= 55:
+        label = "Moderado"
+    else:
+        label = "Alto"
+
+    breakdown = {}
+    for p in allocation:
+        t = p.get("type", "desconocido")
+        pct = p.get("allocation_pct", 0)
+        risk = _INSTRUMENT_RISK_SCORE.get(t, 50)
+        breakdown[t] = breakdown.get(t, {"pct": 0, "risk_score": risk})
+        breakdown[t]["pct"] = round(breakdown[t]["pct"] + pct, 1)
+
+    return {"score": score, "label": label, "stale_penalty": stale_penalty, "breakdown": breakdown}
 
 
 def compute_exposures(allocation: list[dict]) -> dict:
