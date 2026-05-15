@@ -532,11 +532,20 @@ def send_ars_recommendation_email(rec: dict, capital: float, riesgo: str, macro:
     else:
         _triggers_html = ""
 
+    # Pre-computar score de riesgo de la cartera
+    _prs       = rec.get("portfolio_risk_score", {})
+    _prs_score = _prs.get("score", "?")
+    _prs_label = _prs.get("label", "")
+    _prs_emoji = {"Bajo": "🟢", "Moderado": "🟡", "Alto": "🔴"}.get(_prs_label, "⚪")
+    _prs_color = {"Bajo": "#2e7d32", "Moderado": "#f57c00", "Alto": "#c62828"}.get(_prs_label, "#555")
+    _prs_stale = _prs.get("stale_penalty", 0)
+    _prs_stale_note = f" <span style='font-size:11px;color:#888'>(+{_prs_stale} pts por datos desactualizados)</span>" if _prs_stale else ""
+
     # Pre-computar sección USD breakdown para evitar lógica compleja dentro del f-string
     usd_bd = rec.get("usd_exposure_breakdown", {})
     if usd_bd:
         _breakdown_row = f"""
-        <tr><td colspan="2" style="padding-top:12px">
+        <tr><td colspan="3" style="padding-top:12px">
           <table style="width:100%;font-size:13px;color:#555">
             <tr>
               <td>💵 MEP / dólar líquido</td>
@@ -594,15 +603,20 @@ def send_ars_recommendation_email(rec: dict, capital: float, riesgo: str, macro:
     <div style="padding:20px;background:#f8f9fa;border:1px solid #e0e0e0;margin-top:2px">
       <table style="width:100%">
         <tr>
-          <td style="vertical-align:top;width:50%;padding-right:10px">
+          <td style="vertical-align:top;width:33%;padding-right:10px">
             <b>🛡 Cobertura inflacionaria</b><br>
             <span style="font-size:22px;font-weight:bold;color:#1565c0">{rec.get('inflation_coverage_pct','?')}%</span>
             <span style="color:#555;font-size:13px"> del portafolio</span>
           </td>
-          <td style="vertical-align:top;width:50%">
+          <td style="vertical-align:top;width:33%;padding-right:10px">
             <b>💵 Exposición dolarizada total</b><br>
             <span style="font-size:22px;font-weight:bold;color:#1b5e20">{rec.get('usd_exposure_pct','?')}%</span>
             <span style="color:#555;font-size:13px"> del portafolio</span>
+          </td>
+          <td style="vertical-align:top;width:33%">
+            <b>{_prs_emoji} Riesgo de la cartera</b><br>
+            <span style="font-size:22px;font-weight:bold;color:{_prs_color}">{_prs_score}/100</span>
+            <span style="color:#555;font-size:13px"> — {_prs_label}</span>{_prs_stale_note}
           </td>
         </tr>
         {_breakdown_row}
