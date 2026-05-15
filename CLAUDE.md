@@ -130,8 +130,8 @@ Interfaz web Streamlit. Arrancar con `streamlit run app.py`.
 - **app.py** — home: macro en tiempo real (cache 30 min) + tabla de análisis guardados en `storage/`
 - **pages/1_Watchlist.py** — selección de tickers, análisis con barra de progreso, tabla resumen
 - **pages/2_Portafolio_USD.py** — capital + checkbox cache, screening completo + allocator
-- **pages/3_Mi_Portafolio.py** — lee `my_portfolio.json`, analiza acciones/bonos/CEDEARs, síntesis CEO
-- **pages/4_Invertir_ARS.py** — capital ARS + perfil riesgo, recomendación + picks de CEDEARs
+- **pages/3_Mi_Portafolio.py** — botón "Sincronizar desde IOL" (trae posiciones reales con tipo detectado automáticamente) + expander de saldo manual (IOL no expone /cuenta/saldo vía API) + análisis acciones/bonos/CEDEARs + síntesis CEO
+- **pages/4_Invertir_ARS.py** — capital ARS + perfil riesgo + checkbox "⚡ Modo rápido" (skip MERVAL en vivo) + portfolio risk score (0–100, Bajo/Moderado/Alto) + picks de CEDEARs y MERVAL
 - **pages/5_Paper_Trading.py** — performance de señales históricas: win rate, P&L promedio, tabla filtrable por veredicto/fecha/estado, bar chart P&L por ticker, historial de ejecuciones por fecha
 - **pages/6_Perfil.py** — edición del perfil de inversión desde la UI: nivel de riesgo, stop/take profit, reglas fundamentales y técnicas, watchlist. Botón de restaurar defaults incluido.
 
@@ -140,22 +140,47 @@ Los análisis largos (>30s) muestran `st.spinner` y barra de progreso en tiempo 
 
 ### `core/cache.py`
 Helper compartido `get_analysis_cached(ticker, use_cache)`.
-Antes estaba duplicado en `portfolio.py` y `analyze_portfolio.py`.
 Lógica: si `use_cache=True` y existe `storage/{ticker}_analysis.json` con `status=ok`, lo devuelve.
 Si `use_cache=True` pero no existe el archivo, devuelve `{"status": "skipped"}` (no re-analiza).
 Si `use_cache=False`, llama a `run_analysis(ticker)` y guarda el resultado.
+
+### `core/ttl_cache.py`
+Decorador `@ttl_cache(seconds=N)` con TTLs diferenciados por tipo de dato:
+- 300s — precios IOL (cambian en el mercado)
+- 1800s — macro (inflación, UVA, CCL)
+- 3600s — noticias
+- 86400s — tasas PF
+Incluye lógica stale: si el fetch falla, devuelve el último valor conocido marcado como `stale=True`.
+
+### `core/portfolio_manager.py`
+CRUD para `my_portfolio.json` + sincronización desde IOL.
+- `get_portfolio()` — lee `my_portfolio.json`, retorna `_DEFAULTS` si no existe
+- `save_portfolio(portfolio)` — persiste el dict completo
+- `add_position(ticker, shares, avg_price, currency, asset_type, notes)` — agrega o promedia precio
+- `sell_position(ticker, shares)` — reduce cantidad; elimina si shares ≥ total
+- `remove_position(ticker)` — elimina posición completa
+- `update_cash(usd, ars)` — actualiza saldo en efectivo
+- `sync_from_iol()` — trae posiciones reales de IOL vía `get_portfolio_iol()`, detecta tipo de activo
+  comparando ticker contra CEDEAR_REGISTRY, BOND_REGISTRY, HARD_DOLLAR_BOND_REGISTRY, ON_REGISTRY, MERVAL_STOCKS.
+  Currency = ARS si `titulo.moneda == "peso_Argentino"` (incluyendo ONs que cotizan en ARS en BYMA).
+  Cash preservado del archivo local (IOL no expone saldo vía API).
+  Retorna dict con `synced_from_iol=True` y `sync_timestamp`.
 
 ### `data/iol.py`
 Cliente OAuth2 para la API de Invertir Online (IOL).
 - Autenticación: `POST /token` con `grant_type=password` usando `IOL_USERNAME` / `IOL_PASSWORD` del `.env`
 - Token cacheado en memoria por 1200s (con 60s de margen de seguridad)
 - `get_price(simbolo)` — `GET /api/v2/titulos/{simbolo}/cotizacion?mercado=bCBA`
-  Funciona para: acciones MERVAL, CEDEARs, bonos soberanos (TX26, GD30, AL30...)
+  Funciona para: acciones MERVAL, CEDEARs, bonos soberanos (TX26, GD30, AL30...), ONs (YMCIO, etc.)
   Retorna: `simbolo`, `ultimo_precio`, `variacion_pct`, `apertura`, `maximo`, `minimo`, `fecha`
 - `get_prices_bulk(simbolos)` — llama `get_price` en loop, omite los que fallan
+- `get_portfolio_iol()` — `GET /api/v2/portafolio` (endpoint flat, trae todos los mercados).
+  Fallback a `/api/v2/portafolio/{bCBA,nYSE}` con deduplicación por símbolo si el flat devuelve vacío.
+  Cada activo tiene: `titulo.simbolo`, `titulo.tipo`, `titulo.moneda`, `cantidad`, `ppc` (precio promedio), `ultimoPrecio`, `valorizado`.
+- `get_account_balance()` — intenta `/api/v2/cuenta/saldo` y `/api/v2/cuenta/saldos`. Devuelve `{"ARS": float, "USD": float, "available": bool}`. **Nota:** ambos endpoints devuelven 500 para esta cuenta — `available=False` es el resultado esperado. El saldo se ingresa manualmente en la UI.
+- `get_profile()` — `GET /api/v2/perfil`. Retorna `username`, `nombre`, `numeroCuenta`, `tieneCuentaUSA`.
 - `is_available()` — True si las credenciales IOL están configuradas y el token funciona
-**Precios reales obtenidos en pruebas:** TX26=$1353.50, GD30=$93000, AL30=$90940,
-AAPL=$21100, NVDA=$12150, MSFT=$20370, GOOGL=$9945
+**Precios reales:** TX26≈$686 ARS, GD30≈$93000 ARS, AMZN≈$2715 ARS, YMCIO≈$157930 ARS
 
 ### `data/fetcher.py`
 Punto de entrada para obtener todos los datos de un ticker de acciones.
@@ -265,7 +290,7 @@ Recomienda: hold, sell, add, reduce, stop_loss_triggered.
 Devuelve JSON con: `action`, `urgency`, `rationale`, `key_alert`, P&L calculado.
 
 ### `data/instruments_ar.py`
-Universo de **32 instrumentos** de inversión en ARS disponibles en Bull Market Brokers.
+Universo de **37 instrumentos** de inversión en ARS/USD disponibles en IOL.
 Función principal: `get_instruments_universe(macro)` — devuelve lista de instrumentos con
 características actualizadas al contexto macro del momento.
 Instrumentos incluidos (16 tipos):
@@ -277,7 +302,7 @@ Instrumentos incluidos (16 tipos):
 - **Plazo fijo tradicional**: tasa fija TNA — marcado como ineficiente si inflación lo supera
 - **Dólar MEP**: vía AL30/GD30, parking 24hs obligatorio. Precio vía dolarapi.com
 - **Cauciones bursátiles**: préstamos garantizados 1-7 días, TNA ≈ TNA_PF × 0.85
-- **ONs USD**: YMCHO, PAE26, TGS26, IRCP, PAMP3 — obligaciones negociables en USD hard
+- **ONs USD (10 tickers verificados en IOL)**: YMCIO (YPF 2029), YM34O (YPF 2034), TSC3O (TGS 2031), MGC3O (Pampa 2029), MGCOO (Pampa 2034), IRCPD (IRSA 2035), PNDCO (PAE 2027), TLCMO (Telecom 2031), TTC9O (Tecpetrol 2029), VISTD (Vista Energy 2030). Sufijo `O` = liquidación USD hard. Todos con vencimiento > 2026-05-15.
 - **FCI Money Market**: liquidez inmediata, ~TNA mercado, rescate 24hs
 - **FCI Renta Fija**: bonos CER + LECAP, horizonte 3-6 meses
 - **FCI Dólar Linked**: cobertura devaluación, horizonte 6+ meses
@@ -286,24 +311,31 @@ Instrumentos incluidos (16 tipos):
 - **Acciones MERVAL**: GGAL, YPFD, BMA, PAMP, TXAR, TECO2, BBAR, MIRG
 
 Cada instrumento incluye: `return_estimate`, `liquidity`, `risk_level`, `recommended_for`,
-`how_to_buy` (instrucciones exactas en Bull Market), `sovereign_risk`, `bank_risk`.
+`how_to_buy` (instrucciones exactas en IOL), `sovereign_risk`, `bank_risk`.
 TNA plazo fijo: intenta traer de `argentinadatos.com/v1/finanzas/tasas/depositos`;
-si falla, usa `TNA_PF_FALLBACK = 32.0%`.
+si falla, usa `TNA_PF_FALLBACK = 20.0%`.
 
 ### `agents/ars_advisor.py`
 Agente Claude especializado en inversiones en pesos argentinos.
 Recibe: capital, perfil de riesgo (bajo/moderado/alto), universo de instrumentos, macro, **noticias del día**.
+Parámetro `fast_mode=False`: si True, reduce max_attempts a 1 (sin retry) para mayor velocidad.
 Aplica reglas por perfil:
 - **Bajo**: PF UVA + FCI. Sin CEDEARs. Máx 20% bonos CER.
 - **Moderado**: 30-50% CER/UVA + 20-30% MEP + 10-20% CEDEARs + 10% FCI.
 - **Alto**: 30-40% CEDEARs + 20-30% MEP + 20% CER + 10% FCI.
 Descarta automáticamente PF tradicional si inflación mensual supera la TNA.
-**Noticias**: recibe lista de titulares de `data/news_ar.py` e incluye un bloque
-"Noticias recientes" en el prompt — Claude las usa para justificar sus recomendaciones
-con contexto del día (ej: sube el riesgo país → menos bonos soberanos; tensión en Medio
-Oriente → más CEDEARs energía).
+**Noticias**: recibe lista de titulares de `data/news_ar.py`.
+Después de generar la recomendación, llama `compute_risk_score()` y agrega `portfolio_risk_score` al resultado.
 Devuelve JSON con: `allocation[]` (instrument_id, %, amount_ars, rationale, how_to_buy),
-`inflation_coverage_pct`, `usd_exposure_pct`, `strategy_summary`, `main_risk`, `time_horizon`.
+`inflation_coverage_pct`, `usd_exposure_pct`, `strategy_summary`, `main_risk`, `time_horizon`,
+`portfolio_risk_score` (score 0–100, label Bajo/Moderado/Alto, breakdown por tipo).
+
+### `agents/portfolio_validator.py`
+Valida reglas financieras de la cartera ARS y calcula riesgo cuantitativo.
+- `validate_allocation(allocation, macro, profile)` — 10 reglas hard: máx 15% CEDEAR individual (moderado), mín 35% CER si inflación >3% y moderado, máx 15% soberano hard dollar (moderado), mín 15% FCI MM si dolar_liquido=0, triggers solo referencian instrumentos presentes, etc. Retorna lista de errores.
+- `recalculate_fields(allocation, macro)` — recalcula `usd_exposure_pct`, `inflation_coverage_pct` en Python para no depender del LLM.
+- `compute_risk_score(allocation, macro_sources)` — score cuantitativo 0–100: promedio ponderado de `_INSTRUMENT_RISK_SCORE` × allocation_pct/100, + penalización 3pts por fuente de datos stale. Labels: Bajo (≤25), Moderado (≤55), Alto (>55).
+- 21 tests en `tests/test_portfolio_validator.py`.
 
 ### `data/cedears.py`
 Registro y datos de CEDEARs disponibles en BYMA.
@@ -328,7 +360,7 @@ Analiza posiciones en bonos soberanos como TX26, TX28, TX30, DICP.
 Considera: precio sucio vs limpio, ajuste CER devengado, TIR real estimada,
 paridad vs valor técnico, comparación vs plazo fijo UVA y dolarización MEP,
 riesgo soberano argentino, tiempo a vencimiento.
-Requiere que el precio se ingrese manualmente vía `current_price_override`.
+Precio obtenido automáticamente vía IOL (TX26, GD30, AL30...). `current_price_override` opcional para forzar precio manual.
 Devuelve JSON con: `action`, `urgency`, `real_yield_estimate`, `paridad_assessment`,
 `vs_alternatives`, `sovereign_risk_note`, `rationale`, `key_alert`.
 
@@ -402,20 +434,22 @@ Define las reglas y preferencias del inversor:
   - etfs (9): SPY, QQQ, GLD, XLE, XLF, IWM, DIA, EEM, EWZ
 - Sectores prohibidos: ninguno
 - **ETFs**: el agente fundamental usa un prompt especializado (sin P/E/EPS — evalúa diversificación, costo, exposición sectorial)
+- **transaction_costs**: `commission_pct=0.75`, `taxes={cedear:15, bono_argentino:0, bono_hard_dollar:0, on_usd:0, accion_merval:0}` — usado por `alerts.py` para calcular umbrales de stop/target netos
 
 ### `invest_ars.py`
-Expone `run_ars(capital, riesgo)` — callable desde `main.py` y Streamlit.
+Expone `run_ars(capital, riesgo, fecha_objetivo, fast=False)` — callable desde `main.py` y Streamlit.
 Flujo:
 1. Trae macro en tiempo real (argentinadatos.com): inflación, UVA, dólar
-2. **Trae noticias** en tiempo real (data/news_ar.py): hasta 15 titulares de Google News + Ámbito
-3. Construye universo de 32 instrumentos (data/instruments_ar.py)
+2. **Trae noticias** en tiempo real (data/news_ar.py): hasta 12 titulares (5 en fast mode)
+3. Construye universo de 37 instrumentos (data/instruments_ar.py)
 4. Filtra los compatibles con el perfil de riesgo pedido
-5. Llama a agents/ars_advisor.py con macro + noticias para generar la distribución óptima
-6. Imprime tabla de asignación + instrucciones paso a paso en Bull Market
-7. **Si hay CEDEARs**: muestra top 3 por CEO score (de storage cacheado)
-8. Envía email y guarda en `storage/inversion_ars_{fecha}.json` (incluye campo `news`)
+5. Si `riesgo in (moderado, alto)` y no fast_mode: corre análisis MERVAL en vivo
+6. Llama a agents/ars_advisor.py con macro + noticias + picks MERVAL/CEDEAR → `fast_mode` controla intentos
+7. Imprime tabla de asignación + instrucciones paso a paso en IOL
+8. **Si hay CEDEARs**: muestra top 3 por CEO score (de storage cacheado)
+9. Envía email y guarda en `storage/inversion_ars_{fecha}.json`
 
-Flags CLI: `--capital` (requerido, ARS), `--riesgo` (bajo/moderado/alto, default: moderado).
+Flags CLI: `--capital` (requerido, ARS), `--riesgo` (bajo/moderado/alto, default: moderado), `--fast` (skip MERVAL en vivo, 1 intento).
 
 ### `storage/`
 JSONs de cada análisis completo.
@@ -431,22 +465,26 @@ Historial de análisis de acciones por fecha. Se crea automáticamente al correr
 - Es la fuente de datos para `paper_trading.py`
 
 ### `alerts.py`
-Sistema de alertas de precio en tiempo real.
-Expone `run_alerts()` — llamado por el cron horario.
-Flujo:
-1. Lee todos los `storage/*_analysis.json` y extrae stop_loss y take_profit del CEO
-2. Obtiene precios actuales vía yfinance (bulk download, 50 tickers en segundos)
-3. Evalúa 3 tipos de alerta por ticker:
-   - `stop_hit` — precio ≤ stop_loss 🚨
-   - `near_stop` — precio ≤ stop_loss × 1.03 (a 3% del stop) ⚠️
-   - `target_hit` — precio ≥ take_profit ✅
-4. Filtra con `storage/alerts_state.json` para no mandar la misma alerta dos veces el mismo día
-5. Envía email HTML con detalles por ticker (precio actual, P&L, distancia al stop/target)
+Sistema de alertas de precio en tiempo real. Dos fuentes de señales:
 
-**Cron:** cada hora de 14:30 a 21:00 Argentina (17:30–00:00 UTC), Lun–Vie
-(`30 17,18,19,20,21,22,23,0 * * 1-5 scripts/check_alerts.sh`)
+**Fuente 1 — Watchlist USA** (`load_watchlist_thresholds()`):
+Lee `storage/*_analysis.json`, extrae stop_loss / take_profit del CEO en USD.
+Precios vía yfinance (bulk download).
+
+**Fuente 2 — Portafolio IOL** (`load_portfolio_thresholds()`):
+Lee `my_portfolio.json`, obtiene precios actuales de cada posición vía `data/iol.get_price()`.
+Stop/target calculados con ajuste a **ganancia/pérdida neta real**:
+- `stop = ppc × (1 - (stop_pct - commission))` — pérdida neta = stop_pct exacto
+- `target = ppc × (1 + (target_pct + commission) / (1 - tax_rate))` — ganancia neta = target_pct exacto
+- Comisión y tax leídos de `instructions/investor_profile.json → transaction_costs`
+- Tax por tipo: cedear=15%, bono_argentino/bono_hard_dollar/on_usd/accion_merval=0%
+
+`run_alerts()` combina ambas fuentes. `state_key = f"{ticker}_{source}"` distingue watchlist vs portafolio para evitar colisiones en `alerts_state.json`.
+
+**Cron:** cada hora de 11:30 a 21:30 Argentina (14:30–00:30 UTC), Lun–Vie — cubre BYMA (abre 11:00 AR) y NYSE (abre 14:30 AR).
+(`30 14,15,16,17,18,19,20,21,22,23,0 * * 1-5 scripts/check_alerts.sh`)
 **Logs:** `logs/alerts.log`
-**Estado:** `storage/alerts_state.json` — registra última alerta enviada por ticker y tipo
+**Estado:** `storage/alerts_state.json` — registra última alerta enviada por state_key y tipo
 
 ### `paper_trading.py`
 Seguimiento de performance de las señales del CEO contra precios reales.
@@ -479,7 +517,7 @@ IOL_PASSWORD        — contraseña normal de IOL (no es una app password)
 | Schedule | Script | Qué hace |
 |----------|--------|----------|
 | `0 20 * * 1-5` (5pm AR) | `scripts/actualizar_diario.sh` | Re-analiza las acciones del portafolio |
-| `30 17-23,0 * * 1-5` (cada hora, horario mercado) | `scripts/check_alerts.sh` | Chequea stop loss y take profit de 76 tickers |
+| `30 14-23,0 * * 1-5` (cada hora, BYMA + NYSE) | `scripts/check_alerts.sh` | Alertas watchlist USA (yfinance) + portafolio IOL (ARS neto) |
 
 ## Performance
 - **1 ticker acción**: ~55 segundos (datos + 4 agentes paralelos + CEO + email)
@@ -508,8 +546,11 @@ Python 3.12 · anthropic · streamlit · yfinance · feedparser · requests · p
 | 9 | Automatización diaria (cron/scheduler) | ✅ done (cron 5pm Argentina, `scripts/actualizar_diario.sh`, logs en `logs/actualizar.log`) |
 | 9b | Historial de análisis por fecha | ✅ done (`storage/history/{TICKER}_analysis_{fecha}.json`) |
 | 10 | Paper trading — validar rentabilidad histórica | ✅ done (`paper_trading.py` — señales históricas vs precio actual, win rate, P&L) |
-| 11 | Alertas de precio | ✅ done (`alerts.py` — stop/target/near_stop, cron horario, email HTML) |
+| 11 | Alertas de precio | ✅ done (`alerts.py` — stop/target/near_stop, cron BYMA+NYSE, email HTML, umbrales netos) |
 | 12 | Perfil de riesgo dinámico por usuario | ✅ done (`pages/6_Perfil.py` — sliders, checkboxes, watchlist, restaurar defaults) |
+| 13 | Sincronización portafolio desde IOL | ✅ done (`core/portfolio_manager.sync_from_iol()` — detecta tipo automáticamente, preserva cash) |
+| 14 | ONs corporativas en universo ARS | ✅ done (10 tickers verificados en IOL: YMCIO, YM34O, TSC3O, MGC3O, MGCOO, IRCPD, PNDCO, TLCMO, TTC9O, VISTD) |
+| 15 | Alertas con ajuste neto (comisión + impuesto) | ✅ done (`transaction_costs` en perfil — CEDEAR 15%, bonos exentos, comisión 0.75%) |
 
 ## Próximos pasos
 El roadmap original está completo. Posibles extensiones:
@@ -585,12 +626,12 @@ El roadmap original está completo. Posibles extensiones:
 
 ### Orden de implementación
 
-| # | Tarea | Archivos | Prioridad |
-|---|-------|----------|-----------|
-| 1 | Crear `data/merval.py` + `agents/merval_analyzer.py` | 2 nuevos | Alta |
-| 2 | Expandir `CEDEAR_REGISTRY` en `data/cedears.py` | existente | Alta |
-| 3 | Pasar tesis completa al advisor en `agents/ars_advisor.py` | existente | Alta |
-| 4 | Integrar MERVAL en `data/instruments_ar.py` + `invest_ars.py` | existentes | Media |
-| 5 | Reemplazar `pages/2_Portafolio_USD.py` por dashboard CEDEARs | existente | Media |
-| 6 | Enriquecer `pages/4_Invertir_ARS.py` con MERVAL + tesis | existente | Media |
-| 7 | Deprecar comando `portafolio` USD en `main.py` | existente | Baja |
+| # | Tarea | Archivos | Estado |
+|---|-------|----------|--------|
+| 1 | Crear `data/merval.py` + `agents/merval_analyzer.py` | 2 nuevos | ✅ done |
+| 2 | Expandir `CEDEAR_REGISTRY` en `data/cedears.py` | existente | ✅ done (16 tickers verificados) |
+| 3 | Pasar tesis completa al advisor en `agents/ars_advisor.py` | existente | ✅ done |
+| 4 | Integrar MERVAL en `data/instruments_ar.py` + `invest_ars.py` | existentes | ✅ done |
+| 5 | Reemplazar `pages/2_Portafolio_USD.py` por dashboard CEDEARs | existente | ✅ done (`pages/2_CEDEARs.py`) |
+| 6 | Enriquecer `pages/4_Invertir_ARS.py` con MERVAL + tesis | existente | ✅ done |
+| 7 | Deprecar comando `portafolio` USD en `main.py` | existente | Baja — pendiente |

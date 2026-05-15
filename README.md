@@ -55,10 +55,10 @@ streamlit run app.py  # http://localhost:8501
 | 🏠 Home | Macro argentina en tiempo real + tabla de todos los análisis guardados |
 | 📋 Watchlist | Analizar tickers USA (subyacentes de CEDEARs) con barra de progreso |
 | 🌎 CEDEARs | Dashboard de 29 CEDEARs: semáforo de score, paridad ARS, calculadora de exposición USD |
-| 🗂️ Mi Portafolio | Análisis de posiciones reales (acciones, bonos, CEDEARs) |
+| 🗂️ Mi Portafolio | Sincronización automática desde IOL · análisis de posiciones reales · editor de saldo |
 | 💵 Invertir ARS | Recomendación en pesos con noticias del día, picks MERVAL y picks CEDEARs |
 | 📈 Paper Trading | Win rate, P&L% y seguimiento de señales históricas |
-| ⚙️ Perfil | Editar stop loss, take profit, RSI, P/E, watchlist USA y watchlist MERVAL |
+| ⚙️ Perfil | Editar stop loss, take profit, RSI, P/E, watchlist USA, MERVAL y costos de transacción |
 
 ---
 
@@ -70,6 +70,7 @@ source venv/bin/activate
 # Recomendación principal (comando más usado)
 python3 main.py invertir --capital 500000 --riesgo moderado
 python3 main.py invertir --capital 500000 --riesgo alto --fecha 2027-01
+python3 main.py invertir --capital 300000 --riesgo moderado --fast  # sin MERVAL en vivo, más rápido
 
 # Análisis MERVAL
 python3 main.py merval                              # analiza las 10 acciones del panel líder
@@ -101,7 +102,7 @@ python3 main.py paper-trading
 | [Finnhub](https://finnhub.io/) | Fundamentals fallback + noticias | 60 req/min |
 | [Polygon.io](https://polygon.io/) | Datos técnicos (OHLCV, SMA, RSI) | 5 req/min |
 | [yfinance](https://github.com/ranaroussi/yfinance) | Indicadores (MACD, Bollinger, volumen) | Sin límite |
-| [IOL API](https://api.invertironline.com/) | Precios reales de bonos y CEDEARs en BYMA | Requiere cuenta |
+| [IOL API](https://api.invertironline.com/) | Precios en tiempo real · sincronización de portafolio · perfil de cuenta | Requiere cuenta |
 | [argentinadatos.com](https://argentinadatos.com/) | Macro argentina (inflación, UVA, dólar) | Pública |
 | Google News RSS | Noticias económicas argentinas en tiempo real | Pública |
 
@@ -132,31 +133,23 @@ IOL_PASSWORD=...
 
 > **Mínimo requerido:** solo `ANTHROPIC_API_KEY` para correr. yfinance funciona sin key. Las demás mejoran la calidad de los datos con fallback automático.
 
-Crear `my_portfolio.json` con tus posiciones (el archivo no se incluye en el repo):
+Si tenés cuenta en Invertir Online, el portafolio se sincroniza automáticamente: en la página **Mi Portafolio** presionás "🔄 Sincronizar desde IOL" y las posiciones se cargan solas con su precio promedio real. El tipo de activo (CEDEAR, bono, ON, MERVAL) se detecta automáticamente.
+
+Si preferís carga manual, crear `my_portfolio.json` (el archivo no se incluye en el repo):
 
 ```json
 {
-  "broker": "Tu broker",
+  "broker": "Invertir Online (IOL)",
   "positions": [
-    {
-      "ticker": "AAPL",
-      "shares": 10,
-      "avg_buy_price": 185.50,
-      "currency": "USD"
-    },
-    {
-      "ticker": "TX26",
-      "asset_type": "bono_argentino",
-      "shares": 1000,
-      "avg_buy_price": 1450.00,
-      "currency": "ARS"
-    }
+    { "ticker": "AMZN", "asset_type": "cedear",         "shares": 21,   "avg_buy_price": 2697.50, "currency": "ARS" },
+    { "ticker": "TX26", "asset_type": "bono_argentino",  "shares": 8678, "avg_buy_price": 687.09,  "currency": "ARS" },
+    { "ticker": "YMCIO","asset_type": "on_usd",          "shares": 37,   "avg_buy_price": 158000,  "currency": "ARS" }
   ],
-  "cash": { "USD": 0, "ARS": 0 }
+  "cash": { "USD": 62.01, "ARS": 6023.44 }
 }
 ```
 
-> `asset_type` puede ser `"bono_argentino"` o `"cedear"`. Para acciones americanas omitirlo. El campo `current_price_override` es opcional — si no se completa, el precio se obtiene automáticamente vía IOL o yfinance.
+> `asset_type`: `cedear`, `bono_argentino`, `bono_hard_dollar`, `on_usd`, `accion_merval`. Para acciones americanas omitirlo.
 
 ---
 
@@ -168,8 +161,8 @@ Dos crons preconfigurados (ajustar con `crontab -e`):
 # Actualiza análisis del portafolio a las 5pm Argentina (Lun-Vie)
 0 20 * * 1-5 /ruta/al/proyecto/scripts/actualizar_diario.sh
 
-# Chequea stop loss y take profit cada hora en horario de mercado
-30 17,18,19,20,21,22,23,0 * * 1-5 /ruta/al/proyecto/scripts/check_alerts.sh
+# Chequea alertas cada hora — cubre BYMA (11:30 AR) y NYSE (14:30 AR)
+30 14,15,16,17,18,19,20,21,22,23,0 * * 1-5 /ruta/al/proyecto/scripts/check_alerts.sh
 ```
 
 Logs en `logs/actualizar.log` y `logs/alerts.log`.
@@ -185,7 +178,8 @@ Logs en `logs/actualizar.log` y `logs/alerts.log`.
 | `indicators.py` | MACD, Bollinger Bands, volumen | buy / hold / avoid |
 | `sentiment.py` | Noticias Finnhub, posición competitiva | buy / hold / avoid |
 | `ceo/orchestrator.py` | Síntesis final de los 4 agentes | tesis + stop/target |
-| `ars_advisor.py` | Inversión en ARS con macro + noticias + picks | asignación en pesos |
+| `ars_advisor.py` | Inversión en ARS con macro + noticias + picks · modo rápido | asignación en pesos |
+| `portfolio_validator.py` | Valida reglas de cartera · calcula risk score cuantitativo (0–100) | score + label |
 | `merval_analyzer.py` | Acciones MERVAL: valuación USD, hedge inflación, riesgo regulatorio | buy / hold / sell |
 | `bond_analyzer.py` | Bonos CER argentinos (TX26, TX28...) | hold / sell / add |
 | `cedear_analyzer.py` | CEDEARs: paridad, CCL implícito | hold / sell / add |
@@ -198,6 +192,7 @@ Logs en `logs/actualizar.log` y `logs/alerts.log`.
 El sistema usa `instructions/investor_profile.json` (editable desde la UI en Perfil):
 
 - **Riesgo:** moderado — stop loss 8%, take profit 20%, máx 15% por posición
+- **Costos de transacción:** comisión 0.75% · impuesto CEDEARs 15% · bonos/ONs exentos — los umbrales de alerta se ajustan a ganancia/pérdida **neta real**
 - **Reglas fundamentales:** P/E ≤ 40, crecimiento ≥ 5%, deuda/equity ≤ 2.0
 - **Reglas técnicas:** solo sobre MA200, RSI entre 30–75, confirmar volumen
 - **Universo:** 76 tickers en 8 sectores (tech, healthcare, finance, energy, consumer, real estate, communications, ETFs)
@@ -213,13 +208,13 @@ investment-agent/
 ├── pages/                     # 6 páginas Streamlit
 ├── agents/                    # 11 agentes especializados
 ├── ceo/orchestrator.py        # Síntesis CEO
-├── data/                      # 10 módulos de datos
-├── core/                      # Cache y gestión de portafolio
+├── data/                      # Fetchers: IOL, Alpha Vantage, Polygon, Finnhub, yfinance, macro AR, fx
+├── core/                      # Cache TTL, portfolio manager, sync IOL
 ├── notifications/             # Email HTML
 ├── scripts/                   # Scripts de cron
 ├── storage/                   # JSONs de análisis
 │   └── history/               # Historial por fecha (paper trading)
-├── alerts.py                  # Sistema de alertas de precio
+├── alerts.py                  # Alertas stop/target — watchlist USA (yfinance) + portafolio IOL (ARS)
 ├── paper_trading.py           # Seguimiento de señales históricas
 ├── instructions/              # Perfil del inversor
 └── my_portfolio.json          # Posiciones reales
