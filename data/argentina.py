@@ -1,6 +1,7 @@
 import requests
 import yfinance as yf
 from datetime import datetime, timedelta, timezone
+from core.ttl_cache import ttl_cache
 
 # API pública de Argentina (https://argentinadatos.com)
 AD_BASE = "https://api.argentinadatos.com/v1"
@@ -94,6 +95,7 @@ def get_bond_data(ticker: str, price_override: float = None) -> dict:
     }
 
 
+@ttl_cache(seconds=1800)  # 30 min — dato diario, no cambia intraday
 def get_macro_data() -> dict:
     """
     Trae indicadores macro desde argentinadatos.com (API pública, sin key).

@@ -2,6 +2,7 @@ import feedparser
 import requests
 from datetime import datetime, timezone
 from email.utils import parsedate_to_datetime
+from core.ttl_cache import ttl_cache
 
 # Google News RSS — búsquedas temáticas específicas para el mercado argentino
 GOOGLE_NEWS_QUERIES = [
@@ -92,6 +93,7 @@ def _fetch_direct_feed(source: str, url: str, max_entries: int = 5) -> list[dict
         return []
 
 
+@ttl_cache(seconds=3600)  # 1h — RSS se actualiza cada ~1h
 def get_argentina_news(max_articles: int = 15) -> list[dict]:
     """
     Trae titulares recientes de medios financieros argentinos.

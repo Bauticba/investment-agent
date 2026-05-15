@@ -9,6 +9,7 @@ import os
 import time
 import requests
 from dotenv import load_dotenv
+from core.ttl_cache import ttl_cache
 
 load_dotenv(override=True)
 
@@ -18,6 +19,7 @@ MERCADO  = "bCBA"
 _token_cache = {"access_token": None, "expires_at": 0}
 
 
+@ttl_cache(seconds=300)  # 5 min — precios BYMA cambian durante el mercado
 def get_price(simbolo: str) -> dict | None:
     """
     Devuelve el último precio de un activo disponible en BYMA (bCBA).

@@ -2,6 +2,7 @@ import requests
 from datetime import datetime, date
 from data.argentina import get_macro_data, BOND_REGISTRY
 from data.fx import get_mep
+from core.ttl_cache import ttl_cache
 
 TNA_PF_FALLBACK = 20.0
 
@@ -410,6 +411,7 @@ def get_instruments_universe(macro: dict = None) -> list[dict]:
 _PF_URL = "https://api.argentinadatos.com/v1/finanzas/tasas/plazoFijo"
 
 
+@ttl_cache(seconds=86400)  # 24h — tasas bancarias actualizadas una vez por día
 def _fetch_pf_bancos() -> list[dict]:
     """Devuelve lista de bancos con tnaClientes en % anual, ordenada desc."""
     try:
