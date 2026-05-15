@@ -2,6 +2,7 @@ import json
 from datetime import date
 from anthropic import Anthropic
 from dotenv import load_dotenv
+from agents.portfolio_validator import recalculate_fields, validate_allocation, format_errors_for_prompt
 
 load_dotenv()
 client = Anthropic()
@@ -306,37 +307,50 @@ Respondé ÚNICAMENTE con JSON válido, sin texto adicional:
 """
 
     import time
+    result = None
+    validation_errors = []
+
     for attempt in range(3):
+        # En retry: inyectar los errores de validación al final del prompt
+        correction = format_errors_for_prompt(validation_errors) if validation_errors else ""
+
         try:
             response = client.messages.create(
                 model="claude-sonnet-4-6",
                 max_tokens=4000,
-                messages=[{"role": "user", "content": prompt}]
+                messages=[{"role": "user", "content": prompt + correction}]
             )
-            break
         except Exception as e:
             if attempt == 2 or "500" not in str(e):
                 raise
             time.sleep(5 * (attempt + 1))
+            continue
 
-    text  = response.content[0].text
-    start = text.find("{")
-    end   = text.rfind("}")
-    raw   = text[start:end + 1] if start != -1 else text.strip()
+        text  = response.content[0].text
+        start = text.find("{")
+        end   = text.rfind("}")
+        raw   = text[start:end + 1] if start != -1 else text.strip()
 
-    try:
-        result = json.loads(raw)
-    except json.JSONDecodeError:
-        return {"error": "parse_error", "raw": raw}
+        try:
+            result = json.loads(raw)
+        except json.JSONDecodeError:
+            return {"error": "parse_error", "raw": raw}
 
-    # Post-processing: recalcular usd_exposure_pct desde el breakdown (Claude puede equivocarse)
-    bd = result.get("usd_exposure_breakdown")
-    if bd:
-        result["usd_exposure_pct"] = (
-            bd.get("dolar_liquido_pct", 0)
-            + bd.get("renta_soberana_usd_pct", bd.get("renta_fija_usd_pct", 0))
-            + bd.get("renta_corporativa_usd_pct", 0)
-            + bd.get("equity_dolarizado_pct", 0)
-        )
+        # Post-processing: corregir campos que Claude puede calcular mal
+        result = recalculate_fields(result)
+
+        # Validación: si pasa, terminamos; si no, reintentamos con corrección
+        validation_errors = validate_allocation(result, capital, riesgo, macro, cedear_picks)
+        if not validation_errors:
+            break
+
+        if attempt < 2:
+            print(f"[ars_advisor] Intento {attempt + 1}: {len(validation_errors)} error(es) de validación — reintentando")
+            for e in validation_errors:
+                print(f"  · {e}")
+
+    if validation_errors:
+        print(f"[ars_advisor] Advertencia: {len(validation_errors)} error(es) de validación tras 3 intentos")
+        result["validation_warnings"] = validation_errors
 
     return result
