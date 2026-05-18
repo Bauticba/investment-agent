@@ -68,24 +68,22 @@ python3 ceo/orchestrator.py AAPL              # analizar un solo ticker
                                          + email portafolio
 ```
 
-### Flujo portafolio propio (bonos + CEDEARs + acciones)
+### Flujo portafolio propio (bonos + CEDEARs + ONs + FCIs + acciones)
 ```
           my_portfolio.json
                │
                ▼
-     analyze_portfolio.py
-          │         │         │
-          ▼         ▼         ▼
-  acciones/ETFs  bonos AR  CEDEARs
-  (pipeline      (data/    (data/
-   existente)     arg...)   cedears.py)
-          │         │         │
-          ▼         ▼         ▼
-  agents/        agents/   agents/
-  position_      bond_     cedear_
-  analyzer.py    analyzer  analyzer.py
-          │         │         │
-          └────┬────┘─────────┘
+     analyze_portfolio.py  ← detecta tipo via _is_arg_bond / _is_cedear /
+          │    │   │   │      _is_on / _is_fci (orden de prioridad)
+          ▼    ▼   ▼   ▼
+  acciones bonos  ONs  CEDEARs  FCIs
+  (USA)    AR     USD           (IOL*)
+          │    │   │   │         │
+          ▼    ▼   ▼   ▼         ▼
+  position bond_ on_  cedear_  fci_
+  _analyzer analyzer analyzer analyzer
+          │    │   │   │         │
+          └────┴───┴───┴─────────┘
                ▼
         CEO portfolio
         (síntesis final)
@@ -130,7 +128,7 @@ Interfaz web Streamlit. Arrancar con `streamlit run app.py`.
 - **app.py** — home: macro en tiempo real (cache 30 min) + tabla de análisis guardados en `storage/`
 - **pages/1_Watchlist.py** — selección de tickers, análisis con barra de progreso, tabla resumen
 - **pages/2_Portafolio_USD.py** — capital + checkbox cache, screening completo + allocator
-- **pages/3_Mi_Portafolio.py** — botón "Sincronizar desde IOL" (trae posiciones reales con tipo detectado automáticamente) + expander de saldo manual (IOL no expone /cuenta/saldo vía API) + análisis acciones/bonos/CEDEARs + síntesis CEO
+- **pages/3_Mi_Portafolio.py** — botón "Sincronizar desde IOL" (trae posiciones reales con tipo detectado automáticamente) + expander de saldo manual (IOL no expone /cuenta/saldo vía API) + análisis acciones/bonos/ONs/CEDEARs/FCIs + síntesis CEO
 - **pages/4_Invertir_ARS.py** — capital ARS + perfil riesgo + checkbox "⚡ Modo rápido" (skip MERVAL en vivo) + portfolio risk score (0–100, Bajo/Moderado/Alto) + picks de CEDEARs y MERVAL
 - **pages/5_Paper_Trading.py** — performance de señales históricas: win rate, P&L promedio, tabla filtrable por veredicto/fecha/estado, bar chart P&L por ticker, historial de ejecuciones por fecha
 - **pages/6_Perfil.py** — edición del perfil de inversión desde la UI: nivel de riesgo, stop/take profit, reglas fundamentales y técnicas, watchlist. Botón de restaurar defaults incluido.
@@ -162,6 +160,8 @@ CRUD para `my_portfolio.json` + sincronización desde IOL.
 - `update_cash(usd, ars)` — actualiza saldo en efectivo
 - `sync_from_iol()` — trae posiciones reales de IOL vía `get_portfolio_iol()`, detecta tipo de activo
   comparando ticker contra CEDEAR_REGISTRY, BOND_REGISTRY, HARD_DOLLAR_BOND_REGISTRY, ON_REGISTRY, MERVAL_STOCKS.
+  Tickers que empiezan con `"IOL"` → `asset_type = "fci_mm"` (fondos IOL: IOLCAMA, etc.).
+  Para FCIs, persiste `ultimoPrecio` y `valorizado` del endpoint de portafolio en la posición.
   Currency = ARS si `titulo.moneda == "peso_Argentino"` (incluyendo ONs que cotizan en ARS en BYMA).
   Cash preservado del archivo local (IOL no expone saldo vía API).
   Retorna dict con `synced_from_iol=True` y `sync_timestamp`.
@@ -289,6 +289,24 @@ Calcula P&L, distancia al stop loss y take profit.
 Recomienda: hold, sell, add, reduce, stop_loss_triggered.
 Devuelve JSON con: `action`, `urgency`, `rationale`, `key_alert`, P&L calculado.
 
+### `agents/on_analyzer.py`
+Sub-agente especializado en **Obligaciones Negociables (ONs) corporativas USD**.
+Analiza posiciones en ONs que cotizan en ARS en BYMA pero se denominan en USD.
+Recibe precio en ARS desde IOL, convierte a USD usando CCL para calcular precio vs par (100%) y TIR implícita.
+Considera: P&L, tiempo a vencimiento, precio vs par, riesgo corporativo del emisor, comparación vs bonos soberanos y CEDEARs.
+Devuelve JSON con: `action`, `urgency`, `price_vs_par`, `estimated_tir_usd`, `days_to_maturity`, `rationale`, `key_alert`, `vs_alternatives`, métricas P&L completas.
+
+### `agents/fci_analyzer.py`
+Sub-agente especializado en **FCIs (Fondos Comunes de Inversión)**.
+Usa la composición del `FCI_REGISTRY` para estimar el rendimiento efectivo ponderado:
+- Cauciones bursátiles (corporativo tasa ramar) → TNA_PF × 0.85
+- Soberano CER → inflación mensual × 12 (anualizado)
+- Plazo fijo tradicional → TNA_PF
+- Liquidez → 0%
+Compara el rendimiento estimado vs inflación actual y recomienda hold o switch hacia LECAP/PF UVA.
+Si el FCI no está en `FCI_REGISTRY`, `_make_fci_report()` en `analyze_portfolio.py` actúa como fallback básico sin llamada a Claude.
+Devuelve JSON con: `action`, `urgency`, `effective_yield_est_tna`, `vs_inflation`, `composition_assessment`, `rationale`, `key_alert`, `vs_alternatives`.
+
 ### `data/instruments_ar.py`
 Universo de **37 instrumentos** de inversión en ARS/USD disponibles en IOL.
 Función principal: `get_instruments_universe(macro)` — devuelve lista de instrumentos con
@@ -314,6 +332,15 @@ Cada instrumento incluye: `return_estimate`, `liquidity`, `risk_level`, `recomme
 `how_to_buy` (instrucciones exactas en IOL), `sovereign_risk`, `bank_risk`.
 TNA plazo fijo: intenta traer de `argentinadatos.com/v1/finanzas/tasas/depositos`;
 si falla, usa `TNA_PF_FALLBACK = 20.0%`.
+
+**Registros estáticos en este archivo:**
+- `ON_REGISTRY` — 10 ONs corporativas USD con metadata: issuer, maturity, coupon, rating.
+  Función: `get_on_data(ticker, price_ars_override)` → precio IOL + metadata combinados.
+- `HARD_DOLLAR_BOND_REGISTRY` — 10 bonos soberanos hard dollar (AL29…GD46) con metadata.
+- `FCI_REGISTRY` — FCIs con composición declarada. Actualizar manualmente cuando IOL la cambia.
+  IOLCAMA (actualizado 2026-05-18): 78.77% cauciones bursátiles, 9.69% CER soberano,
+  7.92% plazo fijo tradicional, 3.63% liquidez.
+- `MERVAL_STOCKS` — set de 10 tickers del panel líder BYMA para detección de tipo.
 
 ### `agents/ars_advisor.py`
 Agente Claude especializado en inversiones en pesos argentinos.
@@ -392,10 +419,12 @@ Flags CLI: `--capital XXXX` (requerido), `--use-cache`.
 
 ### `analyze_portfolio.py`
 Expone `run_portfolio_analysis(portfolio_file, use_cache)` — callable desde `main.py` y Streamlit.
-Lee `my_portfolio.json` y detecta automáticamente el tipo de activo:
-- **Acciones americanas**: pipeline existente (fetcher + 4 agentes)
-- **Bonos argentinos**: detecta por `asset_type in ("bono_argentino", "bono_cer_argentino")` o ticker en `BOND_REGISTRY`. Precio vía IOL automático.
-- **CEDEARs**: detecta por `asset_type == "cedear"` o ticker en `CEDEAR_REGISTRY`. Precio vía IOL.
+Lee `my_portfolio.json` y detecta automáticamente el tipo de activo (orden de prioridad):
+1. `_is_arg_bond()` → `bond_analyzer` — asset_type bono_* o ticker en BOND_REGISTRY. Precio IOL.
+2. `_is_cedear()` → `cedear_analyzer` — asset_type cedear o ticker en CEDEAR_REGISTRY. Precio IOL.
+3. `_is_on()` → `on_analyzer` — asset_type on_usd/bono_hard_dollar o ticker en ON_REGISTRY/HARD_DOLLAR_BOND_REGISTRY. Precio IOL.
+4. `_is_fci()` → `fci_analyzer` (si en FCI_REGISTRY) o `_make_fci_report()` (fallback) — asset_type fci_mm o ticker startswith("IOL").
+5. Resto → `position_analyzer` — pipeline USA (fetcher + CEO + storage cache).
 Genera: análisis por posición + síntesis CEO del portafolio completo.
 Guarda en `storage/portfolio_analysis_{fecha}.json`.
 
@@ -551,6 +580,7 @@ Python 3.12 · anthropic · streamlit · yfinance · feedparser · requests · p
 | 13 | Sincronización portafolio desde IOL | ✅ done (`core/portfolio_manager.sync_from_iol()` — detecta tipo automáticamente, preserva cash) |
 | 14 | ONs corporativas en universo ARS | ✅ done (10 tickers verificados en IOL: YMCIO, YM34O, TSC3O, MGC3O, MGCOO, IRCPD, PNDCO, TLCMO, TTC9O, VISTD) |
 | 15 | Alertas con ajuste neto (comisión + impuesto) | ✅ done (`transaction_costs` en perfil — CEDEAR 15%, bonos exentos, comisión 0.75%) |
+| 16 | FCI analyzer con composición real | ✅ done (`agents/fci_analyzer.py` + `FCI_REGISTRY` — IOLCAMA deja de mostrar -100% loss) |
 
 ## Próximos pasos
 El roadmap original está completo. Posibles extensiones:
