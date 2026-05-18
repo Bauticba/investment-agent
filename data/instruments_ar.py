@@ -8,6 +8,24 @@ TNA_PF_FALLBACK = 20.0
 
 # Obligaciones Negociables corporativas en USD.
 # Tickers verificados en IOL/BYMA (sufijo O = liquidación USD hard).
+# Fondos Comunes de Inversión — composición estática, actualizar cuando IOL la cambia.
+# Última actualización de IOLCAMA: 2026-05-18.
+FCI_REGISTRY: dict = {
+    "IOLCAMA": {
+        "name":        "IOL FCI Money Market Clase A",
+        "type":        "fci_mm",
+        "manager":     "IOL Invertir Online",
+        "composition": {
+            "corporativo_tasa_ramar": 78.77,   # cauciones bursátiles / deuda corporativa tasa flotante
+            "soberano_tasa_cer":       9.69,   # bonos soberanos ajustados por CER
+            "plazo_fijo_tradicional":  7.92,   # plazos fijos bancarios a tasa fija
+            "liquidez":                3.63,   # efectivo / cuenta corriente
+        },
+        "horizon":     "inmediata",
+        "min_amount":  1,
+    },
+}
+
 ON_REGISTRY: dict = {
     "YMCIO": {"name": "YPF ON 2029 (USD)",               "issuer": "YPF S.A.",            "currency": "USD", "maturity": "2029-06-30", "coupon": 0.090,  "rating": "B+"},
     "YM34O": {"name": "YPF ON 2034 (USD)",               "issuer": "YPF S.A.",            "currency": "USD", "maturity": "2034-01-17", "coupon": 0.0825, "rating": "B+"},

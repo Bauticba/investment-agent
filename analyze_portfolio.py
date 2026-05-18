@@ -11,9 +11,10 @@ from agents.position_analyzer import analyze_position
 from agents.bond_analyzer import analyze_bond_position
 from agents.cedear_analyzer import analyze_cedear_position
 from agents.on_analyzer import analyze_on_position
+from agents.fci_analyzer import analyze_fci_position
 from data.argentina import get_bond_data, BOND_REGISTRY
 from data.cedears import get_cedear_data, CEDEAR_REGISTRY
-from data.instruments_ar import get_on_data, ON_REGISTRY, HARD_DOLLAR_BOND_REGISTRY
+from data.instruments_ar import get_on_data, ON_REGISTRY, HARD_DOLLAR_BOND_REGISTRY, FCI_REGISTRY
 from notifications.email_sender import send_portfolio_analysis_email
 from core.cache import get_analysis_cached
 
@@ -42,7 +43,10 @@ def run_portfolio_analysis(portfolio_file: str = "my_portfolio.json", use_cache:
     bond_positions   = [p for p in positions if _is_arg_bond(p)]
     cedear_positions = [p for p in positions if _is_cedear(p)]
     on_positions     = [p for p in positions if _is_on(p) and not _is_arg_bond(p)]
-    stock_positions  = [p for p in positions if not _is_arg_bond(p) and not _is_cedear(p) and not _is_on(p)]
+    fci_positions    = [p for p in positions if _is_fci(p)]
+    stock_positions  = [p for p in positions if
+                        not _is_arg_bond(p) and not _is_cedear(p)
+                        and not _is_on(p) and not _is_fci(p)]
 
     # --- 1a. Análisis de acciones (pipeline existente) ---
     analyses = {}
@@ -160,6 +164,28 @@ def run_portfolio_analysis(portfolio_file: str = "my_portfolio.json", use_cache:
               f"P&L: {pnl_str}{premium_str} | Urgencia: {report.get('urgency','?').upper()}")
         if report.get("key_alert"):
             print(f"     ⚠️  {report['key_alert']}")
+
+    # --- 1e. Macro para FCI (necesario para estimar rendimiento efectivo) ---
+    fci_macro = None
+    if fci_positions:
+        try:
+            from data.argentina import get_macro_data
+            fci_macro = get_macro_data()
+        except Exception:
+            pass
+
+    for position in fci_positions:
+        ticker   = position["ticker"]
+        fci_meta = FCI_REGISTRY.get(ticker, {})
+        if fci_meta:
+            print(f"  💵 Analizando FCI {ticker} ({fci_meta.get('name', ticker)})...")
+            report = analyze_fci_position(position, fci_meta, profile, macro=fci_macro)
+            print(f"     Rendimiento estimado: ~{report.get('effective_yield_est_tna','?')}% TNA | "
+                  f"Acción: {report.get('action','?').upper()}")
+        else:
+            print(f"  💵 {ticker}: FCI sin composición registrada — reporte básico")
+            report = _make_fci_report(position)
+        position_reports.append(report)
 
     if not position_reports:
         print("No hay posiciones para analizar.")
@@ -341,6 +367,49 @@ def _is_on(position: dict) -> bool:
         return True
     ticker = position["ticker"].upper()
     return ticker in ON_REGISTRY or ticker in HARD_DOLLAR_BOND_REGISTRY
+
+
+def _is_fci(position: dict) -> bool:
+    if position.get("asset_type") in ("fci_mm", "fci", "fondo_comun"):
+        return True
+    return position["ticker"].upper().startswith("IOL")
+
+
+def _make_fci_report(position: dict) -> dict:
+    """
+    Genera un reporte informativo para FCIs (fondos comunes de inversión).
+    No llama APIs externas — usa el valor guardado por el sync de IOL si está disponible.
+    """
+    ticker    = position["ticker"]
+    shares    = position.get("shares", 0)
+    avg_price = position.get("avg_buy_price", 0)
+    cost_ars  = round(shares * avg_price, 2)
+
+    # IOL sync stores valorizado in current_value_ars when available
+    current_value = position.get("current_value_ars") or cost_ars
+    current_price = position.get("current_price_ars") or avg_price
+    pnl_ars = round(current_value - cost_ars, 2)
+    pnl_pct = round(pnl_ars / cost_ars * 100, 2) if cost_ars else 0.0
+
+    return {
+        "ticker":            ticker,
+        "asset_type":        "fci_mm",
+        "action":            "hold",
+        "urgency":           "low",
+        "shares":            shares,
+        "avg_buy_price":     avg_price,
+        "current_price_ars": current_price,
+        "current_value_ars": current_value,
+        "cost_basis_ars":    cost_ars,
+        "pnl_ars":           pnl_ars,
+        "pnl_pct":           pnl_pct,
+        "rationale":         (
+            "FCI money market — instrumento de liquidez diaria equivalente a efectivo. "
+            "El capital rinde a tasa de mercado. No aplica stop loss ni take profit. "
+            "Consultá el valor actualizado de las cuota-partes en la app de IOL."
+        ),
+        "key_alert":         None,
+    }
 
 
 def _parse_args():

@@ -161,8 +161,15 @@ def sync_from_iol() -> dict | None:
             asset_type = "on_usd"
         elif ticker in MERVAL_STOCKS:
             asset_type = "accion_merval"
+        elif ticker.startswith("IOL"):
+            # IOL money market / FCI funds (IOLCAMA, IOLCAMB, etc.)
+            asset_type = "fci_mm"
         else:
             asset_type = None
+
+        # IOL portfolio endpoint includes current price and total value
+        ultimo_precio = float(activo.get("ultimoPrecio") or 0)
+        valorizado    = float(activo.get("valorizado") or 0)
 
         pos = {
             "ticker":        ticker,
@@ -173,6 +180,10 @@ def sync_from_iol() -> dict | None:
         }
         if asset_type:
             pos["asset_type"] = asset_type
+        # For FCIs, persist the IOL-reported value so analysis can use it without API calls
+        if asset_type == "fci_mm" and (ultimo_precio or valorizado):
+            pos["current_price_ars"] = ultimo_precio
+            pos["current_value_ars"] = valorizado or round(cantidad * precio_promedio, 2)
 
         positions.append(pos)
 

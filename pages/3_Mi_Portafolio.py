@@ -163,8 +163,8 @@ with col_opts2:
 use_cache = not live_mode
 
 if not live_mode:
-    from analyze_portfolio import _is_arg_bond, _is_cedear, _is_on
-    stock_positions = [p for p in positions if not _is_arg_bond(p) and not _is_cedear(p) and not _is_on(p)]
+    from analyze_portfolio import _is_arg_bond, _is_cedear, _is_on, _is_fci
+    stock_positions = [p for p in positions if not _is_arg_bond(p) and not _is_cedear(p) and not _is_on(p) and not _is_fci(p)]
     cached = sum(1 for p in stock_positions if os.path.exists(f"storage/{p['ticker']}_analysis.json"))
     total_stocks = len(stock_positions)
     if total_stocks > 0:
@@ -180,7 +180,9 @@ if st.button("Analizar portafolio", type="primary", use_container_width=True):
     from data.instruments_ar import get_on_data
     from notifications.email_sender import send_portfolio_analysis_email
     from core.cache import get_analysis_cached
-    from analyze_portfolio import _run_portfolio_ceo, _is_arg_bond, _is_cedear, _is_on
+    from analyze_portfolio import _run_portfolio_ceo, _is_arg_bond, _is_cedear, _is_on, _is_fci, _make_fci_report
+    from agents.fci_analyzer import analyze_fci_position
+    from data.instruments_ar import FCI_REGISTRY
 
     with open("instructions/investor_profile.json") as f:
         profile = json.load(f)
@@ -188,7 +190,10 @@ if st.button("Analizar portafolio", type="primary", use_container_width=True):
     bond_positions   = [p for p in positions if _is_arg_bond(p)]
     cedear_positions = [p for p in positions if _is_cedear(p)]
     on_positions     = [p for p in positions if _is_on(p) and not _is_arg_bond(p)]
-    stock_positions  = [p for p in positions if not _is_arg_bond(p) and not _is_cedear(p) and not _is_on(p)]
+    fci_positions    = [p for p in positions if _is_fci(p)]
+    stock_positions  = [p for p in positions if
+                        not _is_arg_bond(p) and not _is_cedear(p)
+                        and not _is_on(p) and not _is_fci(p)]
 
     DELAY = 12
     analyses = {}
@@ -254,6 +259,23 @@ if st.button("Analizar portafolio", type="primary", use_container_width=True):
         ticker = position["ticker"].upper()
         with st.spinner(f"Analizando CEDEAR {ticker}..."):
             report = analyze_cedear_position(position, cedear_data_map.get(ticker, {}), profile)
+        position_reports.append(report)
+
+    fci_macro = None
+    if fci_positions:
+        try:
+            from data.argentina import get_macro_data
+            fci_macro = get_macro_data()
+        except Exception:
+            pass
+    for position in fci_positions:
+        ticker   = position["ticker"]
+        fci_meta = FCI_REGISTRY.get(ticker, {})
+        if fci_meta:
+            with st.spinner(f"Analizando FCI {ticker}..."):
+                report = analyze_fci_position(position, fci_meta, profile, macro=fci_macro)
+        else:
+            report = _make_fci_report(position)
         position_reports.append(report)
 
     if not position_reports:
